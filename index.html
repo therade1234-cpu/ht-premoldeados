@@ -2938,10 +2938,6 @@ function actualizarPrecio(){
   }
 }
 function redondearParMetros(){
-  const el=document.getElementById('v-metros');
-  let v=parseFloat(el.value)||0;
-  if(v>0&&v%2!==0) v=Math.ceil(v/2)*2;
-  if(v>0) el.value=v;
   calcTotalVenta();
 }
 function cargarVenta(){
