@@ -1023,7 +1023,7 @@ function applyData(data){
   state.ventas = data.ventas || [];
   state.vendedores = data.vendedores || [];
   const sel=document.getElementById('v-vendedor');
-  if(sel) sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');
+  if(sel){const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');if(prev)sel.value=prev;}
   if(_panelActivo==='admin')renderAdmin();
   else if(_panelActivo==='ventas')renderVentas();
   else if(_panelActivo==='analisis')renderAnalisis();
