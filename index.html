@@ -2876,8 +2876,11 @@ function moverObraFecha(fechaStr,idx){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(nuevaFecha)){alert('Formato inválido. Usá AAAA-MM-DD (ej: 2026-07-15)');return;}
   obra.fecha=nuevaFecha;
   saveState();
-  mostrarDetallesDia(fechaStr);
+  const d=new Date(nuevaFecha);
+  ventasYear=d.getFullYear();ventasMonth=d.getMonth();
   renderVentas();
+  mostrarDetallesDia(nuevaFecha);
+  document.getElementById('detalle-dia-card').scrollIntoView({behavior:'smooth'});
 }
 
 // Utilidades numéricas — DEBEN ir primero
