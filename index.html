@@ -2850,7 +2850,34 @@ function mostrarDetallesDia(fechaStr){
         <div><div style="font-size:10px;color:#888;font-weight:600">SEÑA</div><div style="font-size:14px;font-weight:700;color:#993C1D">${o.sena?fmt(o.sena):'—'}</div></div>
         <div><div style="font-size:10px;color:#888;font-weight:600">RESTA PAGAR</div><div style="font-size:14px;font-weight:700;color:#C62828">${o.resta?fmt(o.resta):'—'}</div></div>
       </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button onclick="moverObraFecha('${fechaStr}',${i})" style="flex:1;padding:8px;border:1.5px solid #D85A30;border-radius:8px;background:#fff;color:#D85A30;font-size:12px;font-weight:700;cursor:pointer">📅 Mover fecha</button>
+        <button onclick="borrarObra('${fechaStr}',${i})" style="flex:1;padding:8px;border:1.5px solid #C62828;border-radius:8px;background:#fff;color:#C62828;font-size:12px;font-weight:700;cursor:pointer">🗑 Borrar obra</button>
+      </div>
     </div>`).join('')}`;
+}
+function borrarObra(fechaStr,idx){
+  const obras=state.ventas.filter(v=>v.fecha===fechaStr);
+  const obra=obras[idx];
+  if(!obra)return;
+  if(!confirm('¿Borrar la obra de '+( obra.cliente||'este cliente')+'? Esta acción no se puede deshacer.'))return;
+  const globalIdx=state.ventas.indexOf(obra);
+  if(globalIdx!==-1)state.ventas.splice(globalIdx,1);
+  saveState();
+  mostrarDetallesDia(fechaStr);
+  renderVentas();
+}
+function moverObraFecha(fechaStr,idx){
+  const obras=state.ventas.filter(v=>v.fecha===fechaStr);
+  const obra=obras[idx];
+  if(!obra)return;
+  const nuevaFecha=prompt('Nueva fecha para la obra de '+(obra.cliente||'este cliente')+':\n(formato AAAA-MM-DD)',fechaStr);
+  if(!nuevaFecha||nuevaFecha===fechaStr)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(nuevaFecha)){alert('Formato inválido. Usá AAAA-MM-DD (ej: 2026-07-15)');return;}
+  obra.fecha=nuevaFecha;
+  saveState();
+  mostrarDetallesDia(fechaStr);
+  renderVentas();
 }
 
 // Utilidades numéricas — DEBEN ir primero
