@@ -118,6 +118,9 @@ table.movs tr:hover td{background:#FAFAFA}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -1013,7 +1016,38 @@ const DIAS_L=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const OC=['#D85A30','#E8744A','#993C1D','#F0997B','#BA7517','#5DCAA5','#7F77DD'];
 const CAT_LABEL={obras:'Obras',senas:'Señas',publicidad:'Publicidad',sueldos:'Sueldos',fabrica:'Fábrica',materiales:'Materiales',vales:'Vales',fletes:'Fletes',ferreteria:'Ferretería',nafta:'Nafta',gastos_calle:'Gastos de calle',sueldos_oficina:'Sueldos oficina',pago_chicos_obra:'Pago semanal chicos de obra',nominas:'Nóminas',otro:'Otro'};
 
+// ---- FIREBASE CONFIG ----
+// REEMPLAZÁ estos valores con los de tu proyecto Firebase
+const FIREBASE_CONFIG = {
+  apiKey: "PEGAR_AQUI",
+  authDomain: "PEGAR_AQUI",
+  databaseURL: "PEGAR_AQUI",
+  projectId: "PEGAR_AQUI",
+  storageBucket: "PEGAR_AQUI",
+  messagingSenderId: "PEGAR_AQUI",
+  appId: "PEGAR_AQUI"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+
 let state={ movimientos:[], ventas:[], vendedores:[] };
+let _panelActivo = null;
+
+// Escuchar cambios en tiempo real — actualiza state y re-renderiza
+db.ref('/').on('value', function(snapshot){
+  const data = snapshot.val() || {};
+  state.movimientos = Object.entries(data.movimientos || {}).map(function([k,v]){return Object.assign({},v,{_key:k});});
+  state.ventas = Object.entries(data.ventas || {}).map(function([k,v]){return Object.assign({},v,{_key:k});});
+  state.vendedores = Object.entries(data.vendedores || {}).map(function([k,v]){return Object.assign({},v,{_key:k});});
+  // Actualizar select de vendedores si existe
+  const sel=document.getElementById('v-vendedor');
+  if(sel) sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');
+  // Re-renderizar el panel activo
+  if(_panelActivo==='admin')renderAdmin();
+  else if(_panelActivo==='ventas')renderVentas();
+  else if(_panelActivo==='analisis')renderAnalisis();
+  else if(_panelActivo==='vendedores')renderVendedores();
+});
 let curYear=2026, curMonth=5, curSemana=0, curView='semana';
 let ventasYear=2026, ventasMonth=5;
 let analisisYear=2026, analisisMonth=5;
@@ -1026,6 +1060,7 @@ function semanas(y,m){const t=new Date(y,m+1,0).getDate();const s=[];let d=1;whi
 
 // ---- NAVEGACIÓN ----
 function openPanel(id){
+  _panelActivo=id;
   document.getElementById('home').style.display='none';
   document.querySelectorAll('.inner').forEach(el=>el.classList.remove('active'));
   document.getElementById('inner-'+id).classList.add('active');
@@ -1452,7 +1487,7 @@ function agregarMovimiento(){
   const fecha=document.getElementById('fecha-mov').value;
   if(!monto){alert('Ingresá un monto válido');return;}
   if(!fecha){alert('Seleccioná una fecha');return;}
-  state.movimientos.push({tipo,cat,desc,monto,fecha});
+  db.ref('movimientos').push({tipo,cat,desc,monto,fecha});
   document.getElementById('desc-mov').value='';
   document.getElementById('monto-mov').value='';
   // Navegar al mes/semana del movimiento recién cargado
@@ -2559,12 +2594,12 @@ function setVale(nombre,fecha,val){
   // Sincronizar con administracion: eliminar el movimiento anterior y agregar el nuevo
   const descVale='Vale — '+nombre;
   // Quitar movimiento anterior de este operario en esta fecha
-  state.movimientos=state.movimientos.filter(function(m){
-    return !(m.fecha===fecha&&m.cat==='vales'&&m.desc===descVale);
-  });
+  state.movimientos.filter(function(m){
+    return m.fecha===fecha&&m.cat==='vales'&&m.desc===descVale;
+  }).forEach(function(m){ if(m._key) db.ref('movimientos/'+m._key).remove(); });
   // Agregar nuevo si monto > 0
   if(monto>0){
-    state.movimientos.push({tipo:'gasto',cat:'vales',desc:descVale,monto:monto,fecha:fecha});
+    db.ref('movimientos').push({tipo:'gasto',cat:'vales',desc:descVale,monto:monto,fecha:fecha});
   }
   // Refrescar admin si está visible
   if(document.getElementById('inner-admin')&&document.getElementById('inner-admin').classList.contains('active'))renderAdmin();
@@ -2893,7 +2928,7 @@ function cargarVenta(){
   const resta=parseMonto(document.getElementById('v-resta').value);
   const placasReja=parseInt(document.getElementById('v-placas-reja').value)||0;
   if(!vend||!cliente||!metros||!fecha){alert('Completá al menos: vendedor, cliente, metros y fecha');return;}
-  state.ventas.push({vendedor:vend,cliente,tel,fecha,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja});
+  db.ref('ventas').push({vendedor:vend,cliente,tel,fecha,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja});
   // limpiar
   ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   renderVentas();
@@ -3026,10 +3061,9 @@ function renderVendedores(){
 function agregarVendedor(){
   const nombre=document.getElementById('vend-nombre').value.trim();if(!nombre)return;
   const tel=document.getElementById('vend-tel').value.trim();const zona=document.getElementById('vend-zona').value.trim();
-  state.vendedores.push({nombre,tel,zona});
+  db.ref('vendedores').push({nombre,tel,zona});
   document.getElementById('vend-nombre').value='';document.getElementById('vend-tel').value='';document.getElementById('vend-zona').value='';
-  const sel=document.getElementById('v-vendedor');sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(v=>`<option value="${v.nombre}">${v.nombre}</option>`).join('');
-  renderVendedores();
+  // el onValue listener actualizará el select y re-renderizará
 }
 
 // ---- LISTA DE PRECIOS ----
