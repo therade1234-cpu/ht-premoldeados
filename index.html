@@ -2164,7 +2164,11 @@ function itemCard(titulo,desc){
 function descargarPresupuestoPNG(){
   var doc=document.getElementById('presup-doc');
   if(!doc){alert('Completá el presupuesto primero');return;}
-  html2canvas(doc,{scale:2,backgroundColor:'#fff',width:794,height:doc.offsetHeight}).then(function(canvas){
+  var prev=document.getElementById('presupuesto-preview');
+  var savedTransform=prev?prev.style.transform:'';
+  if(prev)prev.style.transform='none';
+  html2canvas(doc,{scale:2,backgroundColor:'#fff',width:794,height:doc.scrollHeight,useCORS:true}).then(function(canvas){
+    if(prev)prev.style.transform=savedTransform;
     var link=document.createElement('a');
     var cliente=(document.getElementById('pr-cliente').value||'cliente').replace(/[^a-z0-9]/gi,'_');
     link.download='Presupuesto_'+cliente+'.png';
@@ -2175,7 +2179,11 @@ function descargarPresupuestoPNG(){
 function descargarPresupuestoPDF(){
   var doc=document.getElementById('presup-doc');
   if(!doc){alert('Completá el presupuesto primero');return;}
-  html2canvas(doc,{scale:2,backgroundColor:'#fff',width:794,height:doc.offsetHeight}).then(function(canvas){
+  var prev=document.getElementById('presupuesto-preview');
+  var savedTransform=prev?prev.style.transform:'';
+  if(prev)prev.style.transform='none';
+  html2canvas(doc,{scale:2,backgroundColor:'#fff',width:794,height:doc.scrollHeight,useCORS:true}).then(function(canvas){
+    if(prev)prev.style.transform=savedTransform;
     var imgData=canvas.toDataURL('image/png');
     var jsPDF=window.jspdf.jsPDF;
     var pdf=new jsPDF('p','mm','a4');
