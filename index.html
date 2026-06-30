@@ -115,11 +115,25 @@ table.movs tr:hover td{background:#FAFAFA}
 .cal-day.today{border-color:var(--or);border-width:2px}
 .day-num{font-size:10px;font-weight:600;color:#6B6B6B}
 .day-dot{width:5px;height:5px;border-radius:50%;background:var(--or);margin-top:3px}
+
+/* ===== MODO NOCHE ===== */
+html.dark-mode{filter:invert(1) hue-rotate(180deg)}
+html.dark-mode img{filter:invert(1) hue-rotate(180deg)}
+#theme-toggle{position:fixed;top:16px;right:16px;z-index:2000;width:40px;height:40px;border-radius:50%;border:1.5px solid #E8E8E8;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.1);transition:transform .15s,border-color .15s}
+#theme-toggle:hover{border-color:var(--or);transform:translateY(-2px)}
+#theme-toggle i{font-size:18px;color:#1A1A1A}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+if(localStorage.getItem('ht-dark-mode')==='1'){document.documentElement.classList.add('dark-mode');}
+</script>
 </head>
 <body>
+
+<button id="theme-toggle" onclick="toggleTheme()" title="Modo noche" aria-label="Modo noche">
+  <i class="ti ti-moon" id="theme-icon"></i>
+</button>
 
 <!-- MODAL CONFIRMACIÓN -->
 <div id="modal-confirm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
@@ -1156,6 +1170,15 @@ table.movs tr:hover td{background:#FAFAFA}
 </div>
 
 <script>
+function toggleTheme(){
+  const dark=document.documentElement.classList.toggle('dark-mode');
+  localStorage.setItem('ht-dark-mode',dark?'1':'0');
+  document.getElementById('theme-icon').className=dark?'ti ti-sun':'ti ti-moon';
+}
+if(document.documentElement.classList.contains('dark-mode')){
+  document.getElementById('theme-icon').className='ti ti-sun';
+}
+
 const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MESES_C=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const DIAS_L=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
