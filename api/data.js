@@ -13,7 +13,7 @@ async function readData() {
 }
 
 async function writeData(data) {
-  await fetch(
+  const r = await fetch(
     `https://api.vercel.com/v1/edge-config/${EC_ID}/items${TEAM_ID ? `?teamId=${TEAM_ID}` : ''}`,
     {
       method: 'PATCH',
@@ -21,6 +21,11 @@ async function writeData(data) {
       body: JSON.stringify({ items: [{ operation: 'upsert', key: 'ht-premol', value: data }] }),
     }
   );
+  if (!r.ok) {
+    const text = await r.text();
+    throw new Error(`Edge Config write failed ${r.status}: ${text}`);
+  }
+  return r;
 }
 
 module.exports = async function handler(req, res) {
@@ -36,9 +41,13 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    await writeData(body);
-    return res.status(200).json({ ok: true });
+    try {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      await writeData(body);
+      return res.status(200).json({ ok: true });
+    } catch(e) {
+      return res.status(500).json({ ok: false, error: e.message });
+    }
   }
 
   res.status(405).json({ error: 'Method not allowed' });

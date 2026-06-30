@@ -1075,14 +1075,22 @@ async function saveState(){
   if(_saving) return;
   _saving = true;
   try {
-    await fetch('/api/data', {
+    const r = await fetch('/api/data', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores })
     });
+    const result = await r.json();
+    if(!result.ok) {
+      console.error('Error guardando:', result.error);
+      alert('Error al guardar: ' + (result.error||'Error desconocido'));
+    } else {
+      _lastSave = Date.now();
+    }
+  } catch(e) {
+    console.error('Error de red al guardar:', e);
   } finally {
     _saving = false;
-    _lastSave = Date.now();
   }
 }
 
