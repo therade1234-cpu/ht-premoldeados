@@ -180,8 +180,9 @@ table.movs tr:hover td{background:#FAFAFA}
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Diseño</label>
-          <select id="edit-diseno" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff">
-            <option>Similar ladrillo</option><option>Similar bloque</option><option>Similar piedra</option><option>Similar laja</option><option>Similar piedra alpina</option><option>Similar ladrillo rústico</option><option>Similar madera</option><option>Doble vista</option></select></div>
+          <select id="edit-diseno" onchange="toggleDisenoCustom('edit-diseno','edit-diseno-custom')" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff">
+            <option>Similar ladrillo</option><option>Similar bloque</option><option>Similar piedra</option><option>Similar laja</option><option>Similar piedra alpina</option><option>Similar ladrillo rústico</option><option>Similar madera</option><option>Doble vista</option><option>A confirmar</option></select>
+          <input type="text" id="edit-diseno-custom" placeholder="Describí la combinación..." style="display:none;margin-top:6px;width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #2563EB;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
         <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Distribución</label>
           <input id="edit-distribucion" type="text" placeholder="Ej: 2 tramos" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
       </div>
@@ -1010,7 +1011,7 @@ table.movs tr:hover td{background:#FAFAFA}
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Diseño</label>
-            <select id="v-diseno" onchange="actualizarPrecio()">
+            <select id="v-diseno" onchange="actualizarPrecio();toggleDisenoCustom('v-diseno','v-diseno-custom')">
               <option>Similar ladrillo</option>
               <option>Similar bloque</option>
               <option>Similar piedra</option>
@@ -1019,7 +1020,9 @@ table.movs tr:hover td{background:#FAFAFA}
               <option>Similar ladrillo rústico</option>
               <option>Similar madera</option>
               <option>Doble vista</option>
-            </select></div>
+              <option>A confirmar</option>
+            </select>
+            <input type="text" id="v-diseno-custom" placeholder="Describí la combinación de diseños..." style="display:none;margin-top:6px;width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid #D85A30;border-radius:7px;font-size:13px;font-family:inherit;outline:none"></div>
           <div class="form-group"><label class="form-label">Distribución</label><input type="text" id="v-distribucion" placeholder="Ej: 3 paños de 3m" /></div>
         </div>
 
@@ -3092,7 +3095,12 @@ function editarObra(fechaStr,idx){
   set('edit-fecha-venta',obra.fechaVenta||'');
   set('edit-metros',obra.metros);
   set('edit-altura',obra.altura||'1,60 m');
-  set('edit-diseno',obra.diseno||'Similar ladrillo');
+  const disSaved=obra.diseno||'Similar ladrillo';
+  const isDV=disSaved.startsWith('Doble vista');
+  document.getElementById('edit-diseno').value=isDV?'Doble vista':disSaved;
+  const editCustom=document.getElementById('edit-diseno-custom');
+  if(isDV&&disSaved.includes(': ')){editCustom.value=disSaved.split(': ').slice(1).join(': ');editCustom.style.display='block';}
+  else{editCustom.value='';editCustom.style.display='none';}
   set('edit-distribucion',obra.distribucion);
   set('edit-encadenado',obra.encadenado||'No');
   set('edit-gorros',obra.gorros||'Sin gorros');
@@ -3139,7 +3147,9 @@ function guardarEdicion(){
   obra.fechaVenta=g('edit-fecha-venta');
   obra.metros=parseFloat(g('edit-metros'))||0;
   obra.altura=g('edit-altura');
-  obra.diseno=g('edit-diseno');
+  const editDisBase=g('edit-diseno');
+  const editDisCustom=g('edit-diseno-custom').trim();
+  obra.diseno=(editDisBase==='Doble vista'&&editDisCustom)?'Doble vista: '+editDisCustom:editDisBase;
   obra.distribucion=g('edit-distribucion');
   obra.encadenado=g('edit-encadenado');
   obra.gorros=g('edit-gorros');
@@ -3241,6 +3251,13 @@ function seleccionarModelo(mod){
   sel.value=mod;actualizarPrecio();
   document.getElementById('modal-precios').style.display='none';
 }
+function toggleDisenoCustom(selId,inputId){
+  const sel=document.getElementById(selId);
+  const inp=document.getElementById(inputId);
+  if(!sel||!inp)return;
+  if(sel.value==='Doble vista'){inp.style.display='block';inp.focus();}
+  else{inp.style.display='none';inp.value='';}
+}
 function actualizarPrecio(){
   const diseno=document.getElementById('v-diseno').value;
   const altura=document.getElementById('v-altura').value;
@@ -3262,7 +3279,9 @@ function cargarVenta(){
   const dir=document.getElementById('v-direccion').value.trim();
   const metros=parseFloat(document.getElementById('v-metros').value)||0;
   const altura=document.getElementById('v-altura').value.trim();
-  const dis=document.getElementById('v-diseno').value;
+  const disBase=document.getElementById('v-diseno').value;
+  const disCustom=document.getElementById('v-diseno-custom').value.trim();
+  const dis=(disBase==='Doble vista'&&disCustom)?'Doble vista: '+disCustom:disBase;
   const dist=document.getElementById('v-distribucion').value.trim();
   const desmonte=document.getElementById('v-desmonte').value.trim();
   const enc=document.getElementById('v-encadenado').value;
@@ -3283,7 +3302,8 @@ function cargarVenta(){
   const vendGuardado=vendSel?vendSel.value:'';
   saveState();
   // limpiar
-  ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-fecha-venta'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-fecha-venta','v-diseno-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const dcEl=document.getElementById('v-diseno-custom');if(dcEl)dcEl.style.display='none';
   if(vendSel&&vendGuardado)vendSel.value=vendGuardado;
   const dFechaParts=fecha.split('-');
   ventasYear=parseInt(dFechaParts[0]);ventasMonth=parseInt(dFechaParts[1])-1;
