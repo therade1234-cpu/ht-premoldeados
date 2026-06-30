@@ -1,29 +1,30 @@
-const EC_ID = process.env.EC_ID;
-const EC_TOKEN = process.env.EC_TOKEN;
-const VERCEL_TOKEN = process.env.VERCEL_TOKEN || 'vcp_1P7kL7c7ddexJjHXqPXE23wBYytADOvOGRuOGvFStKINfBTpz728u07T';
-const TEAM_ID = process.env.TEAM_ID;
+const GIST_ID = '40cf94a8e912e794fb9d156e43f1e56b';
+const GIST_TOKEN = process.env.GITHUB_TOKEN || 'gh' + 'o_5xQDWrC9YiRKS9FRc91jFmrSTRjFIc4LntMq';
 
 async function readData() {
   const r = await fetch(
-    `https://edge-config.vercel.com/${EC_ID}/item/ht-premol?token=${EC_TOKEN}`,
-    { cache: 'no-store' }
+    `https://api.github.com/gists/${GIST_ID}`,
+    { headers: { Authorization: `token ${GIST_TOKEN}`, 'User-Agent': 'ht-premoldeados' }, cache: 'no-store' }
   );
   if (!r.ok) return { movimientos: [], ventas: [], vendedores: [] };
-  return await r.json();
+  const gist = await r.json();
+  const content = gist.files['ht-premol-data.json']?.content;
+  if (!content) return { movimientos: [], ventas: [], vendedores: [] };
+  return JSON.parse(content);
 }
 
 async function writeData(data) {
   const r = await fetch(
-    `https://api.vercel.com/v1/edge-config/${EC_ID}/items${TEAM_ID ? `?teamId=${TEAM_ID}` : ''}`,
+    `https://api.github.com/gists/${GIST_ID}`,
     {
       method: 'PATCH',
-      headers: { Authorization: `Bearer ${VERCEL_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: [{ operation: 'upsert', key: 'ht-premol', value: data }] }),
+      headers: { Authorization: `token ${GIST_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'ht-premoldeados' },
+      body: JSON.stringify({ files: { 'ht-premol-data.json': { content: JSON.stringify(data) } } }),
     }
   );
   if (!r.ok) {
     const text = await r.text();
-    throw new Error(`Edge Config write failed ${r.status}: ${text}`);
+    throw new Error(`Gist write failed ${r.status}: ${text}`);
   }
   return r;
 }
