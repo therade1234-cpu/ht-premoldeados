@@ -1007,7 +1007,7 @@ if(localStorage.getItem('ht-dark-mode')==='1'){document.documentElement.classLis
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Fecha de obra</label><input type="date" id="v-fecha" /></div>
-          <div class="form-group"><label class="form-label">Fecha de venta</label><input type="date" id="v-fecha-venta" /></div>
+          <div class="form-group"><label class="form-label">Fecha de venta *</label><input type="date" id="v-fecha-venta" /></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Localidad</label><input type="text" id="v-localidad" placeholder="Ej: Merlo, Morón..." /></div>
@@ -3326,12 +3326,13 @@ function cargarVenta(){
   const resta=parseMonto(document.getElementById('v-resta').value);
   const placasReja=parseInt(document.getElementById('v-placas-reja').value)||0;
   if(!vend||!cliente||!metros||!fecha){alert('Completá al menos: vendedor, cliente, metros y fecha');return;}
+  if(!fechaVenta){alert('Completá la Fecha de venta: es el campo que determina el mes de la comisión');return;}
   state.ventas.push({vendedor:vend,cliente,tel,fecha,fechaVenta,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja});
   const vendSel=document.getElementById('v-vendedor');
   const vendGuardado=vendSel?vendSel.value:'';
   saveState();
   // limpiar
-  ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-fecha-venta','v-diseno-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-diseno-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const dcEl=document.getElementById('v-diseno-custom');if(dcEl)dcEl.style.display='none';
   if(vendSel&&vendGuardado)vendSel.value=vendGuardado;
   const dFechaParts=fecha.split('-');
@@ -3412,7 +3413,7 @@ function calcComisionEscala(totalVendido){
 function renderVendedores(){
   document.getElementById('vend-period-label').textContent=MESES[vendMonth]+' '+vendYear;
   document.getElementById('ranking-titulo').textContent='Ranking — '+MESES[vendMonth];
-  const vs=state.ventas.filter(v=>{const d=parseFecha(v.fechaVenta||v.fecha);return d.getFullYear()===vendYear&&d.getMonth()===vendMonth;});
+  const vs=state.ventas.filter(v=>{const d=parseFecha(v.fechaVenta);return d.getFullYear()===vendYear&&d.getMonth()===vendMonth;});
   const ranked=state.vendedores.map(vnd=>{
     const vv=vs.filter(v=>v.vendedor===vnd.nombre);
     const totalVendido=vv.reduce((s,v)=>s+(v.totalObra||v.metros*v.precio),0);
@@ -3479,6 +3480,7 @@ const todayStr=`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}
 document.getElementById('fecha-mov').value=todayStr;
 filtrarCatsPorTipo();
 document.getElementById('v-fecha').value=todayStr;
+document.getElementById('v-fecha-venta').value=todayStr;
 var nomF=document.getElementById('nom-fecha');if(nomF)nomF.value=todayStr;
 renderPresentismo();
 </script>
