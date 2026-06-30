@@ -635,7 +635,7 @@ table.movs tr:hover td{background:#FAFAFA}
             <option value="2,80 m" selected>2,80 m</option>
           </select></div>
         </div>
-        <div class="form-group" style="margin-bottom:10px"><label class="form-label">Diseño</label><select id="pr-diseno" onchange="calcPresupuestoTotal()">
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">Diseño</label><select id="pr-diseno" onchange="calcPresupuestoTotal();toggleDisenoCustom('pr-diseno','pr-diseno-custom')">
           <option value="Similar ladrillo">Similar ladrillo</option>
           <option value="Similar bloque">Similar bloque</option>
           <option value="Similar piedra">Similar piedra</option>
@@ -644,7 +644,9 @@ table.movs tr:hover td{background:#FAFAFA}
           <option value="Similar ladrillo rústico">Similar ladrillo rústico</option>
           <option value="Similar madera">Similar madera</option>
           <option value="Doble vista">Doble vista</option>
-        </select></div>
+          <option value="A confirmar">A confirmar</option>
+        </select>
+        <input type="text" id="pr-diseno-custom" placeholder="Describí la combinación de diseños..." oninput="renderPresupuesto()" style="display:none;margin-top:6px;width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid #D85A30;border-radius:7px;font-size:13px;font-family:inherit;outline:none"></div>
         <div class="form-group" style="margin-bottom:10px"><label class="form-label">Distribución</label><input type="text" id="pr-distribucion" placeholder="Ej: 3 paños + portón" oninput="renderPresupuesto()" /></div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Gorros</label><select id="pr-gorros" onchange="renderPresupuesto()">
@@ -2221,7 +2223,9 @@ function descargarReciboPDF(){
 function calcPresupuestoTotal(){
   var metros=parseFloat((document.getElementById('pr-metros-num')||{}).value)||0;
   var altura=(document.getElementById('pr-altura')||{}).value||'2,80 m';
-  var diseno=(document.getElementById('pr-diseno')||{}).value||'Similar ladrillo';
+  var disenoBase=(document.getElementById('pr-diseno')||{}).value||'Similar ladrillo';
+  var disenoCustom=((document.getElementById('pr-diseno-custom')||{}).value||'').trim();
+  var diseno=(disenoBase==='Doble vista'&&disenoCustom)?'Doble vista: '+disenoCustom:disenoBase;
   var adicional=parseMonto((document.getElementById('pr-adicional-monto')||{}).value)||0;
   if(typeof PRECIOS!=='undefined'&&PRECIOS[diseno]&&PRECIOS[diseno][altura]&&metros>0){
     var total=metros*PRECIOS[diseno][altura]+adicional;
@@ -2240,7 +2244,9 @@ function renderPresupuesto(){
   var fecha=fechaRaw?fechaRaw.split('-').reverse().join('/'):'—';
   var metrosNum=g('pr-metros-num');
   var altura=g('pr-altura')||'2,80 m';
-  var diseno=g('pr-diseno')||'—';
+  var disenoBasePr=g('pr-diseno')||'—';
+  var disenoCustomPr=((document.getElementById('pr-diseno-custom')||{}).value||'').trim();
+  var diseno=(disenoBasePr==='Doble vista'&&disenoCustomPr)?'Doble vista: '+disenoCustomPr:disenoBasePr;
   var metrosTxt=metrosNum?(metrosNum+' metros lineales a '+altura+' de altura'):'—';
   var distribucion=g('pr-distribucion');
   var gorros=g('pr-gorros')||'No lleva';
