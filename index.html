@@ -849,6 +849,9 @@ table.movs tr:hover td{background:#FAFAFA}
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Fecha de obra</label><input type="date" id="v-fecha" /></div>
+          <div class="form-group"><label class="form-label">Fecha de venta</label><input type="date" id="v-fecha-venta" /></div>
+        </div>
+        <div class="form-row">
           <div class="form-group"><label class="form-label">Localidad</label><input type="text" id="v-localidad" placeholder="Ej: Merlo, Morón..." /></div>
         </div>
         <div class="form-group" style="margin-bottom:14px"><label class="form-label">Dirección</label><input type="text" id="v-direccion" placeholder="Calle y número" /></div>
@@ -2945,6 +2948,7 @@ function cargarVenta(){
   const cliente=document.getElementById('v-cliente').value.trim();
   const tel=document.getElementById('v-tel').value.trim();
   const fecha=document.getElementById('v-fecha').value;
+  const fechaVenta=document.getElementById('v-fecha-venta').value;
   const loc=document.getElementById('v-localidad').value.trim();
   const dir=document.getElementById('v-direccion').value.trim();
   const metros=parseFloat(document.getElementById('v-metros').value)||0;
@@ -2965,12 +2969,12 @@ function cargarVenta(){
   const resta=parseMonto(document.getElementById('v-resta').value);
   const placasReja=parseInt(document.getElementById('v-placas-reja').value)||0;
   if(!vend||!cliente||!metros||!fecha){alert('Completá al menos: vendedor, cliente, metros y fecha');return;}
-  state.ventas.push({vendedor:vend,cliente,tel,fecha,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja});
+  state.ventas.push({vendedor:vend,cliente,tel,fecha,fechaVenta,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja});
   const vendSel=document.getElementById('v-vendedor');
   const vendGuardado=vendSel?vendSel.value:'';
   saveState();
   // limpiar
-  ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-fecha-venta'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   if(vendSel&&vendGuardado)vendSel.value=vendGuardado;
   renderVentas();
 }
@@ -3048,7 +3052,7 @@ function calcComisionEscala(totalVendido){
 function renderVendedores(){
   document.getElementById('vend-period-label').textContent=MESES[vendMonth]+' '+vendYear;
   document.getElementById('ranking-titulo').textContent='Ranking — '+MESES[vendMonth];
-  const vs=state.ventas.filter(v=>{const d=new Date(v.fecha);return d.getFullYear()===vendYear&&d.getMonth()===vendMonth;});
+  const vs=state.ventas.filter(v=>{const d=new Date(v.fechaVenta||v.fecha);return d.getFullYear()===vendYear&&d.getMonth()===vendMonth;});
   const ranked=state.vendedores.map(vnd=>{
     const vv=vs.filter(v=>v.vendedor===vnd.nombre);
     const totalVendido=vv.reduce((s,v)=>s+(v.totalObra||v.metros*v.precio),0);
