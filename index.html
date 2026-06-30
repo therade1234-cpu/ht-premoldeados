@@ -1083,7 +1083,7 @@ async function saveState(){
     const result = await r.json();
     if(!result.ok) {
       console.error('Error guardando:', result.error);
-      alert('Error al guardar: ' + (result.error||'Error desconocido'));
+      window._lastSaveError = result.error;
     } else {
       _lastSave = Date.now();
     }
