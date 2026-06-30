@@ -1055,16 +1055,14 @@ let _saving = false;
 let _lastSave = 0;
 
 function applyData(data){
-  const incoming = {
-    movimientos: data.movimientos || [],
-    ventas: data.ventas || [],
-    vendedores: data.vendedores || []
-  };
-  // Si el servidor devuelve menos datos que los que tenemos localmente
-  // (porque Edge Config aún no propagó el último save), ignorar esos campos
-  if(incoming.ventas.length >= state.ventas.length) state.ventas = incoming.ventas;
-  if(incoming.movimientos.length >= state.movimientos.length) state.movimientos = incoming.movimientos;
-  state.vendedores = incoming.vendedores;
+  const sinceLastSave = Date.now() - _lastSave;
+  // Bloquear sobreescritura de ventas/movimientos por 30s tras un save
+  // para esperar que Edge Config propague el dato nuevo
+  if(sinceLastSave > 30000){
+    state.ventas = data.ventas || [];
+    state.movimientos = data.movimientos || [];
+  }
+  state.vendedores = data.vendedores || [];
   const sel=document.getElementById('v-vendedor');
   if(sel){const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');if(prev)sel.value=prev;}
   if(_panelActivo==='admin')renderAdmin();
