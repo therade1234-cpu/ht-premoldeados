@@ -1247,7 +1247,7 @@ const OC=['#D85A30','#E8744A','#993C1D','#F0997B','#BA7517','#5DCAA5','#7F77DD']
 const CAT_LABEL={obras:'Obras',senas:'Señas',publicidad:'Publicidad',sueldos:'Sueldos',fabrica:'Fábrica',materiales:'Materiales',vales:'Vales',fletes:'Fletes',ferreteria:'Ferretería',nafta:'Nafta',gastos_calle:'Gastos de calle',sueldos_oficina:'Sueldos oficina',pago_chicos_obra:'Pago semanal chicos de obra',nominas:'Nóminas',otro:'Otro'};
 
 // ---- PERSISTENCIA EN TIEMPO REAL (Vercel Edge Config) ----
-let state={ movimientos:[], ventas:[], vendedores:[] };
+let state={ movimientos:[], ventas:[], vendedores:[], ultimoRecibo:0 };
 let _panelActivo = null;
 let _saving = false;
 let _lastSave = 0;
@@ -1261,6 +1261,7 @@ function applyData(data){
     state.movimientos = data.movimientos || [];
   }
   state.vendedores = data.vendedores || [];
+  state.ultimoRecibo = data.ultimoRecibo || 0;
   const sel=document.getElementById('v-vendedor');
   if(sel){const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');if(prev)sel.value=prev;}
   if(_panelActivo==='admin')renderAdmin();
@@ -1276,7 +1277,7 @@ async function saveState(){
     const r = await fetch('/api/data', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores })
+      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, ultimoRecibo: state.ultimoRecibo })
     });
     const result = await r.json();
     if(!result.ok) {
@@ -1341,6 +1342,7 @@ function openPanel(id){
     setTimeout(function(){
       var rf=document.getElementById('rc-fecha');if(rf&&!rf.value)rf.value=s3;
       var rfo=document.getElementById('rc-fecha-obra');if(rfo&&!rfo.value)rfo.value=s3;
+      autocompletarNumeroRecibo();
       renderRecibo();
     },50);
   }
@@ -2273,6 +2275,23 @@ function renderRecibo(){
   },10);
 }
 
+function numeroReciboFormateado(n){return String(n).padStart(5,'0');}
+function autocompletarNumeroRecibo(){
+  var el=document.getElementById('rc-num');
+  if(el&&!el.value)el.value=numeroReciboFormateado(state.ultimoRecibo+1);
+}
+function registrarUsoNumeroRecibo(){
+  var el=document.getElementById('rc-num');
+  var n=parseInt((el&&el.value||'').replace(/\D/g,''))||0;
+  if(n>state.ultimoRecibo){
+    state.ultimoRecibo=n;
+    saveState();
+  }
+  setTimeout(function(){
+    if(el)el.value=numeroReciboFormateado(state.ultimoRecibo+1);
+    renderRecibo();
+  },300);
+}
 function descargarReciboPNG(){
   var doc=document.getElementById('recibo-doc');
   if(!doc){alert('Completá el recibo primero');return;}
@@ -2282,6 +2301,7 @@ function descargarReciboPNG(){
     link.download='Recibo_'+cliente+'.png';
     link.href=canvas.toDataURL('image/png');
     link.click();
+    registrarUsoNumeroRecibo();
   });
 }
 
@@ -2299,6 +2319,7 @@ function descargarReciboPDF(){
     pdf.addImage(imgData,'PNG',(pw-iw)/2,(ph-ih)/2,iw,ih);
     var cliente=(document.getElementById('rc-cliente').value||'cliente').replace(/[^a-z0-9]/gi,'_');
     pdf.save('Recibo_'+cliente+'.pdf');
+    registrarUsoNumeroRecibo();
   });
 }
 
