@@ -1220,6 +1220,13 @@ function currentTheme(){
   if(cl.contains('theme-gray'))return'gray';
   return'light';
 }
+// Click en cualquier parte de un input de fecha abre el calendario (no solo el ícono)
+document.addEventListener('click',function(e){
+  const inp=e.target.closest('input[type="date"]');
+  if(inp&&typeof inp.showPicker==='function'){
+    try{inp.showPicker();}catch(err){}
+  }
+});
 function applyTheme(t){
   document.documentElement.classList.remove('theme-gray','theme-dark');
   if(t==='gray')document.documentElement.classList.add('theme-gray');
