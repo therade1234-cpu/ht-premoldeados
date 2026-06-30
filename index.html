@@ -1099,6 +1099,10 @@ function openPanel(id){
 }
 let rolActual='admin';
 function loginComo(rol){
+  if(rol==='admin'){
+    const pass=prompt('Ingresá la contraseña de administración:');
+    if(pass!=='ht2026'){alert('Contraseña incorrecta');return;}
+  }
   rolActual=rol;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('home').style.display='flex';
