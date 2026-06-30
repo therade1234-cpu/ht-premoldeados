@@ -2980,6 +2980,8 @@ function cargarVenta(){
   // limpiar
   ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-fecha-venta'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   if(vendSel&&vendGuardado)vendSel.value=vendGuardado;
+  const dFecha=new Date(fecha);
+  ventasYear=dFecha.getFullYear();ventasMonth=dFecha.getMonth();
   renderVentas();
 }
 
