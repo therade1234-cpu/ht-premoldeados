@@ -1,6 +1,6 @@
 const EC_ID = process.env.EC_ID;
 const EC_TOKEN = process.env.EC_TOKEN;
-const VERCEL_TOKEN = process.env.VERCEL_TOKEN;
+const VERCEL_TOKEN = process.env.VERCEL_TOKEN || 'vcp_1P7kL7c7ddexJjHXqPXE23wBYytADOvOGRuOGvFStKINfBTpz728u07T';
 const TEAM_ID = process.env.TEAM_ID;
 
 async function readData() {
