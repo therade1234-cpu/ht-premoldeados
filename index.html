@@ -1037,6 +1037,7 @@ const CAT_LABEL={obras:'Obras',senas:'Señas',publicidad:'Publicidad',sueldos:'S
 let state={ movimientos:[], ventas:[], vendedores:[] };
 let _panelActivo = null;
 let _saving = false;
+let _lastSave = 0;
 
 function applyData(data){
   state.movimientos = data.movimientos || [];
@@ -1059,7 +1060,10 @@ async function saveState(){
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores })
     });
-  } finally { _saving = false; }
+  } finally {
+    _saving = false;
+    _lastSave = Date.now();
+  }
 }
 
 // Cargar datos al inicio
@@ -1067,7 +1071,7 @@ fetch('/api/data').then(r=>r.json()).then(applyData).catch(()=>{});
 
 // Polling cada 6 segundos para sincronizar cambios de otras PCs
 setInterval(function(){
-  if(!_saving) fetch('/api/data').then(r=>r.json()).then(applyData).catch(()=>{});
+  if(!_saving && Date.now()-_lastSave>10000) fetch('/api/data').then(r=>r.json()).then(applyData).catch(()=>{});
 }, 6000);
 let curYear=2026, curMonth=5, curSemana=0, curView='semana';
 let ventasYear=2026, ventasMonth=5;
