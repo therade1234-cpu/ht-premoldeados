@@ -136,6 +136,98 @@ table.movs tr:hover td{background:#FAFAFA}
   </div>
 </div>
 
+<!-- MODAL EDITAR OBRA -->
+<div id="modal-editar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:2000;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:20px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.22);margin:auto">
+    <div style="padding:24px 28px 0;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #F0E0D6;padding-bottom:16px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:42px;height:42px;border-radius:12px;background:#FDF3EF;display:flex;align-items:center;justify-content:center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </div>
+        <div><div style="font-size:16px;font-weight:700;color:#1A1A1A">Editar obra</div><div style="font-size:12px;color:#888" id="edit-subtitle"></div></div>
+      </div>
+      <button onclick="cerrarModalEditar()" style="background:none;border:none;cursor:pointer;color:#888;font-size:20px;line-height:1;padding:4px">✕</button>
+    </div>
+    <div style="padding:20px 28px 28px">
+      <div style="font-size:10px;font-weight:700;color:#993C1D;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">Datos del cliente</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Vendedor</label>
+          <select id="edit-vendedor" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff;color:#1A1A1A"></select></div>
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Cliente</label>
+          <input id="edit-cliente" type="text" placeholder="Nombre" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Teléfono</label>
+          <input id="edit-tel" type="text" placeholder="11-xxxx-xxxx" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Localidad</label>
+          <input id="edit-localidad" type="text" placeholder="Ej: Merlo" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+      </div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Dirección</label>
+        <input id="edit-direccion" type="text" placeholder="Calle y número" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Fecha de obra</label>
+          <input id="edit-fecha" type="date" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Fecha de venta</label>
+          <input id="edit-fecha-venta" type="date" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:#993C1D;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 12px">Especificaciones</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Metros lineales</label>
+          <input id="edit-metros" type="number" placeholder="0" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Altura</label>
+          <select id="edit-altura" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff">
+            <option>1,60 m</option><option>2,00 m</option><option>2,40 m</option><option>2,80 m</option></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Diseño</label>
+          <select id="edit-diseno" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff">
+            <option>Similar ladrillo</option><option>Similar bloque</option><option>Similar piedra</option><option>Similar laja</option><option>Similar piedra alpina</option><option>Similar ladrillo rústico</option><option>Similar madera</option><option>Doble vista</option></select></div>
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Distribución</label>
+          <input id="edit-distribucion" type="text" placeholder="Ej: 2 tramos" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Encadenado</label>
+          <select id="edit-encadenado" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"><option value="No">No</option><option value="Sí">Sí</option></select></div>
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Gorros</label>
+          <select id="edit-gorros" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"><option value="Sin gorros">Sin gorros</option><option value="Intercalados">Intercalados</option><option value="Completos">Completos</option></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Columnas remo</label>
+          <select id="edit-columnas" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"><option value="No lleva">No lleva</option><option value="Completos">Completos</option></select></div>
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Desmonte</label>
+          <input id="edit-desmonte" type="text" placeholder="Descripción" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Agua</label>
+          <select id="edit-agua" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"><option value="No">No</option><option value="Sí">Sí</option></select></div>
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Luz</label>
+          <select id="edit-luz" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff"><option value="No">No</option><option value="Sí">Sí</option></select></div>
+      </div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Detalle / Notas</label>
+        <textarea id="edit-detalle" placeholder="Notas importantes..." style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;resize:vertical;min-height:60px"></textarea></div>
+      <div style="font-size:10px;font-weight:700;color:#993C1D;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 12px">Totales</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Flete ($)</label>
+          <input id="edit-flete" type="text" placeholder="0" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Precio por metro ($)</label>
+          <input id="edit-precio" type="text" placeholder="0" oninput="editCalcTotal()" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Total obra ($)</label>
+          <input id="edit-total-obra" type="text" placeholder="0" oninput="editCalcResta()" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;font-weight:700"></div>
+        <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Seña ($)</label>
+          <input id="edit-sena" type="text" placeholder="0" oninput="editCalcResta()" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+      </div>
+      <div style="margin-bottom:20px"><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Resta pagar ($)</label>
+        <input id="edit-resta" type="text" placeholder="0" readonly style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #E0E0E0;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#F5F5F5;color:#C62828;font-weight:700"></div>
+      <div style="display:flex;gap:10px">
+        <button onclick="cerrarModalEditar()" style="flex:1;padding:12px;border:1.5px solid #E0E0E0;border-radius:10px;background:#fff;color:#6B6B6B;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+        <button onclick="guardarEdicion()" style="flex:1;padding:12px;border:none;border-radius:10px;background:#D85A30;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL MOVER FECHA -->
 <div id="modal-fecha" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:20px;padding:36px 32px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.18);text-align:center;margin:20px">
@@ -2962,7 +3054,8 @@ function mostrarDetallesDia(fechaStr){
       </div>
       <div style="margin-top:10px;display:flex;gap:8px">
         <button onclick="moverObraFecha('${fechaStr}',${i})" style="flex:1;padding:8px;border:1.5px solid #D85A30;border-radius:8px;background:#fff;color:#D85A30;font-size:12px;font-weight:700;cursor:pointer">📅 Mover fecha</button>
-        <button onclick="borrarObra('${fechaStr}',${i})" style="flex:1;padding:8px;border:1.5px solid #C62828;border-radius:8px;background:#fff;color:#C62828;font-size:12px;font-weight:700;cursor:pointer">🗑 Borrar obra</button>
+        <button onclick="editarObra('${fechaStr}',${i})" style="flex:1;padding:8px;border:1.5px solid #2563EB;border-radius:8px;background:#fff;color:#2563EB;font-size:12px;font-weight:700;cursor:pointer">✏️ Editar</button>
+        <button onclick="borrarObra('${fechaStr}',${i})" style="flex:1;padding:8px;border:1.5px solid #C62828;border-radius:8px;background:#fff;color:#C62828;font-size:12px;font-weight:700;cursor:pointer">🗑 Borrar</button>
       </div>
     </div>`).join('')}`;
 }
@@ -2977,6 +3070,96 @@ async function borrarObra(fechaStr,idx){
   saveState();
   mostrarDetallesDia(fechaStr);
   renderVentas();
+}
+let _editObraCtx=null;
+function editarObra(fechaStr,idx){
+  const obras=state.ventas.filter(v=>v.fecha===fechaStr);
+  const obra=obras[idx];
+  if(!obra)return;
+  _editObraCtx=obra;
+  document.getElementById('edit-subtitle').textContent=(obra.cliente||'sin nombre')+' — '+fechaStr.split('-').reverse().join('/');
+  // populate vendedor select
+  const vs=document.getElementById('edit-vendedor');
+  vs.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(v=>`<option value="${v.nombre}">${v.nombre}</option>`).join('');
+  vs.value=obra.vendedor||'';
+  // populate fields
+  const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
+  set('edit-cliente',obra.cliente);
+  set('edit-tel',obra.tel);
+  set('edit-localidad',obra.localidad);
+  set('edit-direccion',obra.direccion);
+  set('edit-fecha',obra.fecha);
+  set('edit-fecha-venta',obra.fechaVenta||'');
+  set('edit-metros',obra.metros);
+  set('edit-altura',obra.altura||'1,60 m');
+  set('edit-diseno',obra.diseno||'Similar ladrillo');
+  set('edit-distribucion',obra.distribucion);
+  set('edit-encadenado',obra.encadenado||'No');
+  set('edit-gorros',obra.gorros||'Sin gorros');
+  set('edit-columnas',obra.columnas||'No lleva');
+  set('edit-desmonte',obra.desmonte);
+  set('edit-agua',obra.agua||'No');
+  set('edit-luz',obra.luz||'No');
+  set('edit-detalle',obra.detalle);
+  set('edit-flete',obra.flete||0);
+  set('edit-precio',obra.precio||0);
+  set('edit-total-obra',obra.totalObra||0);
+  set('edit-sena',obra.sena||0);
+  set('edit-resta',obra.resta||0);
+  document.getElementById('modal-editar').style.display='flex';
+}
+function cerrarModalEditar(){
+  document.getElementById('modal-editar').style.display='none';
+  _editObraCtx=null;
+}
+function editCalcTotal(){
+  const metros=parseFloat(document.getElementById('edit-metros').value)||0;
+  const precio=parseFloat((document.getElementById('edit-precio').value||'').replace(/\./g,'').replace(',','.'))||0;
+  const flete=parseFloat((document.getElementById('edit-flete').value||'').replace(/\./g,'').replace(',','.'))||0;
+  const total=metros*precio+flete;
+  document.getElementById('edit-total-obra').value=total||0;
+  editCalcResta();
+}
+function editCalcResta(){
+  const total=parseFloat((document.getElementById('edit-total-obra').value||'').replace(/\./g,'').replace(',','.'))||0;
+  const sena=parseFloat((document.getElementById('edit-sena').value||'').replace(/\./g,'').replace(',','.'))||0;
+  document.getElementById('edit-resta').value=total-sena;
+}
+function guardarEdicion(){
+  if(!_editObraCtx)return;
+  const obra=_editObraCtx;
+  const g=(id)=>{const el=document.getElementById(id);return el?el.value:'';};
+  const gn=(id)=>parseFloat((g(id)||'0').replace(/\./g,'').replace(',','.'))||0;
+  obra.vendedor=g('edit-vendedor');
+  obra.cliente=g('edit-cliente');
+  obra.tel=g('edit-tel');
+  obra.localidad=g('edit-localidad');
+  obra.direccion=g('edit-direccion');
+  obra.fecha=g('edit-fecha');
+  obra.fechaVenta=g('edit-fecha-venta');
+  obra.metros=parseFloat(g('edit-metros'))||0;
+  obra.altura=g('edit-altura');
+  obra.diseno=g('edit-diseno');
+  obra.distribucion=g('edit-distribucion');
+  obra.encadenado=g('edit-encadenado');
+  obra.gorros=g('edit-gorros');
+  obra.columnas=g('edit-columnas');
+  obra.desmonte=g('edit-desmonte');
+  obra.agua=g('edit-agua');
+  obra.luz=g('edit-luz');
+  obra.detalle=g('edit-detalle');
+  obra.flete=gn('edit-flete');
+  obra.precio=gn('edit-precio');
+  obra.totalObra=gn('edit-total-obra');
+  obra.sena=gn('edit-sena');
+  obra.resta=gn('edit-resta');
+  cerrarModalEditar();
+  saveState();
+  const parts=obra.fecha.split('-');
+  ventasYear=parseInt(parts[0]);ventasMonth=parseInt(parts[1])-1;
+  renderVentas();
+  mostrarDetallesDia(obra.fecha);
+  document.getElementById('detalle-dia-card').scrollIntoView({behavior:'smooth'});
 }
 let _moverObraCtx=null;
 function moverObraFecha(fechaStr,idx){
