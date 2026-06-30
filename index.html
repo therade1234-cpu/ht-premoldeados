@@ -1085,6 +1085,7 @@ let ventasYear=2026, ventasMonth=5;
 let analisisYear=2026, analisisMonth=5;
 let vendYear=2026, vendMonth=5;
 
+function parseFecha(f){if(!f)return new Date(NaN);const p=f.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
 const fmt=n=>{if(n===0)return'$0';const a=Math.abs(Math.round(n));return(n<0?'-':'')+'$'+a.toLocaleString('es-AR');};
 const fmtC=n=>n<0?`<span style="color:#C62828">${fmt(n)}</span>`:n>0?`<span style="color:#2E7D32">${fmt(n)}</span>`:`<span style="color:#A0A0A0">—</span>`;
 
@@ -1206,11 +1207,11 @@ function renderAdmin(){
   let ventasPeriodo;
   if(curView==='semana'){
     const r=semanas(curYear,curMonth)[curSemana];
-    ventasPeriodo=r?state.ventas.filter(v=>{const d=new Date(v.fecha);return d.getFullYear()===curYear&&d.getMonth()===curMonth&&d.getDate()>=r.start&&d.getDate()<=r.end;}):[];
+    ventasPeriodo=r?state.ventas.filter(v=>{const d=parseFecha(v.fecha);return d.getFullYear()===curYear&&d.getMonth()===curMonth&&d.getDate()>=r.start&&d.getDate()<=r.end;}):[];
   } else if(curView==='mes'){
-    ventasPeriodo=state.ventas.filter(v=>{const d=new Date(v.fecha);return d.getFullYear()===curYear&&d.getMonth()===curMonth;});
+    ventasPeriodo=state.ventas.filter(v=>{const d=parseFecha(v.fecha);return d.getFullYear()===curYear&&d.getMonth()===curMonth;});
   } else {
-    ventasPeriodo=state.ventas.filter(v=>new Date(v.fecha).getFullYear()===curYear);
+    ventasPeriodo=state.ventas.filter(v=>parseFecha(v.fecha).getFullYear()===curYear);
   }
   const metros=ventasPeriodo.reduce((s,v)=>s+v.metros,0);
   const ingEsperado=ventasPeriodo.reduce((s,v)=>s+(v.totalObra||v.metros*v.precio),0);
@@ -1327,7 +1328,7 @@ function renderBalanceMes(){
   const gst=mm.filter(m=>m.tipo==='gasto').reduce((s,m)=>s+m.monto,0);
   const neto=ing-gst;
   const pct=ing>0?Math.round((ing/(ing+gst))*100):0;
-  const metros=state.ventas.filter(v=>{const d=new Date(v.fecha);return d.getFullYear()===balYear&&d.getMonth()===balMonth;}).reduce((s,v)=>s+v.metros,0);
+  const metros=state.ventas.filter(v=>{const d=parseFecha(v.fecha);return d.getFullYear()===balYear&&d.getMonth()===balMonth;}).reduce((s,v)=>s+v.metros,0);
   document.getElementById('bal-ing').textContent=fmt(ing);
   document.getElementById('bal-gst').textContent=fmt(gst);
   document.getElementById('bal-neto').textContent=fmt(neto);
@@ -1369,7 +1370,7 @@ function renderBalanceAnual(){
     const ing=mm.filter(x=>x.tipo==='ingreso').reduce((s,x)=>s+x.monto,0);
     const gst=mm.filter(x=>x.tipo==='gasto').reduce((s,x)=>s+x.monto,0);
     const neto=ing-gst;
-    const metros=state.ventas.filter(v=>{const d=new Date(v.fecha);return d.getFullYear()===balYear&&d.getMonth()===m;}).reduce((s,v)=>s+v.metros,0);
+    const metros=state.ventas.filter(v=>{const d=parseFecha(v.fecha);return d.getFullYear()===balYear&&d.getMonth()===m;}).reduce((s,v)=>s+v.metros,0);
     totIng+=ing;totGst+=gst;totMetros+=metros;
     const hasData=mm.length>0;
     let var_html='<span style="color:#A0A0A0;font-size:11px">—</span>';
@@ -1548,7 +1549,7 @@ function agregarMovimiento(){
   document.getElementById('desc-mov').value='';
   document.getElementById('monto-mov').value='';
   // Navegar al mes/semana del movimiento recién cargado
-  const fd=new Date(fecha+'T00:00:00');
+  const fd=parseFecha(fecha);
   curYear=fd.getFullYear();
   curMonth=fd.getMonth();
   // Buscar la semana que contiene ese día
@@ -1572,7 +1573,7 @@ function navVentasMes(d){ventasMonth+=d;if(ventasMonth<0){ventasMonth=11;ventasY
 function renderVentas(){
   document.getElementById('ventas-period-label').textContent=MESES[ventasMonth]+' '+ventasYear;
   document.getElementById('cal-titulo').textContent='Calendario — '+MESES[ventasMonth]+' '+ventasYear;
-  const vs=state.ventas.filter(v=>{const d=new Date(v.fecha);return d.getFullYear()===ventasYear&&d.getMonth()===ventasMonth;});
+  const vs=state.ventas.filter(v=>{const d=parseFecha(v.fecha);return d.getFullYear()===ventasYear&&d.getMonth()===ventasMonth;});
   const metros=vs.reduce((s,v)=>s+v.metros,0);const total=vs.reduce((s,v)=>s+(v.metros*v.precio),0);
   document.getElementById('ventas-metrics').innerHTML=`
     <div class="metric-card"><div class="metric-label">Ventas</div><div class="metric-value">${vs.length}</div><div class="metric-month">${MESES[ventasMonth]}</div></div>
@@ -1612,7 +1613,7 @@ function verVentaDesdeSearch(fecha){
   document.getElementById('resultado-busqueda').style.display='none';
   document.getElementById('buscador-cliente').value='';
   // navegar al mes correcto
-  const d=new Date(fecha);
+  const d=parseFecha(fecha);
   ventasYear=d.getFullYear();ventasMonth=d.getMonth();
   renderVentas();
   mostrarDetallesDia(fecha);
@@ -1627,7 +1628,7 @@ function buildCalendar(){
   const cal=document.getElementById('calendario');
   const firstDay=new Date(ventasYear,ventasMonth,1).getDay();
   const daysInMonth=new Date(ventasYear,ventasMonth+1,0).getDate();
-  const ventasM=state.ventas.filter(v=>{const d=new Date(v.fecha);return d.getFullYear()===ventasYear&&d.getMonth()===ventasMonth;});
+  const ventasM=state.ventas.filter(v=>{const d=parseFecha(v.fecha);return d.getFullYear()===ventasYear&&d.getMonth()===ventasMonth;});
   const hoy=new Date();
   const DOT_COLORS=['#D85A30','#1D7A3E','#1565C0','#6A1B9A'];
   const DOT_BG=['#FDF3EF','#E8F5E9','#E3F0FD','#F3E5F5'];
@@ -1773,7 +1774,7 @@ function renderMateriales(){
 
   // Filtrar ventas del período
   // T00:00:00 fuerza interpretación local (evita desfase UTC en Argentina)
-  function parseFechaLocal(f){return new Date(f+'T00:00:00');}
+  function parseFechaLocal(f){return parseFecha(f);}
   var vs;
   if(matTab==='semana'){
     vs=sr?state.ventas.filter(function(v){
@@ -3037,7 +3038,7 @@ function cargarVenta(){
 function navAnalisisMes(d){analisisMonth+=d;if(analisisMonth<0){analisisMonth=11;analisisYear--;}if(analisisMonth>11){analisisMonth=0;analisisYear++;}renderAnalisis();}
 function renderAnalisis(){
   document.getElementById('analisis-period-label').textContent=MESES[analisisMonth]+' '+analisisYear;
-  const vs=state.ventas.filter(v=>{const d=new Date(v.fecha);return d.getFullYear()===analisisYear&&d.getMonth()===analisisMonth;});
+  const vs=state.ventas.filter(v=>{const d=parseFecha(v.fecha);return d.getFullYear()===analisisYear&&d.getMonth()===analisisMonth;});
   const byLoc={},byDis={},byAlt={};let tM=0;
   vs.forEach(v=>{
     const loc=(v.localidad||'Sin localidad').trim();
@@ -3106,7 +3107,7 @@ function calcComisionEscala(totalVendido){
 function renderVendedores(){
   document.getElementById('vend-period-label').textContent=MESES[vendMonth]+' '+vendYear;
   document.getElementById('ranking-titulo').textContent='Ranking — '+MESES[vendMonth];
-  const vs=state.ventas.filter(v=>{const d=new Date(v.fechaVenta||v.fecha);return d.getFullYear()===vendYear&&d.getMonth()===vendMonth;});
+  const vs=state.ventas.filter(v=>{const d=parseFecha(v.fechaVenta||v.fecha);return d.getFullYear()===vendYear&&d.getMonth()===vendMonth;});
   const ranked=state.vendedores.map(vnd=>{
     const vv=vs.filter(v=>v.vendedor===vnd.nombre);
     const totalVendido=vv.reduce((s,v)=>s+(v.totalObra||v.metros*v.precio),0);
