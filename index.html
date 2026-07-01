@@ -75,6 +75,37 @@ html[data-theme="dark"] #login-screen button[onclick*="loginComo('vendedor')"]{b
 /* Modals */
 html[data-theme="dark"] #modal-confirm>div,html[data-theme="dark"] #modal-admin-pass>div,html[data-theme="dark"] #modal-fecha>div,html[data-theme="dark"] #modal-editar>div{background:#1D4575!important;color:#E8F1FA!important}
 html[data-theme="dark"] #modal-editar [style*="border-bottom:1px solid #F0E0D6"]{border-color:#2A5580!important}
+/* Vista previa presupuesto y recibo — hoja siempre blanca */
+html[data-theme="dark"] #presupuesto-preview [style*="background:#fff"],
+html[data-theme="dark"] #presupuesto-preview [style*="background:#FFFFFF"],
+html[data-theme="dark"] #recibo-preview [style*="background:#fff"],
+html[data-theme="dark"] #recibo-preview [style*="background:#FFFFFF"]{background:#fff!important}
+html[data-theme="dark"] #presupuesto-preview [style*="background:#FAFAFA"],
+html[data-theme="dark"] #recibo-preview [style*="background:#FAFAFA"]{background:#FAFAFA!important}
+html[data-theme="dark"] #presupuesto-preview [style*="background:#F7F7F7"],
+html[data-theme="dark"] #recibo-preview [style*="background:#F7F7F7"]{background:#F7F7F7!important}
+html[data-theme="dark"] #presupuesto-preview [style*="background:#FDF3EF"],
+html[data-theme="dark"] #recibo-preview [style*="background:#FDF3EF"]{background:#FDF3EF!important}
+html[data-theme="dark"] #presupuesto-preview [style*="background:#FFF8F5"],
+html[data-theme="dark"] #recibo-preview [style*="background:#FFF8F5"]{background:#FFF8F5!important}
+html[data-theme="dark"] #presupuesto-preview [style*="background:#F0F0F0"],
+html[data-theme="dark"] #recibo-preview [style*="background:#F0F0F0"]{background:#F0F0F0!important}
+html[data-theme="dark"] #presupuesto-preview [style*="color:#1A1A1A"],
+html[data-theme="dark"] #recibo-preview [style*="color:#1A1A1A"]{color:#1A1A1A!important}
+html[data-theme="dark"] #presupuesto-preview [style*="color:#333"],
+html[data-theme="dark"] #recibo-preview [style*="color:#333"]{color:#333!important}
+html[data-theme="dark"] #presupuesto-preview [style*="color:#6B6B6B"],
+html[data-theme="dark"] #recibo-preview [style*="color:#6B6B6B"]{color:#6B6B6B!important}
+html[data-theme="dark"] #presupuesto-preview [style*="color:#888"],
+html[data-theme="dark"] #recibo-preview [style*="color:#888"]{color:#888!important}
+html[data-theme="dark"] #presupuesto-preview [style*="color:#555"],
+html[data-theme="dark"] #recibo-preview [style*="color:#555"]{color:#555!important}
+html[data-theme="dark"] #presupuesto-preview [style*="color:#993C1D"],
+html[data-theme="dark"] #recibo-preview [style*="color:#993C1D"]{color:#993C1D!important}
+html[data-theme="dark"] #presupuesto-preview [style*="color:#D85A30"],
+html[data-theme="dark"] #recibo-preview [style*="color:#D85A30"]{color:#D85A30!important}
+html[data-theme="dark"] #presupuesto-preview [style*="border"],
+html[data-theme="dark"] #recibo-preview [style*="border"]{border-color:revert!important}
 /* Btn tema */
 .btn-tema{background:transparent;border:1.5px solid #CCC;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:#666;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .15s}
 .btn-tema:hover{border-color:var(--or);color:var(--or)}
@@ -1295,15 +1326,8 @@ const fmtC=n=>n<0?`<span style="color:#C62828">${fmt(n)}</span>`:n>0?`<span styl
 function semanas(y,m){const t=new Date(y,m+1,0).getDate();const s=[];let d=1;while(d<=t&&s.length<5){const dow=new Date(y,m,d).getDay();const mon=dow===1?d:dow===0?d+1:d+(8-dow)%7;if(mon>t)break;const sat=Math.min(mon+5,t);s.push({start:mon,end:sat});d=sat+1;}return s;}
 
 // ---- NAVEGACIÓN ----
-const _PANELES_DIA=['presupuestos','recibos'];
 function openPanel(id){
   _panelActivo=id;
-  // Suspender tema oscuro en paneles que siempre van en modo día
-  if(_PANELES_DIA.includes(id)){
-    document.documentElement.removeAttribute('data-theme');
-  } else {
-    if(localStorage.getItem('ht-tema')==='dark') document.documentElement.setAttribute('data-theme','dark');
-  }
   document.getElementById('home').style.display='none';
   document.querySelectorAll('.inner').forEach(el=>el.classList.remove('active'));
   document.getElementById('inner-'+id).classList.add('active');
@@ -1401,7 +1425,6 @@ function cerrarSesion(){
   document.querySelectorAll('.inner').forEach(function(el){el.classList.remove('active');});
 }
 function goHome(){
-  if(localStorage.getItem('ht-tema')==='dark') document.documentElement.setAttribute('data-theme','dark');
   document.getElementById('home').style.display='flex';
   document.querySelectorAll('.inner').forEach(el=>el.classList.remove('active'));
 }
