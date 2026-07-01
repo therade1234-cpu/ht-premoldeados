@@ -424,33 +424,12 @@ table.movs tr:hover td{background:#FAFAFA}
   <button onclick="cerrarSesion()" style="position:absolute;top:20px;right:20px;background:#fff;border:1.5px solid #CCC;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">Cambiar perfil</button>
   <button onclick="toggleTema()" class="btn-tema" style="position:absolute;top:20px;left:20px"><span class="btn-tema-icon">🌙</span> <span class="btn-tema-txt">Modo oscuro</span></button>
   <div class="home-grid">
-    <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('precios')">
-      <div class="home-btn-icon-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-      </div>
-      <div class="home-btn-title">LISTA DE PRECIOS PREMOLDEADOS</div>
-      <div class="home-btn-desc">Precios por modelo y altura</div>
-    </button>
-    <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('precios-portones')">
-      <div class="home-btn-icon-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="3" y="4" width="18" height="16" rx="1"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="7" y1="9" x2="7" y2="15"/><line x1="17" y1="9" x2="17" y2="15"/></svg>
-      </div>
-      <div class="home-btn-title">LISTA DE PRECIOS PORTONES</div>
-      <div class="home-btn-desc">Precios de portones</div>
-    </button>
     <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('ventas')">
       <div class="home-btn-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
       </div>
       <div class="home-btn-title">REGISTRO DE VENTAS</div>
       <div class="home-btn-desc">Cargá ventas en el calendario</div>
-    </button>
-    <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('vendedores')">
-      <div class="home-btn-icon-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg>
-      </div>
-      <div class="home-btn-title">VENDEDORES</div>
-      <div class="home-btn-desc">Pagos, comisiones y metros vendidos</div>
     </button>
     <button class="home-btn rol-vendedor" onclick="openPanel('presupuestos')">
       <div class="home-btn-icon-wrap">
@@ -473,14 +452,6 @@ table.movs tr:hover td{background:#FAFAFA}
       <div class="home-btn-title">ADMINISTRACIÓN</div>
       <div class="home-btn-desc">Ingresos, gastos y balance general</div>
     </button>
-    <button class="home-btn rol-admin" onclick="openPanel('analisis')">
-      <div class="home-btn-icon-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
-      </div>
-      <div class="home-btn-title">ANÁLISIS DE VENTAS</div>
-      <div class="home-btn-desc">Material, diseño y zonas más vendidas</div>
-    </button>
-
     <button class="home-btn rol-admin" onclick="openPanel('nominas')">
       <div class="home-btn-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
@@ -494,6 +465,34 @@ table.movs tr:hover td{background:#FAFAFA}
       </div>
       <div class="home-btn-title">MATERIALES DE OBRA</div>
       <div class="home-btn-desc">Placas, pilares y gorritos por semana o mes</div>
+    </button>
+    <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('precios')">
+      <div class="home-btn-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </div>
+      <div class="home-btn-title">LISTA DE PRECIOS PREMOLDEADOS</div>
+      <div class="home-btn-desc">Precios por modelo y altura</div>
+    </button>
+    <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('precios-portones')">
+      <div class="home-btn-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="3" y="4" width="18" height="16" rx="1"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="7" y1="9" x2="7" y2="15"/><line x1="17" y1="9" x2="17" y2="15"/></svg>
+      </div>
+      <div class="home-btn-title">LISTA DE PRECIOS PORTONES</div>
+      <div class="home-btn-desc">Precios de portones</div>
+    </button>
+    <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('vendedores')">
+      <div class="home-btn-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.87"/></svg>
+      </div>
+      <div class="home-btn-title">VENDEDORES</div>
+      <div class="home-btn-desc">Pagos, comisiones y metros vendidos</div>
+    </button>
+    <button class="home-btn rol-admin" onclick="openPanel('analisis')">
+      <div class="home-btn-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
+      </div>
+      <div class="home-btn-title">ANÁLISIS DE VENTAS</div>
+      <div class="home-btn-desc">Material, diseño y zonas más vendidas</div>
     </button>
   </div>
 </div>
