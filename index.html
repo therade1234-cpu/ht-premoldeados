@@ -2436,18 +2436,15 @@ function descargarReciboPNG(){
 function descargarReciboPDF(){
   var doc=document.getElementById('recibo-doc');
   if(!doc){alert('Completá el recibo primero');return;}
-  html2canvas(doc,{scale:2,backgroundColor:'#fff',width:794,height:doc.offsetHeight}).then(function(canvas){
-    var imgData=canvas.toDataURL('image/png');
-    var pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
-    var pw=pdf.internal.pageSize.getWidth();
-    var ph=pdf.internal.pageSize.getHeight();
-    var ratio=canvas.width/canvas.height;
-    var iw=pw; var ih=pw/ratio;
-    if(ih>ph){ih=ph;iw=ph*ratio;}
-    pdf.addImage(imgData,'PNG',(pw-iw)/2,(ph-ih)/2,iw,ih);
-    var cliente=(document.getElementById('rc-cliente').value||'cliente').replace(/[^a-z0-9]/gi,'_');
-    pdf.save('Recibo_'+cliente+'.pdf');
-  });
+  var cliente=(document.getElementById('rc-cliente')||{}).value||'cliente';
+  var w=window.open('','_blank','width=900,height=750');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Recibo - '+cliente+'</title>'+
+    '<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#fff}'+
+    '@media print{@page{size:A4 portrait;margin:0}body{margin:0}}</style>'+
+    '</head><body>'+doc.outerHTML+'</body></html>');
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},500);
 }
 
 // ---- LISTA DE PRECIOS ----
