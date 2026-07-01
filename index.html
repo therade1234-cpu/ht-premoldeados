@@ -1004,6 +1004,16 @@ table.movs tr:hover td{background:#FAFAFA}
       </div>
     </div>
 
+    <!-- BOTONES IMPRIMIR / PDF -->
+    <div style="display:flex;gap:12px;justify-content:flex-end;padding:8px 0 20px">
+      <button onclick="nomImprimir()" style="display:flex;align-items:center;gap:7px;padding:10px 20px;background:#fff;border:2px solid #D85A30;border-radius:8px;color:#D85A30;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        🖨️ Imprimir
+      </button>
+      <button onclick="nomDescargarPDF()" style="display:flex;align-items:center;gap:7px;padding:10px 20px;background:#D85A30;border:2px solid #D85A30;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        ⬇️ Descargar PDF
+      </button>
+    </div>
+
   </div>
 </div>
 
@@ -2916,6 +2926,93 @@ function renderNominas(){
     html+='</tbody></table></div>';
     mc.innerHTML=html;
   }
+}
+
+// ---- NOMINAS IMPRIMIR / PDF ----
+function nomGenerarHTML(){
+  var ss2=semanas(nominasYear,nominasMonth);var sr=ss2[nominasSemana];
+  var srLabel=sr?' ('+sr.start+'-'+sr.end+')':'';
+  var titulo='Planilla — '+MESES[nominasMonth]+' '+nominasYear+' — Semana '+(nominasSemana+1)+srLabel;
+
+  var totTotal=0,totGanado=0,totValesSem=0;
+  nomPlanilla.forEach(function(r){var s=nomDatosSemana(r);totTotal+=s.total;totGanado+=s.dias.reduce(function(a,d){return a+d;},0);totValesSem+=s.valesDias.reduce(function(a,v){return a+v;},0);});
+
+  var DIAS=['Lun','Mar','Mié','Jue','Vie','Sáb'];
+  var rows='';
+  nomPlanilla.forEach(function(r,i){
+    var s=nomDatosSemana(r);
+    var valesSem=s.valesDias.reduce(function(a,v){return a+v;},0);
+    rows+='<tr class="'+(i%2===0?'par':'impar')+'">';
+    rows+='<td class="nombre">'+r.nombre+'</td>';
+    rows+='<td class="monto">'+fmtMonto(r.porDia)+'</td>';
+    for(var j=0;j<6;j++){
+      var presente=s.dias[j]>0;
+      var vale=s.valesDias[j]||0;
+      rows+='<td class="check">'+(presente?'✓':'')+'</td>';
+      rows+='<td class="vale">'+(vale>0?fmtMonto(vale):'')+'</td>';
+    }
+    rows+='<td class="monto verde">'+(s.extras>0?fmtMonto(s.extras):'')+'</td>';
+    rows+='<td class="monto rojo">'+(s.desc>0?fmtMonto(s.desc):'')+'</td>';
+    rows+='<td class="monto naranja">'+(valesSem>0?fmt(valesSem):'—')+'</td>';
+    rows+='<td class="total '+(s.total>=0?'verde':'rojo')+'">'+fmt(s.total)+'</td>';
+    rows+='</tr>';
+  });
+
+  return '<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+titulo+'</title><style>'+
+    '*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;font-size:11px;color:#1A1A1A;padding:18px}'+
+    'h1{font-size:14px;font-weight:700;color:#D85A30;margin-bottom:14px;text-align:center}'+
+    '.resumen{display:flex;gap:20px;margin-bottom:14px;background:#FDF3EF;border-radius:8px;padding:10px 14px}'+
+    '.res-item{flex:1}.res-label{font-size:9px;color:#666;text-transform:uppercase;font-weight:700}.res-val{font-size:13px;font-weight:700;color:#1A1A1A}'+
+    'table{width:100%;border-collapse:collapse}'+
+    'th{background:#D85A30;color:#fff;padding:5px 4px;font-size:9px;font-weight:700;text-transform:uppercase;text-align:center}'+
+    'th.izq{text-align:left;padding-left:8px}'+
+    'tr.par td{background:#fff}tr.impar td{background:#FAFAFA}'+
+    'td{padding:4px 4px;border-bottom:1px solid #F0F0F0;font-size:10px}'+
+    'td.nombre{padding-left:8px;font-weight:600;min-width:110px}'+
+    'td.monto{text-align:right;color:#993C1D;font-weight:600}'+
+    'td.check{text-align:center;color:#2E7D32;font-weight:700;font-size:11px}'+
+    'td.vale{text-align:right;color:#BA7517;font-size:9px}'+
+    'td.total{text-align:right;font-weight:700;font-size:11px;background:#FFF0EE!important}'+
+    'td.verde{color:#2E7D32}td.rojo{color:#C62828}td.naranja{color:#BA7517}'+
+    'tfoot td{font-weight:700;font-size:11px;border-top:2px solid #D85A30;background:#FDF3EF!important}'+
+    '@media print{body{padding:10px}@page{size:A4 landscape;margin:10mm}}'+
+    '</style></head><body>'+
+    '<h1>'+titulo+'</h1>'+
+    '<div class="resumen">'+
+      '<div class="res-item"><div class="res-label">Total a pagar</div><div class="res-val" style="color:#2E7D32">'+fmt(totTotal)+'</div></div>'+
+      '<div class="res-item"><div class="res-label">Total jornales</div><div class="res-val">'+fmt(totGanado)+'</div></div>'+
+      '<div class="res-item"><div class="res-label">Total vales</div><div class="res-val" style="color:#BA7517">'+fmt(totValesSem)+'</div></div>'+
+      '<div class="res-item"><div class="res-label">Empleados</div><div class="res-val">'+nomPlanilla.length+'</div></div>'+
+    '</div>'+
+    '<table><thead><tr>'+
+      '<th class="izq">Nombre</th><th>Por día</th>'+
+      '<th>Lun ✓</th><th>Vale</th><th>Mar ✓</th><th>Vale</th><th>Mié ✓</th><th>Vale</th>'+
+      '<th>Jue ✓</th><th>Vale</th><th>Vie ✓</th><th>Vale</th><th>Sáb ✓</th><th>Vale</th>'+
+      '<th>Extras</th><th>Desc.</th><th>Vales sem.</th><th>Total</th>'+
+    '</tr></thead><tbody>'+rows+'</tbody>'+
+    '<tfoot><tr><td colspan="2" style="padding-left:8px">TOTALES</td>'+
+      '<td colspan="12"></td>'+
+      '<td class="monto verde" style="text-align:right">'+fmt(totTotal)+'</td>'+
+      '<td class="naranja" style="text-align:right">'+fmt(totValesSem)+'</td>'+
+      '<td class="total verde">'+fmt(totTotal)+'</td>'+
+    '</tr></tfoot></table>'+
+    '</body></html>';
+}
+
+function nomImprimir(){
+  var w=window.open('','_blank','width=1100,height=700');
+  w.document.write(nomGenerarHTML());
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},400);
+}
+
+function nomDescargarPDF(){
+  var w=window.open('','_blank','width=1100,height=700');
+  w.document.write(nomGenerarHTML());
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();},400);
 }
 
 // ---- PRESENTISMO ----// ---- PRESENTISMO ----
