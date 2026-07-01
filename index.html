@@ -1299,13 +1299,18 @@ let _lastSave = 0;
 
 function applyData(data){
   const sinceLastSave = Date.now() - _lastSave;
-  // Bloquear sobreescritura de ventas/movimientos por 30s tras un save
-  // para esperar que Edge Config propague el dato nuevo
   if(sinceLastSave > 30000){
     state.ventas = data.ventas || [];
     state.movimientos = data.movimientos || [];
   }
   state.vendedores = data.vendedores || [];
+  // Restaurar semanas guardadas de nóminas
+  if(data.nomPlanilla){
+    data.nomPlanilla.forEach(function(saved){
+      const local=nomPlanilla.find(function(r){return r.nombre===saved.nombre;});
+      if(local&&saved.semanas) local.semanas=saved.semanas;
+    });
+  }
   const sel=document.getElementById('v-vendedor');
   if(sel){const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');if(prev)sel.value=prev;}
   if(_panelActivo==='admin')renderAdmin();
@@ -1321,7 +1326,7 @@ async function saveState(){
     const r = await fetch('/api/data', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores })
+      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, nomPlanilla: nomPlanilla })
     });
     const result = await r.json();
     if(!result.ok) {
@@ -2806,6 +2811,7 @@ function nomTogglePresente(idx,diaIdx){
   s.dias[diaIdx]=s.dias[diaIdx]>0?0:(r.porDia||0);
   nomRecalcTotal(r);
   renderNominas();
+  saveState();
 }
 function nomSetValeDia(idx,diaIdx,val){
   var r=nomPlanilla[idx];if(!r)return;
@@ -2813,6 +2819,7 @@ function nomSetValeDia(idx,diaIdx,val){
   s.valesDias[diaIdx]=parseMonto(val)||0;
   nomRecalcTotal(r);
   renderNominas();
+  saveState();
 }
 function nomSetExtras(idx,val){
   var r=nomPlanilla[idx];if(!r)return;
@@ -2820,6 +2827,7 @@ function nomSetExtras(idx,val){
   s.extras=parseMonto(val)||0;
   nomRecalcTotal(r);
   renderNominas();
+  saveState();
 }
 function nomSetDesc(idx,val){
   var r=nomPlanilla[idx];if(!r)return;
@@ -2827,6 +2835,7 @@ function nomSetDesc(idx,val){
   s.desc=parseMonto(val)||0;
   nomRecalcTotal(r);
   renderNominas();
+  saveState();
 }
 
 function renderNominas(){
