@@ -1403,7 +1403,7 @@ function confirmarPassAdmin(){
   rolActual='admin';
   document.getElementById('login-screen').style.display='none';
   document.getElementById('home').style.display='flex';
-  document.querySelectorAll('.home-btn').forEach(function(b){b.style.display='';});
+  document.querySelectorAll('.home-btn').forEach(function(b){b.style.display=b.classList.contains('rol-admin')?'':'none';});
 }
 function cerrarModalPass(){
   document.getElementById('modal-admin-pass').style.display='none';
