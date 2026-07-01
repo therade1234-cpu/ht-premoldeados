@@ -1313,10 +1313,11 @@ fetch('/api/data').then(r=>r.json()).then(applyData).catch(()=>{});
 setInterval(function(){
   if(!_saving && Date.now()-_lastSave>10000) fetch('/api/data').then(r=>r.json()).then(applyData).catch(()=>{});
 }, 6000);
-let curYear=2026, curMonth=5, curSemana=0, curView='semana';
-let ventasYear=2026, ventasMonth=5;
-let analisisYear=2026, analisisMonth=5;
-let vendYear=2026, vendMonth=5;
+const _hoy=new Date();
+let curYear=_hoy.getFullYear(), curMonth=_hoy.getMonth(), curSemana=0, curView='semana';
+let ventasYear=_hoy.getFullYear(), ventasMonth=_hoy.getMonth();
+let analisisYear=_hoy.getFullYear(), analisisMonth=_hoy.getMonth();
+let vendYear=_hoy.getFullYear(), vendMonth=_hoy.getMonth();
 
 function parseFecha(f){if(!f)return new Date(NaN);const p=f.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
 const fmt=n=>{if(n===0)return'$0';const a=Math.abs(Math.round(n));return(n<0?'-':'')+'$'+a.toLocaleString('es-AR');};
@@ -2592,7 +2593,7 @@ function renderPrecios(){
 }
 
 // ---- NÓMINAS ----
-let nominasYear=2026, nominasMonth=5, nominasTab='semana', nominasSemana=0;
+let nominasYear=_hoy.getFullYear(), nominasMonth=_hoy.getMonth(), nominasTab='semana', nominasSemana=0;
 let nominas=[];
 const NOM_TIPO={sueldo:'Sueldo',anticipo:'Anticipo',bono:'Bono',liquidacion:'Liquidación',otro:'Otro'};
 
