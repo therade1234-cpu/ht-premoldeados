@@ -13,6 +13,48 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#F7F7F7;color:#1A
   --tx:#1A1A1A;--mu:#6B6B6B;--hi:#A0A0A0;--bd:#E8E8E8;--bg:#F7F7F7;--wh:#FFFFFF;
   --gr:#2E7D32;--gr-bg:#EDF7EE;--re:#C62828;
 }
+body.night{
+  --tx:#D6E8F5;--mu:#7FA8C4;--hi:#4A7A9B;--bd:#1E3448;--bg:#0D1B2A;--wh:#112336;
+  --or-bg:#1A2D40;--gr-bg:#0E2218;
+  background:#0D1B2A!important;color:#D6E8F5!important;
+}
+body.night .home{background:linear-gradient(145deg,#0D1B2A 0%,#0F2035 60%,#0A1828 100%)!important}
+body.night .home-brand{color:#D6E8F5!important}
+body.night .home-sub{color:#4A7A9B!important}
+body.night .home-tagline{color:#4A7A9B!important}
+body.night .home-btn{background:#112336!important;border-color:#1E3448!important}
+body.night .home-btn:hover{border-color:#D85A30!important;box-shadow:0 8px 24px rgba(13,27,42,.5)!important}
+body.night .home-btn-title,.night .home-btn-desc{color:#D6E8F5!important}
+body.night .topbar{background:#112336!important;border-color:#1E3448!important}
+body.night .back-btn{border-color:#1E3448!important;color:#7FA8C4!important;background:#0D1B2A!important}
+body.night .card,.night .metric-card{background:#112336!important;border-color:#1E3448!important}
+body.night .card-title{color:#D6E8F5!important}
+body.night .period-bar,.night .period-label{background:#112336!important;border-color:#1E3448!important;color:#D6E8F5!important}
+body.night .nav-btn{background:#112336!important;border-color:#1E3448!important;color:#D6E8F5!important}
+body.night .vtabs{border-color:#1E3448!important}
+body.night .vtab{background:#112336!important;border-color:#1E3448!important;color:#7FA8C4!important}
+body.night .vtab.active{background:#D85A30!important;color:#fff!important}
+body.night input,.night select,.night textarea{background:#0D1B2A!important;color:#D6E8F5!important;border-color:#1E3448!important}
+body.night input::placeholder,.night textarea::placeholder{color:#4A7A9B!important}
+body.night .form-group input,.night .form-group select{background:#0D1B2A!important;color:#D6E8F5!important;border-color:#1E3448!important}
+body.night .form-label{color:#7FA8C4!important}
+body.night label{color:#7FA8C4!important}
+body.night .btn-primary{background:#D85A30!important}
+body.night table.movs th{color:#7FA8C4!important;border-color:#1E3448!important}
+body.night table.movs td{color:#D6E8F5!important;border-color:#1E3448!important}
+body.night .ht-table,.night .ht-table th,.night .ht-table td,.night .anual-table,.night .anual-table th,.night .anual-table td{background:#112336!important;border-color:#1E3448!important;color:#D6E8F5!important}
+body.night .ht-table th,.night .anual-table th{background:#0D1B2A!important;color:#7FA8C4!important}
+body.night .badge-green{background:#0E2218!important;color:#4CAF50!important}
+body.night .badge-orange{background:#1A2D40!important;color:#F0997B!important}
+body.night [style*="background:#fff"],[style*="background: #fff"],[style*="background:#FFF"],[style*="background:#FFFFFF"]{background:#112336!important}
+body.night [style*="background:#F7F7F7"],[style*="background:#F9F9F9"],[style*="background:#F5F5F5"]{background:#0D1B2A!important}
+body.night [style*="color:#1A1A1A"],[style*="color: #1A1A1A"]{color:#D6E8F5!important}
+body.night [style*="color:#6B6B6B"],[style*="color:#555"],[style*="color:#888"]{color:#7FA8C4!important}
+body.night [style*="border.*#E8E8E8"],[style*="border-color:#E8E8E8"],[style*="border:1px solid #E8E8E8"],[style*="border:1.5px solid #E0E0E0"],[style*="border:1.5px solid #CCCCCC"]{border-color:#1E3448!important}
+body.night [style*="background:#FDF3EF"],[style*="background:#FFF8F5"],[style*="background:#FFF0EE"],[style*="background:#FFF3EE"],[style*="background:#FBEDE6"],[style*="background:#FFF8F5"]{background:#1A2D40!important}
+body.night [style*="background:#F0F0F0"]{background:#1E3448!important}
+body.night [style*="color:#333333"]{color:#D6E8F5!important}
+body.night [style*="background:#EDF7EE"],[style*="background:#EDF5FF"]{background:#0E1E30!important}
 
 /* ===== HOME ===== */
 .home{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px;background:linear-gradient(145deg,#FFF8F5 0%,#F7F7F7 60%,#FFF3EE 100%)}
@@ -380,6 +422,7 @@ html.theme-gray .avatar{background:#DCDCDC}
   <div class="home-divider"></div>
   <div class="home-tagline">Panel de gestión — seleccioná un módulo</div>
   <button onclick="cerrarSesion()" style="position:absolute;top:20px;right:20px;background:#fff;border:1.5px solid #CCC;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">Cambiar perfil</button>
+  <button id="btn-night" onclick="toggleNight()" style="position:absolute;top:20px;left:20px;background:#fff;border:1.5px solid #CCC;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">🌙 Modo noche</button>
   <div class="home-grid">
     <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('precios')">
       <div class="home-btn-icon-wrap">
@@ -1314,6 +1357,7 @@ function semanas(y,m){const t=new Date(y,m+1,0).getDate();const s=[];let d=1;whi
 // ---- NAVEGACIÓN ----
 function openPanel(id){
   _panelActivo=id;
+  _nightFloatVisible(true);
   document.getElementById('home').style.display='none';
   document.querySelectorAll('.inner').forEach(el=>el.classList.remove('active'));
   document.getElementById('inner-'+id).classList.add('active');
@@ -1395,12 +1439,29 @@ function confirmarPassAdmin(){
 function cerrarModalPass(){
   document.getElementById('modal-admin-pass').style.display='none';
 }
+function _syncNightBtns(isNight){
+  const b=document.getElementById('btn-night');
+  if(b){b.textContent=isNight?'☀️ Modo día':'🌙 Modo noche';b.style.background=isNight?'#1E3448':'#fff';b.style.color=isNight?'#D6E8F5':'#666';b.style.borderColor=isNight?'#1E3448':'#CCC';}
+  const f=document.getElementById('btn-night-float');
+  if(f){f.textContent=isNight?'☀️':'🌙';f.style.background=isNight?'#1E3448':'#112336';}
+}
+function toggleNight(){
+  const isNight=document.body.classList.toggle('night');
+  localStorage.setItem('ht-night',isNight?'1':'0');
+  _syncNightBtns(isNight);
+}
+function _nightFloatVisible(show){const f=document.getElementById('btn-night-float');if(f)f.style.display=show?'flex':'none';}
+(function(){
+  if(localStorage.getItem('ht-night')==='1'){document.body.classList.add('night');}
+  window.addEventListener('DOMContentLoaded',function(){_syncNightBtns(document.body.classList.contains('night'));});
+})();
 function cerrarSesion(){
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('home').style.display='none';
   document.querySelectorAll('.inner').forEach(function(el){el.classList.remove('active');});
 }
 function goHome(){
+  _nightFloatVisible(false);
   document.getElementById('home').style.display='flex';
   document.querySelectorAll('.inner').forEach(el=>el.classList.remove('active'));
 }
@@ -3702,6 +3763,10 @@ renderPresentismo();
     </div>
   </div>
 </div>
+
+<!-- Botón flotante modo noche (visible en paneles internos) -->
+<button id="btn-night-float" onclick="toggleNight()" title="Modo noche"
+  style="position:fixed;bottom:22px;right:22px;z-index:9999;width:44px;height:44px;border-radius:50%;border:none;background:#112336;color:#D6E8F5;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25);display:none;align-items:center;justify-content:center;transition:transform .15s">🌙</button>
 
 </body>
 </html>
