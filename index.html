@@ -73,7 +73,7 @@ html[data-theme="dark"] #login-screen{background:#163559!important}
 html[data-theme="dark"] #login-screen button[onclick*="loginComo('admin')"]{background:#1D4575!important;border-color:#D85A30!important}
 html[data-theme="dark"] #login-screen button[onclick*="loginComo('vendedor')"]{background:#1D4575!important;border-color:#4A90D9!important}
 /* Modals */
-html[data-theme="dark"] #modal-confirm>div,html[data-theme="dark"] #modal-admin-pass>div,html[data-theme="dark"] #modal-fecha>div,html[data-theme="dark"] #modal-editar>div{background:#1D4575!important;color:#E8F1FA!important}
+html[data-theme="dark"] #modal-confirm>div,html[data-theme="dark"] #modal-admin-pass>div,html[data-theme="dark"] #modal-fecha>div,html[data-theme="dark"] #modal-editar>div,html[data-theme="dark"] #modal-editar-mov>div{background:#1D4575!important;color:#E8F1FA!important}
 html[data-theme="dark"] #modal-editar [style*="border-bottom:1px solid #F0E0D6"]{border-color:#2A5580!important}
 /* Vista previa presupuesto y recibo — hoja siempre blanca */
 html[data-theme="dark"] #presupuesto-preview [style*="background:#fff"],
@@ -217,6 +217,37 @@ table.movs tr:hover td{background:#FAFAFA}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+
+<!-- MODAL EDITAR MOVIMIENTO -->
+<div id="modal-editar-mov" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:20px;padding:28px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2);margin:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div style="font-size:16px;font-weight:700;color:#1A1A1A">Editar movimiento</div>
+      <button onclick="cerrarEditarMov()" style="background:none;border:none;cursor:pointer;color:#888;font-size:20px;line-height:1">✕</button>
+    </div>
+    <input type="hidden" id="emov-idx">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px">Tipo</label>
+        <select id="emov-tipo" onchange="filtrarCatsEditMov()" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff;color:#1A1A1A">
+          <option value="gasto">Gasto</option><option value="ingreso">Ingreso</option>
+        </select></div>
+      <div><label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px">Categoría</label>
+        <select id="emov-cat" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff;color:#1A1A1A"></select></div>
+    </div>
+    <div style="margin-bottom:10px"><label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px">Descripción</label>
+      <input id="emov-desc" type="text" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <div><label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px">Monto ($)</label>
+        <input id="emov-monto" type="text" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+      <div><label style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px">Fecha</label>
+        <input id="emov-fecha" type="date" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="cerrarEditarMov()" style="flex:1;padding:11px;border:1.5px solid #E0E0E0;border-radius:10px;background:#fff;color:#6B6B6B;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>
+      <button onclick="guardarEditarMov()" style="flex:1;padding:11px;border:none;border-radius:10px;background:#D85A30;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Guardar</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL CONFIRMACIÓN -->
 <div id="modal-confirm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
@@ -679,8 +710,8 @@ table.movs tr:hover td{background:#FAFAFA}
       </div>
       <div class="table-wrap"><table class="movs">
         <thead><tr><th style="width:80px">Fecha</th><th style="width:90px">Categoría</th>
-          <th>Descripción</th><th style="width:70px">Tipo</th><th style="width:90px;text-align:right">Monto</th></tr></thead>
-        <tbody id="tabla-movimientos"><tr><td colspan="5" style="color:#A0A0A0;text-align:center;padding:20px">Sin movimientos</td></tr></tbody>
+          <th>Descripción</th><th style="width:70px">Tipo</th><th style="width:90px;text-align:right">Monto</th><th style="width:64px"></th></tr></thead>
+        <tbody id="tabla-movimientos"><tr><td colspan="6" style="color:#A0A0A0;text-align:center;padding:20px">Sin movimientos</td></tr></tbody>
       </table></div>
     </div>
   </div>
@@ -1777,8 +1808,69 @@ function renderDistIngresos(movs){
 function renderTablaMovs(movs){
   document.getElementById('mov-count').textContent=movs.length+' registros';
   const tb=document.getElementById('tabla-movimientos');
-  if(!movs.length){tb.innerHTML='<tr><td colspan="5" style="color:#A0A0A0;text-align:center;padding:20px">Sin movimientos</td></tr>';return;}
-  tb.innerHTML=movs.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(m=>`<tr><td>${m.fecha.slice(5)}</td><td>${CAT_LABEL[m.cat]||m.cat}</td><td>${m.desc}</td><td><span class="badge ${m.tipo==='ingreso'?'badge-green':'badge-orange'}">${m.tipo}</span></td><td style="text-align:right;font-weight:600;color:${m.tipo==='ingreso'?'#2E7D32':'#C62828'}">${m.tipo==='ingreso'?'+':'-'}${fmt(m.monto)}</td></tr>`).join('');
+  if(!movs.length){tb.innerHTML='<tr><td colspan="6" style="color:#A0A0A0;text-align:center;padding:20px">Sin movimientos</td></tr>';return;}
+  const sorted=movs.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  tb.innerHTML=sorted.map((m,i)=>{
+    const realIdx=state.movimientos.indexOf(m);
+    return `<tr>
+      <td>${m.fecha.slice(5)}</td>
+      <td>${CAT_LABEL[m.cat]||m.cat}</td>
+      <td>${m.desc}</td>
+      <td><span class="badge ${m.tipo==='ingreso'?'badge-green':'badge-orange'}">${m.tipo}</span></td>
+      <td style="text-align:right;font-weight:600;color:${m.tipo==='ingreso'?'#2E7D32':'#C62828'}">${m.tipo==='ingreso'?'+':'-'}${fmt(m.monto)}</td>
+      <td style="text-align:center;white-space:nowrap">
+        <button onclick="abrirEditarMov(${realIdx})" title="Editar" style="background:none;border:none;cursor:pointer;color:#5E8FBA;font-size:14px;padding:3px 5px">✏️</button>
+        <button onclick="borrarMov(${realIdx})" title="Borrar" style="background:none;border:none;cursor:pointer;color:#C62828;font-size:14px;padding:3px 5px">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function abrirEditarMov(idx){
+  const m=state.movimientos[idx];
+  if(!m)return;
+  document.getElementById('emov-idx').value=idx;
+  document.getElementById('emov-tipo').value=m.tipo;
+  filtrarCatsEditMov();
+  document.getElementById('emov-cat').value=m.cat;
+  document.getElementById('emov-desc').value=m.desc;
+  document.getElementById('emov-monto').value=m.monto;
+  document.getElementById('emov-fecha').value=m.fecha;
+  document.getElementById('modal-editar-mov').style.display='flex';
+}
+function cerrarEditarMov(){document.getElementById('modal-editar-mov').style.display='none';}
+function filtrarCatsEditMov(){
+  const tipo=document.getElementById('emov-tipo').value;
+  const ingCats=[{v:'obras',l:'Obras'},{v:'senas',l:'Señas'}];
+  const gstCats=[
+    {v:'publicidad',l:'Publicidad'},{v:'sueldos',l:'Sueldos'},
+    {v:'sueldos_oficina',l:'Sueldos oficina'},{v:'pago_chicos_obra',l:'Pago semanal chicos de obra'},
+    {v:'fabrica',l:'Fábrica'},{v:'materiales',l:'Materiales'},{v:'vales',l:'Vales'},
+    {v:'fletes',l:'Fletes'},{v:'ferreteria',l:'Ferretería'},{v:'nafta',l:'Nafta'},
+    {v:'gastos_calle',l:'Gastos de calle'},{v:'nominas',l:'Nóminas'},{v:'otro',l:'Otro'}
+  ];
+  document.getElementById('emov-cat').innerHTML=(tipo==='ingreso'?ingCats:gstCats).map(o=>`<option value="${o.v}">${o.l}</option>`).join('');
+}
+function guardarEditarMov(){
+  const idx=parseInt(document.getElementById('emov-idx').value);
+  const m=state.movimientos[idx];
+  if(!m)return;
+  m.tipo=document.getElementById('emov-tipo').value;
+  m.cat=document.getElementById('emov-cat').value;
+  m.desc=document.getElementById('emov-desc').value.trim()||m.cat;
+  m.monto=Math.abs(parseMonto(document.getElementById('emov-monto').value));
+  m.fecha=document.getElementById('emov-fecha').value;
+  saveState();
+  cerrarEditarMov();
+  renderAdmin();
+}
+async function borrarMov(idx){
+  const m=state.movimientos[idx];
+  if(!m)return;
+  const ok=await showConfirm('Eliminar movimiento','¿Eliminar '+CAT_LABEL[m.cat]+' '+fmt(m.monto)+'?');
+  if(!ok)return;
+  state.movimientos.splice(idx,1);
+  saveState();
+  renderAdmin();
 }
 function filtrarCatsPorTipo(){
   const tipo=document.getElementById('tipo-mov').value;
