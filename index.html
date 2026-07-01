@@ -75,6 +75,12 @@ html[data-theme="dark"] #login-screen button[onclick*="loginComo('vendedor')"]{b
 /* Modals */
 html[data-theme="dark"] #modal-confirm>div,html[data-theme="dark"] #modal-admin-pass>div,html[data-theme="dark"] #modal-fecha>div,html[data-theme="dark"] #modal-editar>div{background:#1D4575!important;color:#E8F1FA!important}
 html[data-theme="dark"] #modal-editar [style*="border-bottom:1px solid #F0E0D6"]{border-color:#2A5580!important}
+/* Hojas de presupuesto y recibo — siempre blancas */
+html[data-theme="dark"] #presupuesto-preview,html[data-theme="dark"] #presupuesto-preview *,
+html[data-theme="dark"] #recibo-preview,html[data-theme="dark"] #recibo-preview *{
+  background:revert!important;color:revert!important;border-color:revert!important
+}
+html[data-theme="dark"] #presup-doc,html[data-theme="dark"] #recibo-doc{background:#fff!important;color:#1A1A1A!important}
 /* Btn tema */
 .btn-tema{background:transparent;border:1.5px solid #CCC;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:#666;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .15s}
 .btn-tema:hover{border-color:var(--or);color:var(--or)}
