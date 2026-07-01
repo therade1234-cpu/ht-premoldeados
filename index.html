@@ -56,6 +56,26 @@ body.night [style*="background:#F0F0F0"]{background:#1E3448!important}
 body.night [style*="color:#333333"]{color:#D6E8F5!important}
 body.night [style*="background:#EDF7EE"],[style*="background:#EDF5FF"]{background:#0E1E30!important}
 
+/* Login screen night */
+body.night #login-screen{background:#0D1B2A!important}
+body.night #login-screen [style*="color:#1A1A1A"]{color:#D6E8F5!important}
+body.night #login-screen [style*="color:#6B6B6B"],[style*="color:#888"],[style*="color:#B0B0B0"]{color:#7FA8C4!important}
+body.night #login-screen button[onclick*="loginComo('admin')"]{background:#112336!important;border-color:#D85A30!important}
+body.night #login-screen button[onclick*="loginComo('vendedor')"]{background:#112336!important;border-color:#1565C0!important}
+body.night #login-screen button [style*="background:#FDF3EF"]{background:#1A2D40!important}
+body.night #login-screen button [style*="background:#EFF6FF"]{background:#0E1E30!important}
+
+/* Modals night */
+body.night #modal-confirm>div,body.night #modal-admin-pass>div,body.night #modal-fecha>div,body.night #modal-editar>div{background:#112336!important;color:#D6E8F5!important}
+body.night #modal-confirm [style*="color:#1A1A1A"],body.night #modal-admin-pass [style*="color:#1A1A1A"],body.night #modal-fecha [style*="color:#1A1A1A"],body.night #modal-editar [style*="color:#1A1A1A"]{color:#D6E8F5!important}
+body.night #modal-confirm [style*="color:#6B6B6B"],body.night #modal-fecha [style*="color:#888"]{color:#7FA8C4!important}
+body.night #modal-editar [style*="border-bottom:1px solid #F0E0D6"]{border-color:#1E3448!important}
+body.night #modal-editar [style*="background:#FDF3EF"]{background:#1A2D40!important}
+body.night #modal-fecha [style*="background:#EDF5FF"]{background:#0E1E30!important}
+
+/* Night mode toggle btn on home - float variant */
+body.night #btn-night-float{background:#1E3448!important}
+
 /* ===== HOME ===== */
 .home{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px;background:linear-gradient(145deg,#FFF8F5 0%,#F7F7F7 60%,#FFF3EE 100%)}
 .home-logo{display:flex;align-items:center;gap:14px;margin-bottom:6px}
@@ -157,67 +177,11 @@ table.movs tr:hover td{background:#FAFAFA}
 .cal-day.today{border-color:var(--or);border-width:2px}
 .day-num{font-size:10px;font-weight:600;color:#6B6B6B}
 .day-dot{width:5px;height:5px;border-radius:50%;background:var(--or);margin-top:3px}
-
-/* ===== TEMAS (día / gris / noche) ===== */
-html.theme-dark{filter:invert(1) hue-rotate(180deg)}
-html.theme-dark img{filter:invert(1) hue-rotate(180deg)}
-
-/* ---- gris: paleta real con tonos intermedios, no un filtro ---- */
-html.theme-gray body{background:#CFCFCF;color:#222}
-html.theme-gray .home{background:linear-gradient(145deg,#D6D6D6 0%,#CFCFCF 60%,#D2D2D2 100%)}
-html.theme-gray .home-brand,html.theme-gray .home-btn-title{color:#222}
-html.theme-gray .home-btn{background:#DCDCDC;border-color:#B5B5B5}
-html.theme-gray .home-btn:hover{border-color:var(--or);background:#E2E2E2}
-html.theme-gray .home-btn-icon-wrap{background:#CFCFCF}
-html.theme-gray #login-screen{background:#CFCFCF !important}
-html.theme-gray #login-screen>div>div{color:#222}
-html.theme-gray button[onclick="loginComo('admin')"],html.theme-gray button[onclick="loginComo('vendedor')"]{background:#DCDCDC !important}
-html.theme-gray button[onclick="loginComo('admin')"]:hover{background:#E2E2E2 !important}
-html.theme-gray button[onclick="cerrarSesion()"]{background:#DCDCDC !important;border-color:#B5B5B5 !important;color:#333 !important}
-
-html.theme-gray .topbar,html.theme-gray .period-bar{background:#DCDCDC;border-color:#B5B5B5}
-html.theme-gray .back-btn,html.theme-gray .vtab,html.theme-gray .nav-btn{background:#DCDCDC;border-color:#888;color:#222}
-html.theme-gray .vtab.active{background:var(--or);color:#fff}
-html.theme-gray .period-label{background:#CFCFCF;border-color:#888;color:#222}
-html.theme-gray .tb-title{color:#222}
-
-html.theme-gray .content{background:#CFCFCF}
-html.theme-gray .card,html.theme-gray .metric-card,html.theme-gray .ht-table,html.theme-gray .anual-table,html.theme-gray table.movs{background:#E3E3E3;border-color:#B5B5B5}
-html.theme-gray .metric-value,html.theme-gray .card-title{color:#222}
-html.theme-gray .metric-label,html.theme-gray .form-label{color:#5A5A5A}
-html.theme-gray table.movs th{background:#D6D6D6;color:#222 !important;border-color:#B5B5B5}
-html.theme-gray table.movs td{color:#222 !important;border-color:#CFCFCF}
-html.theme-gray table.movs tr:hover td{background:#D6D6D6}
-html.theme-gray .ht-table th,html.theme-gray .ht-table td,html.theme-gray .anual-table th,html.theme-gray .anual-table td{border-color:#B5B5B5}
-html.theme-gray .th-s{background:#D6D6D6;color:#444}
-html.theme-gray .tr-tot{background:#D2C4BC}
-
-html.theme-gray .form-group input,html.theme-gray .form-group select{background:#EFEFEF;border-color:#999;color:#222}
-html.theme-gray .progress-bar{background:#C2C2C2}
-html.theme-gray .cal-day{background:#E3E3E3;border-color:#B5B5B5}
-html.theme-gray .cal-day:hover{background:var(--or-bg)}
-html.theme-gray .day-num{color:#5A5A5A}
-html.theme-gray .avatar{background:#DCDCDC}
-#theme-toggle{position:fixed;top:64px;right:16px;z-index:2000;width:40px;height:40px;border-radius:50%;border:1.5px solid #E8E8E8;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.1);transition:transform .15s,border-color .15s}
-#theme-toggle:hover{border-color:var(--or);transform:translateY(-2px)}
-#theme-toggle i{font-size:18px;color:#1A1A1A}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script>
-(function(){
-  var t=localStorage.getItem('ht-theme');
-  if(!t&&localStorage.getItem('ht-dark-mode')==='1')t='dark';
-  if(t==='gray')document.documentElement.classList.add('theme-gray');
-  else if(t==='dark')document.documentElement.classList.add('theme-dark');
-})();
-</script>
 </head>
 <body>
-
-<button id="theme-toggle" onclick="toggleTheme()" title="Modo noche" aria-label="Modo noche">
-  <i class="ti ti-moon" id="theme-icon"></i>
-</button>
 
 <!-- MODAL CONFIRMACIÓN -->
 <div id="modal-confirm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
@@ -1092,7 +1056,7 @@ html.theme-gray .avatar{background:#DCDCDC}
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Fecha de obra</label><input type="date" id="v-fecha" /></div>
-          <div class="form-group"><label class="form-label">Fecha de venta *</label><input type="date" id="v-fecha-venta" /></div>
+          <div class="form-group"><label class="form-label">Fecha de venta</label><input type="date" id="v-fecha-venta" /></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Localidad</label><input type="text" id="v-localidad" placeholder="Ej: Merlo, Morón..." /></div>
@@ -1255,34 +1219,6 @@ html.theme-gray .avatar{background:#DCDCDC}
 </div>
 
 <script>
-const THEME_ICONS={light:'ti ti-sun',gray:'ti ti-cloud',dark:'ti ti-moon'};
-const THEME_ORDER=['light','gray','dark'];
-function currentTheme(){
-  const cl=document.documentElement.classList;
-  if(cl.contains('theme-dark'))return'dark';
-  if(cl.contains('theme-gray'))return'gray';
-  return'light';
-}
-// Click en cualquier parte de un input de fecha abre el calendario (no solo el ícono)
-document.addEventListener('click',function(e){
-  const inp=e.target.closest('input[type="date"]');
-  if(inp&&typeof inp.showPicker==='function'){
-    try{inp.showPicker();}catch(err){}
-  }
-});
-function applyTheme(t){
-  document.documentElement.classList.remove('theme-gray','theme-dark');
-  if(t==='gray')document.documentElement.classList.add('theme-gray');
-  else if(t==='dark')document.documentElement.classList.add('theme-dark');
-  localStorage.setItem('ht-theme',t);
-  document.getElementById('theme-icon').className=THEME_ICONS[t];
-}
-function toggleTheme(){
-  const next=THEME_ORDER[(THEME_ORDER.indexOf(currentTheme())+1)%THEME_ORDER.length];
-  applyTheme(next);
-}
-document.getElementById('theme-icon').className=THEME_ICONS[currentTheme()];
-
 const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MESES_C=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const DIAS_L=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -1290,7 +1226,7 @@ const OC=['#D85A30','#E8744A','#993C1D','#F0997B','#BA7517','#5DCAA5','#7F77DD']
 const CAT_LABEL={obras:'Obras',senas:'Señas',publicidad:'Publicidad',sueldos:'Sueldos',fabrica:'Fábrica',materiales:'Materiales',vales:'Vales',fletes:'Fletes',ferreteria:'Ferretería',nafta:'Nafta',gastos_calle:'Gastos de calle',sueldos_oficina:'Sueldos oficina',pago_chicos_obra:'Pago semanal chicos de obra',nominas:'Nóminas',otro:'Otro'};
 
 // ---- PERSISTENCIA EN TIEMPO REAL (Vercel Edge Config) ----
-let state={ movimientos:[], ventas:[], vendedores:[], ultimoRecibo:0 };
+let state={ movimientos:[], ventas:[], vendedores:[] };
 let _panelActivo = null;
 let _saving = false;
 let _lastSave = 0;
@@ -1304,7 +1240,6 @@ function applyData(data){
     state.movimientos = data.movimientos || [];
   }
   state.vendedores = data.vendedores || [];
-  state.ultimoRecibo = data.ultimoRecibo || 0;
   const sel=document.getElementById('v-vendedor');
   if(sel){const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');if(prev)sel.value=prev;}
   if(_panelActivo==='admin')renderAdmin();
@@ -1320,7 +1255,7 @@ async function saveState(){
     const r = await fetch('/api/data', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, ultimoRecibo: state.ultimoRecibo })
+      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores })
     });
     const result = await r.json();
     if(!result.ok) {
@@ -1386,7 +1321,6 @@ function openPanel(id){
     setTimeout(function(){
       var rf=document.getElementById('rc-fecha');if(rf&&!rf.value)rf.value=s3;
       var rfo=document.getElementById('rc-fecha-obra');if(rfo&&!rfo.value)rfo.value=s3;
-      autocompletarNumeroRecibo();
       renderRecibo();
     },50);
   }
@@ -2336,23 +2270,6 @@ function renderRecibo(){
   },10);
 }
 
-function numeroReciboFormateado(n){return String(n).padStart(5,'0');}
-function autocompletarNumeroRecibo(){
-  var el=document.getElementById('rc-num');
-  if(el&&!el.value)el.value=numeroReciboFormateado(state.ultimoRecibo+1);
-}
-function registrarUsoNumeroRecibo(){
-  var el=document.getElementById('rc-num');
-  var n=parseInt((el&&el.value||'').replace(/\D/g,''))||0;
-  if(n>state.ultimoRecibo){
-    state.ultimoRecibo=n;
-    saveState();
-  }
-  setTimeout(function(){
-    if(el)el.value=numeroReciboFormateado(state.ultimoRecibo+1);
-    renderRecibo();
-  },300);
-}
 function descargarReciboPNG(){
   var doc=document.getElementById('recibo-doc');
   if(!doc){alert('Completá el recibo primero');return;}
@@ -2362,7 +2279,6 @@ function descargarReciboPNG(){
     link.download='Recibo_'+cliente+'.png';
     link.href=canvas.toDataURL('image/png');
     link.click();
-    registrarUsoNumeroRecibo();
   });
 }
 
@@ -2380,7 +2296,6 @@ function descargarReciboPDF(){
     pdf.addImage(imgData,'PNG',(pw-iw)/2,(ph-ih)/2,iw,ih);
     var cliente=(document.getElementById('rc-cliente').value||'cliente').replace(/[^a-z0-9]/gi,'_');
     pdf.save('Recibo_'+cliente+'.pdf');
-    registrarUsoNumeroRecibo();
   });
 }
 
@@ -3469,13 +3384,12 @@ function cargarVenta(){
   const resta=parseMonto(document.getElementById('v-resta').value);
   const placasReja=parseInt(document.getElementById('v-placas-reja').value)||0;
   if(!vend||!cliente||!metros||!fecha){alert('Completá al menos: vendedor, cliente, metros y fecha');return;}
-  if(!fechaVenta){alert('Completá la Fecha de venta: es el campo que determina el mes de la comisión');return;}
   state.ventas.push({vendedor:vend,cliente,tel,fecha,fechaVenta,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja});
   const vendSel=document.getElementById('v-vendedor');
   const vendGuardado=vendSel?vendSel.value:'';
   saveState();
   // limpiar
-  ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-diseno-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-fecha-venta','v-diseno-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const dcEl=document.getElementById('v-diseno-custom');if(dcEl)dcEl.style.display='none';
   if(vendSel&&vendGuardado)vendSel.value=vendGuardado;
   const dFechaParts=fecha.split('-');
@@ -3556,7 +3470,7 @@ function calcComisionEscala(totalVendido){
 function renderVendedores(){
   document.getElementById('vend-period-label').textContent=MESES[vendMonth]+' '+vendYear;
   document.getElementById('ranking-titulo').textContent='Ranking — '+MESES[vendMonth];
-  const vs=state.ventas.filter(v=>{const d=parseFecha(v.fechaVenta);return d.getFullYear()===vendYear&&d.getMonth()===vendMonth;});
+  const vs=state.ventas.filter(v=>{const d=parseFecha(v.fechaVenta||v.fecha);return d.getFullYear()===vendYear&&d.getMonth()===vendMonth;});
   const ranked=state.vendedores.map(vnd=>{
     const vv=vs.filter(v=>v.vendedor===vnd.nombre);
     const totalVendido=vv.reduce((s,v)=>s+(v.totalObra||v.metros*v.precio),0);
@@ -3623,7 +3537,6 @@ const todayStr=`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,'0')}
 document.getElementById('fecha-mov').value=todayStr;
 filtrarCatsPorTipo();
 document.getElementById('v-fecha').value=todayStr;
-document.getElementById('v-fecha-venta').value=todayStr;
 var nomF=document.getElementById('nom-fecha');if(nomF)nomF.value=todayStr;
 renderPresentismo();
 </script>
