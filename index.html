@@ -13,6 +13,66 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#F7F7F7;color:#1A
   --tx:#1A1A1A;--mu:#6B6B6B;--hi:#A0A0A0;--bd:#E8E8E8;--bg:#F7F7F7;--wh:#FFFFFF;
   --gr:#2E7D32;--gr-bg:#EDF7EE;--re:#C62828;
 }
+/* ===== TEMA AZUL OSCURO ===== */
+html[data-theme="dark"]{
+  --tx:#E8F1FA;--mu:#8BAECB;--hi:#5E8FBA;--bd:#2A5580;--bg:#122D4A;--wh:#1D4575;
+  --or-bg:#1A3556;--gr-bg:#0D2A1F;--re:#EF5350;
+}
+html[data-theme="dark"] body{background:#122D4A!important;color:#E8F1FA!important}
+html[data-theme="dark"] .home{background:linear-gradient(145deg,#163559 0%,#122D4A 60%,#163559 100%)!important}
+html[data-theme="dark"] .home-brand{color:#E8F1FA!important}
+html[data-theme="dark"] .home-sub{color:#8BAECB!important}
+html[data-theme="dark"] .home-tagline{color:#8BAECB!important}
+html[data-theme="dark"] .home-btn{background:#1D4575!important;border-color:#2A5580!important}
+html[data-theme="dark"] .home-btn:hover{border-color:#D85A30!important;box-shadow:0 8px 24px rgba(22,53,89,.5)!important}
+html[data-theme="dark"] .home-btn-title,html[data-theme="dark"] .home-btn-desc{color:#E8F1FA!important}
+html[data-theme="dark"] .home-btn-icon-wrap{background:#163559!important}
+html[data-theme="dark"] .topbar{background:#1D4575!important;border-color:#2A5580!important}
+html[data-theme="dark"] .back-btn{border-color:#2A5580!important;color:#8BAECB!important;background:#163559!important}
+html[data-theme="dark"] .tb-title{color:#E8F1FA!important}
+html[data-theme="dark"] .content{background:#122D4A!important}
+html[data-theme="dark"] .card,html[data-theme="dark"] .metric-card{background:#1D4575!important;border-color:#2A5580!important}
+html[data-theme="dark"] .card-title{color:#F0997B!important}
+html[data-theme="dark"] .metric-label{color:#8BAECB!important}
+html[data-theme="dark"] .metric-value{color:#E8F1FA!important}
+html[data-theme="dark"] .period-bar{background:#1D4575!important;border-color:#2A5580!important}
+html[data-theme="dark"] .period-label{background:#163559!important;border-color:#2A5580!important;color:#E8F1FA!important}
+html[data-theme="dark"] .nav-btn{background:#1D4575!important;border-color:#2A5580!important;color:#E8F1FA!important}
+html[data-theme="dark"] .vtabs{border-color:#2A5580!important}
+html[data-theme="dark"] .vtab{background:#1D4575!important;border-color:#2A5580!important;color:#8BAECB!important}
+html[data-theme="dark"] .vtab.active{background:var(--or)!important;color:#fff!important}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:#163559!important;color:#E8F1FA!important;border-color:#2A5580!important}
+html[data-theme="dark"] .form-label,html[data-theme="dark"] label{color:#8BAECB!important}
+html[data-theme="dark"] table.movs th{color:#8BAECB!important;border-color:#2A5580!important}
+html[data-theme="dark"] table.movs td{color:#E8F1FA!important;border-color:#2A5580!important}
+html[data-theme="dark"] table.movs tr:hover td{background:#244E88!important}
+html[data-theme="dark"] .ht-table,html[data-theme="dark"] .ht-table th,html[data-theme="dark"] .ht-table td,html[data-theme="dark"] .anual-table,html[data-theme="dark"] .anual-table th,html[data-theme="dark"] .anual-table td{background:#1D4575!important;border-color:#2A5580!important;color:#E8F1FA!important}
+html[data-theme="dark"] .ht-table th,html[data-theme="dark"] .anual-table th{background:#163559!important;color:#8BAECB!important}
+html[data-theme="dark"] .badge-green{background:#0D2A1F!important;color:#66BB6A!important}
+html[data-theme="dark"] .badge-orange{background:#1A3556!important;color:#F0997B!important}
+html[data-theme="dark"] .cal-day{background:#1D4575!important;border-color:#2A5580!important}
+html[data-theme="dark"] .cal-day.has-data{background:#1A3556!important;border-color:var(--or)!important}
+html[data-theme="dark"] .cal-hdr,html[data-theme="dark"] .day-num{color:#8BAECB!important}
+/* Inline style overrides */
+html[data-theme="dark"] [style*="background:#fff"],html[data-theme="dark"] [style*="background: #fff"],html[data-theme="dark"] [style*="background:#FFF"],html[data-theme="dark"] [style*="background:#FFFFFF"]{background:#1D4575!important}
+html[data-theme="dark"] [style*="background:#F7F7F7"],html[data-theme="dark"] [style*="background:#F9F9F9"],html[data-theme="dark"] [style*="background:#F5F5F5"]{background:#122D4A!important}
+html[data-theme="dark"] [style*="background:#F0F0F0"]{background:#244E88!important}
+html[data-theme="dark"] [style*="background:#FDF3EF"],html[data-theme="dark"] [style*="background:#FFF8F5"],html[data-theme="dark"] [style*="background:#FFF0EE"],html[data-theme="dark"] [style*="background:#FFF3EE"],html[data-theme="dark"] [style*="background:#FBEDE6"]{background:#1A3556!important}
+html[data-theme="dark"] [style*="background:#EFF6FF"],html[data-theme="dark"] [style*="background:#EDF5FF"],html[data-theme="dark"] [style*="background:#EDF7EE"]{background:#163559!important}
+html[data-theme="dark"] [style*="color:#1A1A1A"],html[data-theme="dark"] [style*="color: #1A1A1A"],html[data-theme="dark"] [style*="color:#333333"]{color:#E8F1FA!important}
+html[data-theme="dark"] [style*="color:#6B6B6B"],html[data-theme="dark"] [style*="color:#555"],html[data-theme="dark"] [style*="color:#888"],html[data-theme="dark"] [style*="color:#B0B0B0"]{color:#8BAECB!important}
+html[data-theme="dark"] [style*="border-color:#E8E8E8"],html[data-theme="dark"] [style*="border:1px solid #E8E8E8"],html[data-theme="dark"] [style*="border:1.5px solid #CCCCCC"],html[data-theme="dark"] [style*="border:2px solid #1A1A1A"],html[data-theme="dark"] [style*="border:1.5px solid #E0E0E0"],html[data-theme="dark"] [style*="border:1.5px solid #CCC"]{border-color:#2A5580!important}
+/* Login */
+html[data-theme="dark"] #login-screen{background:#163559!important}
+html[data-theme="dark"] #login-screen button[onclick*="loginComo('admin')"]{background:#1D4575!important;border-color:#D85A30!important}
+html[data-theme="dark"] #login-screen button[onclick*="loginComo('vendedor')"]{background:#1D4575!important;border-color:#4A90D9!important}
+/* Modals */
+html[data-theme="dark"] #modal-confirm>div,html[data-theme="dark"] #modal-admin-pass>div,html[data-theme="dark"] #modal-fecha>div,html[data-theme="dark"] #modal-editar>div{background:#1D4575!important;color:#E8F1FA!important}
+html[data-theme="dark"] #modal-editar [style*="border-bottom:1px solid #F0E0D6"]{border-color:#2A5580!important}
+/* Btn tema */
+.btn-tema{background:transparent;border:1.5px solid #CCC;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:#666;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .15s}
+.btn-tema:hover{border-color:var(--or);color:var(--or)}
+html[data-theme="dark"] .btn-tema{border-color:#2A5580;color:#8BAECB;background:#1D4575}
 
 /* ===== HOME ===== */
 .home{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px 24px;background:linear-gradient(145deg,#FFF8F5 0%,#F7F7F7 60%,#FFF3EE 100%)}
@@ -265,6 +325,7 @@ table.movs tr:hover td{background:#FAFAFA}
 
 <!-- LOGIN / SELECCIÓN DE ROL -->
 <div id="login-screen" style="position:fixed;inset:0;background:#fff;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px">
+  <button onclick="toggleTema()" class="btn-tema" style="position:absolute;top:18px;right:18px"><span class="btn-tema-icon">🌙</span> <span class="btn-tema-txt">Modo oscuro</span></button>
   <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
     <div style="display:grid;grid-template-columns:repeat(3,18px);grid-template-rows:repeat(3,18px);gap:3px">
       <div style="background:transparent;border-radius:3px"></div>
@@ -324,6 +385,7 @@ table.movs tr:hover td{background:#FAFAFA}
   <div class="home-divider"></div>
   <div class="home-tagline">Panel de gestión — seleccioná un módulo</div>
   <button onclick="cerrarSesion()" style="position:absolute;top:20px;right:20px;background:#fff;border:1.5px solid #CCC;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">Cambiar perfil</button>
+  <button onclick="toggleTema()" class="btn-tema" style="position:absolute;top:20px;left:20px"><span class="btn-tema-icon">🌙</span> <span class="btn-tema-txt">Modo oscuro</span></button>
   <div class="home-grid">
     <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('precios')">
       <div class="home-btn-icon-wrap">
@@ -1309,6 +1371,17 @@ function confirmarPassAdmin(){
 function cerrarModalPass(){
   document.getElementById('modal-admin-pass').style.display='none';
 }
+function setTema(dark){
+  if(dark){document.documentElement.setAttribute('data-theme','dark');}
+  else{document.documentElement.removeAttribute('data-theme');}
+  localStorage.setItem('ht-tema',dark?'dark':'light');
+  document.querySelectorAll('.btn-tema-icon').forEach(el=>el.textContent=dark?'☀️':'🌙');
+  document.querySelectorAll('.btn-tema-txt').forEach(el=>el.textContent=dark?'Modo claro':'Modo oscuro');
+}
+function toggleTema(){
+  setTema(document.documentElement.getAttribute('data-theme')!=='dark');
+}
+(function(){if(localStorage.getItem('ht-tema')==='dark')setTema(true);})();
 function cerrarSesion(){
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('home').style.display='none';
