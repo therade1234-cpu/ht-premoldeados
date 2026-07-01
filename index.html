@@ -1518,8 +1518,8 @@ function renderAdmin(){
   document.getElementById('period-label').textContent=label;
   let mp;
   if(curView==='semana'){mp=getMovsSemana();}
-  else if(curView==='mes'){mp=state.movimientos.filter(m=>{const d=new Date(m.fecha);return d.getFullYear()===curYear&&d.getMonth()===curMonth;});}
-  else{mp=state.movimientos.filter(m=>new Date(m.fecha).getFullYear()===curYear);}
+  else if(curView==='mes'){mp=state.movimientos.filter(m=>{const d=parseFecha(m.fecha);return d.getFullYear()===curYear&&d.getMonth()===curMonth;});}
+  else{mp=state.movimientos.filter(m=>parseFecha(m.fecha).getFullYear()===curYear);}
   const ing=mp.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.monto,0);
   const gst=mp.filter(m=>m.tipo==='gasto').reduce((s,m)=>s+m.monto,0);
   const neto=ing-gst;
@@ -1554,7 +1554,7 @@ function renderAdmin(){
 
 function getMovsSemana(){
   const r=semanas(curYear,curMonth)[curSemana];if(!r)return[];
-  return state.movimientos.filter(m=>{const d=new Date(m.fecha);return d.getFullYear()===curYear&&d.getMonth()===curMonth&&d.getDate()>=r.start&&d.getDate()<=r.end;});
+  return state.movimientos.filter(m=>{const d=parseFecha(m.fecha);return d.getFullYear()===curYear&&d.getMonth()===curMonth&&d.getDate()>=r.start&&d.getDate()<=r.end;});
 }
 
 function renderAdminSemana(){
@@ -1584,7 +1584,7 @@ function renderAdminMes(){
   const ss=semanas(curYear,curMonth);const cats=['obras','senas','publicidad','sueldos_oficina','pago_chicos_obra','fletes','fabrica','materiales','vales','nominas'];
   const grand={};cats.forEach(c=>grand[c]=0);
   document.getElementById('tbody-mes').innerHTML=ss.map((r,sIdx)=>{
-    const sm=state.movimientos.filter(m=>{const d=new Date(m.fecha);return d.getFullYear()===curYear&&d.getMonth()===curMonth&&d.getDate()>=r.start&&d.getDate()<=r.end;});
+    const sm=state.movimientos.filter(m=>{const d=parseFecha(m.fecha);return d.getFullYear()===curYear&&d.getMonth()===curMonth&&d.getDate()>=r.start&&d.getDate()<=r.end;});
     const v={};cats.forEach(c=>{if(c==='fabrica'){
         v[c]=sm.filter(m=>['fabrica','nafta','ferreteria','gastos_calle','otro'].includes(m.cat)).reduce((s,m)=>s+m.monto*(m.tipo==='gasto'?-1:1),0);
       } else {
@@ -1642,7 +1642,7 @@ function renderBalance(){
   else renderBalanceAnual();
 }
 function renderBalanceMes(){
-  const mm=state.movimientos.filter(m=>{const d=new Date(m.fecha);return d.getFullYear()===balYear&&d.getMonth()===balMonth;});
+  const mm=state.movimientos.filter(m=>{const d=parseFecha(m.fecha);return d.getFullYear()===balYear&&d.getMonth()===balMonth;});
   const ing=mm.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.monto,0);
   const gst=mm.filter(m=>m.tipo==='gasto').reduce((s,m)=>s+m.monto,0);
   const neto=ing-gst;
