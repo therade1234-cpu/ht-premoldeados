@@ -1374,7 +1374,7 @@ function loginComo(rol){
   document.getElementById('home').style.display='flex';
   // Mostrar/ocultar botones según rol
   document.querySelectorAll('.home-btn').forEach(function(b){
-    if(rol==='admin'){b.style.display='';}
+    if(rol==='admin'){b.style.display=b.classList.contains('rol-admin')?'':'none';}
     else{b.style.display=b.classList.contains('rol-vendedor')?'':'none';}
   });
 }
