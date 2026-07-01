@@ -2424,13 +2424,23 @@ function renderRecibo(){
 function descargarReciboPNG(){
   var doc=document.getElementById('recibo-doc');
   if(!doc){alert('Completá el recibo primero');return;}
-  html2canvas(doc,{scale:2,backgroundColor:'#fff',width:794,height:doc.offsetHeight}).then(function(canvas){
+  var cliente=(document.getElementById('rc-cliente')||{}).value||'cliente';
+  // Clonar el elemento fuera de cualquier transform para que html2canvas lo capture limpio
+  var clone=doc.cloneNode(true);
+  clone.style.position='fixed';
+  clone.style.top='-9999px';
+  clone.style.left='0';
+  clone.style.transform='none';
+  clone.style.width='794px';
+  clone.style.zIndex='-1';
+  document.body.appendChild(clone);
+  html2canvas(clone,{scale:2,backgroundColor:'#fff',useCORS:true,allowTaint:true,width:794,height:clone.scrollHeight,windowWidth:794}).then(function(canvas){
+    document.body.removeChild(clone);
     var link=document.createElement('a');
-    var cliente=(document.getElementById('rc-cliente').value||'cliente').replace(/[^a-z0-9]/gi,'_');
-    link.download='Recibo_'+cliente+'.png';
+    link.download='Recibo_'+cliente.replace(/[^a-z0-9]/gi,'_')+'.png';
     link.href=canvas.toDataURL('image/png');
     link.click();
-  });
+  }).catch(function(){document.body.removeChild(clone);});
 }
 
 function descargarReciboPDF(){
