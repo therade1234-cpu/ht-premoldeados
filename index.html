@@ -76,11 +76,28 @@ html[data-theme="dark"] #login-screen button[onclick*="loginComo('vendedor')"]{b
 html[data-theme="dark"] #modal-confirm>div,html[data-theme="dark"] #modal-admin-pass>div,html[data-theme="dark"] #modal-fecha>div,html[data-theme="dark"] #modal-editar>div{background:#1D4575!important;color:#E8F1FA!important}
 html[data-theme="dark"] #modal-editar [style*="border-bottom:1px solid #F0E0D6"]{border-color:#2A5580!important}
 /* Presupuestos y recibos — siempre modo día completo */
-html[data-theme="dark"] #inner-presupuestos,html[data-theme="dark"] #inner-presupuestos *,
-html[data-theme="dark"] #inner-recibos,html[data-theme="dark"] #inner-recibos *{
-  background:revert!important;color:revert!important;border-color:revert!important;
-  filter:none!important
-}
+html[data-theme="dark"] #inner-presupuestos,html[data-theme="dark"] #inner-recibos{--tx:#1A1A1A;--mu:#6B6B6B;--hi:#A0A0A0;--bd:#E8E8E8;--bg:#F7F7F7;--wh:#FFFFFF;--or-bg:#FDF3EF;--gr-bg:#EDF7EE}
+html[data-theme="dark"] #inner-presupuestos .topbar,html[data-theme="dark"] #inner-recibos .topbar{background:#fff!important;border-color:#E8E8E8!important}
+html[data-theme="dark"] #inner-presupuestos .back-btn,html[data-theme="dark"] #inner-recibos .back-btn{background:none!important;border-color:#E8E8E8!important;color:#6B6B6B!important}
+html[data-theme="dark"] #inner-presupuestos .tb-title,html[data-theme="dark"] #inner-recibos .tb-title{color:#1A1A1A!important}
+html[data-theme="dark"] #inner-presupuestos .content,html[data-theme="dark"] #inner-recibos .content{background:#F7F7F7!important}
+html[data-theme="dark"] #inner-presupuestos .card,html[data-theme="dark"] #inner-recibos .card{background:#fff!important;border-color:#E8E8E8!important}
+html[data-theme="dark"] #inner-presupuestos .card-title,html[data-theme="dark"] #inner-recibos .card-title{color:#993C1D!important}
+html[data-theme="dark"] #inner-presupuestos .form-label,html[data-theme="dark"] #inner-recibos .form-label{color:#1A1A1A!important}
+html[data-theme="dark"] #inner-presupuestos label,html[data-theme="dark"] #inner-recibos label{color:#1A1A1A!important}
+html[data-theme="dark"] #inner-presupuestos input,html[data-theme="dark"] #inner-recibos input,html[data-theme="dark"] #inner-presupuestos select,html[data-theme="dark"] #inner-recibos select,html[data-theme="dark"] #inner-presupuestos textarea,html[data-theme="dark"] #inner-recibos textarea{background:#fff!important;color:#1A1A1A!important;border-color:#CCCCCC!important}
+html[data-theme="dark"] #inner-presupuestos [style*="background:#fff"],html[data-theme="dark"] #inner-recibos [style*="background:#fff"]{background:#fff!important}
+html[data-theme="dark"] #inner-presupuestos [style*="background:#F7F7F7"],html[data-theme="dark"] #inner-recibos [style*="background:#F7F7F7"]{background:#F7F7F7!important}
+html[data-theme="dark"] #inner-presupuestos [style*="background:#FDF3EF"],html[data-theme="dark"] #inner-recibos [style*="background:#FDF3EF"]{background:#FDF3EF!important}
+html[data-theme="dark"] #inner-presupuestos [style*="background:#FAFAFA"],html[data-theme="dark"] #inner-recibos [style*="background:#FAFAFA"]{background:#FAFAFA!important}
+html[data-theme="dark"] #inner-presupuestos [style*="color:#1A1A1A"],html[data-theme="dark"] #inner-recibos [style*="color:#1A1A1A"]{color:#1A1A1A!important}
+html[data-theme="dark"] #inner-presupuestos [style*="color:#6B6B6B"],html[data-theme="dark"] #inner-recibos [style*="color:#6B6B6B"]{color:#6B6B6B!important}
+html[data-theme="dark"] #inner-presupuestos [style*="color:#888"],html[data-theme="dark"] #inner-recibos [style*="color:#888"]{color:#888!important}
+html[data-theme="dark"] #inner-presupuestos [style*="color:#555"],html[data-theme="dark"] #inner-recibos [style*="color:#555"]{color:#555!important}
+html[data-theme="dark"] #inner-presupuestos [style*="color:#993C1D"],html[data-theme="dark"] #inner-recibos [style*="color:#993C1D"]{color:#993C1D!important}
+html[data-theme="dark"] #inner-presupuestos [style*="color:#D85A30"],html[data-theme="dark"] #inner-recibos [style*="color:#D85A30"]{color:#D85A30!important}
+html[data-theme="dark"] #inner-presupuestos [style*="border:1.5px solid #CCCCCC"],html[data-theme="dark"] #inner-recibos [style*="border:1.5px solid #CCCCCC"]{border-color:#CCCCCC!important}
+html[data-theme="dark"] #inner-presupuestos [style*="border:1px solid #E8E8E8"],html[data-theme="dark"] #inner-recibos [style*="border:1px solid #E8E8E8"]{border-color:#E8E8E8!important}
 /* Btn tema */
 .btn-tema{background:transparent;border:1.5px solid #CCC;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:#666;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .15s}
 .btn-tema:hover{border-color:var(--or);color:var(--or)}
