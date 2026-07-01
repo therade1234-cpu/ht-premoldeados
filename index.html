@@ -2447,14 +2447,26 @@ function descargarReciboPDF(){
   var doc=document.getElementById('recibo-doc');
   if(!doc){alert('Completá el recibo primero');return;}
   var cliente=(document.getElementById('rc-cliente')||{}).value||'cliente';
-  var w=window.open('','_blank','width=900,height=750');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Recibo - '+cliente+'</title>'+
-    '<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#fff}'+
-    '@media print{@page{size:A4 portrait;margin:0}body{margin:0}}</style>'+
-    '</head><body>'+doc.outerHTML+'</body></html>');
-  w.document.close();
-  w.focus();
-  setTimeout(function(){w.print();},500);
+  var clone=doc.cloneNode(true);
+  clone.style.position='fixed';
+  clone.style.top='-9999px';
+  clone.style.left='0';
+  clone.style.transform='none';
+  clone.style.width='794px';
+  clone.style.zIndex='-1';
+  document.body.appendChild(clone);
+  html2canvas(clone,{scale:2,backgroundColor:'#fff',useCORS:true,allowTaint:true,width:794,height:clone.scrollHeight,windowWidth:794}).then(function(canvas){
+    document.body.removeChild(clone);
+    var imgData=canvas.toDataURL('image/png');
+    var pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'pt',format:'a4'});
+    var pw=pdf.internal.pageSize.getWidth();
+    var ph=pdf.internal.pageSize.getHeight();
+    var imgW=pw;
+    var imgH=canvas.height*(pw/canvas.width);
+    if(imgH>ph)imgH=ph;
+    pdf.addImage(imgData,'PNG',0,0,imgW,imgH,'','FAST');
+    pdf.save('Recibo_'+cliente.replace(/[^a-z0-9]/gi,'_')+'.pdf');
+  }).catch(function(){document.body.removeChild(clone);});
 }
 
 // ---- LISTA DE PRECIOS ----
