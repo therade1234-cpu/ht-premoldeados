@@ -1354,7 +1354,22 @@ function parseFecha(f){if(!f)return new Date(NaN);const p=f.split('-');return ne
 const fmt=n=>{if(n===0)return'$0';const a=Math.abs(Math.round(n));return(n<0?'-':'')+'$'+a.toLocaleString('es-AR');};
 const fmtC=n=>n<0?`<span style="color:#C62828">${fmt(n)}</span>`:n>0?`<span style="color:#2E7D32">${fmt(n)}</span>`:`<span style="color:#A0A0A0">—</span>`;
 
-function semanas(y,m){const t=new Date(y,m+1,0).getDate();const s=[];let d=1;while(d<=t&&s.length<5){const dow=new Date(y,m,d).getDay();const mon=dow===1?d:dow===0?d+1:d+(8-dow)%7;if(mon>t)break;const sat=Math.min(mon+5,t);s.push({start:mon,end:sat});d=sat+1;}return s;}
+function semanas(y,m){
+  const t=new Date(y,m+1,0).getDate();
+  const s=[];
+  let d=1;
+  // Si el mes arranca en domingo, empezar el lunes
+  if(new Date(y,m,1).getDay()===0) d=2;
+  while(d<=t&&s.length<5){
+    const start=d;
+    const dow=new Date(y,m,d).getDay();
+    const daysToSat=dow===6?0:(6-dow);
+    const end=Math.min(d+daysToSat,t);
+    s.push({start,end});
+    d=end+2; // saltar domingo
+  }
+  return s;
+}
 
 // ---- NAVEGACIÓN ----
 function openPanel(id){
