@@ -1423,21 +1423,12 @@ function openPanel(id){
 }
 let rolActual='admin';
 function loginComo(rol){
-  if(rol==='admin'){
-    document.getElementById('modal-admin-pass').style.display='flex';
-    document.getElementById('modal-pass-input').value='';
-    document.getElementById('modal-pass-error').textContent='';
-    setTimeout(()=>document.getElementById('modal-pass-input').focus(),50);
-    return;
-  }
-  rolActual=rol;
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('home').style.display='flex';
-  // Mostrar/ocultar botones según rol
-  document.querySelectorAll('.home-btn').forEach(function(b){
-    if(rol==='admin'){b.style.display=b.classList.contains('rol-admin')?'':'none';}
-    else{b.style.display=b.classList.contains('rol-vendedor')?'':'none';}
-  });
+  document.getElementById('modal-admin-pass').style.display='flex';
+  document.getElementById('modal-pass-input').value='';
+  document.getElementById('modal-pass-error').textContent='';
+  document.getElementById('modal-admin-pass').dataset.rol=rol;
+  var titulo=document.querySelector('#modal-admin-pass [style*="font-size:18px"]')||document.querySelector('#modal-admin-pass div');
+  setTimeout(()=>document.getElementById('modal-pass-input').focus(),50);
 }
 let _confirmResolve=null;
 function showConfirm(title,msg){
@@ -1454,17 +1445,22 @@ function resolveConfirm(val){
 }
 function confirmarPassAdmin(){
   const pass=document.getElementById('modal-pass-input').value;
-  if(pass!=='ht2026'){
+  const rol=document.getElementById('modal-admin-pass').dataset.rol||'admin';
+  const passCorrecta=rol==='admin'?'ht2026':'ventas1234';
+  if(pass!==passCorrecta){
     document.getElementById('modal-pass-error').textContent='Contraseña incorrecta. Intentá de nuevo.';
     document.getElementById('modal-pass-input').value='';
     document.getElementById('modal-pass-input').focus();
     return;
   }
   cerrarModalPass();
-  rolActual='admin';
+  rolActual=rol;
   document.getElementById('login-screen').style.display='none';
   document.getElementById('home').style.display='flex';
-  document.querySelectorAll('.home-btn').forEach(function(b){b.style.display=b.classList.contains('rol-admin')?'':'none';});
+  document.querySelectorAll('.home-btn').forEach(function(b){
+    if(rol==='admin'){b.style.display=b.classList.contains('rol-admin')?'':'none';}
+    else{b.style.display=b.classList.contains('rol-vendedor')?'':'none';}
+  });
 }
 function cerrarModalPass(){
   document.getElementById('modal-admin-pass').style.display='none';
