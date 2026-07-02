@@ -2800,14 +2800,18 @@ function confirmarNuevoEmpleado(){
   nomPlanilla.push({nombre:nombre,porDia:jornal,semanas:{}});
   document.getElementById('modal-nuevo-empleado').style.display='none';
   renderNominas();
+  saveState();
+  saveState();
 }
-function nomRenombrar(idx,val){var n=val.trim();if(n&&nomPlanilla[idx])nomPlanilla[idx].nombre=n;}
+function nomRenombrar(idx,val){var n=val.trim();if(n&&nomPlanilla[idx]){nomPlanilla[idx].nombre=n;saveState();}}
 async function nomEliminar(idx){
   var nombre=nomPlanilla[idx]?nomPlanilla[idx].nombre:'este empleado';
   const ok=await showConfirm('¿Eliminar empleado?','Se eliminará a '+nombre+' de la planilla.');
   if(!ok)return;
   nomPlanilla.splice(idx,1);
   renderNominas();
+  saveState();
+  saveState();
 }
 function nomSetDia(idx,val){
   var m=parseMonto(val)||0;
@@ -2817,6 +2821,7 @@ function nomSetDia(idx,val){
   for(var j=0;j<6;j++){if(s.dias[j]>0)s.dias[j]=m;}
   nomRecalcTotal(r);
   renderNominas();
+  saveState();
 }
 function nomTogglePresente(idx,diaIdx){
   var r=nomPlanilla[idx];if(!r)return;
