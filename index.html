@@ -1316,11 +1316,10 @@ function applyData(data){
     state.movimientos = data.movimientos || [];
   }
   state.vendedores = data.vendedores || [];
-  // Restaurar semanas guardadas de nóminas
-  if(data.nomPlanilla){
-    data.nomPlanilla.forEach(function(saved){
-      const local=nomPlanilla.find(function(r){return r.nombre===saved.nombre;});
-      if(local&&saved.semanas) local.semanas=saved.semanas;
+  // Restaurar nóminas completas (empleados, porDia y semanas)
+  if(data.nomPlanilla && data.nomPlanilla.length > 0){
+    nomPlanilla = data.nomPlanilla.map(function(saved){
+      return { nombre: saved.nombre, porDia: saved.porDia||0, semanas: saved.semanas||{} };
     });
   }
   const sel=document.getElementById('v-vendedor');
