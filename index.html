@@ -1309,7 +1309,9 @@ let _lastSave = 0;
 
 function applyData(data){
   const sinceLastSave = Date.now() - _lastSave;
-  if(sinceLastSave > 30000){
+  const modalAbierto = _editObraCtx !== null ||
+    document.getElementById('modal-editar-mov').style.display==='flex';
+  if(sinceLastSave > 30000 && !modalAbierto){
     state.ventas = data.ventas || [];
     state.movimientos = data.movimientos || [];
   }
@@ -3408,11 +3410,14 @@ async function borrarObra(fechaStr,idx){
   renderVentas();
 }
 let _editObraCtx=null;
+let _editObraFecha=null, _editObraIdx=-1;
 function editarObra(fechaStr,idx){
   const obras=state.ventas.filter(v=>v.fecha===fechaStr);
   const obra=obras[idx];
   if(!obra)return;
   _editObraCtx=obra;
+  _editObraFecha=fechaStr;
+  _editObraIdx=state.ventas.indexOf(obra);
   document.getElementById('edit-subtitle').textContent=(obra.cliente||'sin nombre')+' — '+fechaStr.split('-').reverse().join('/');
   // populate vendedor select
   const vs=document.getElementById('edit-vendedor');
@@ -3468,7 +3473,8 @@ function editCalcResta(){
 }
 function guardarEdicion(){
   if(!_editObraCtx)return;
-  const obra=_editObraCtx;
+  // Usar el índice guardado para obtener la referencia actual en state.ventas (evita stale ref por polling)
+  const obra=_editObraIdx>=0&&state.ventas[_editObraIdx]?state.ventas[_editObraIdx]:_editObraCtx;
   const g=(id)=>{const el=document.getElementById(id);return el?el.value:'';};
   const gn=(id)=>parseFloat((g(id)||'0').replace(/\./g,'').replace(',','.'))||0;
   obra.vendedor=g('edit-vendedor');
