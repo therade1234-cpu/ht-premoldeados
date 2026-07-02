@@ -1329,9 +1329,11 @@ function applyData(data){
   else if(_panelActivo==='vendedores')renderVendedores();
 }
 
+let _pendingSave = false;
 async function saveState(){
-  if(_saving) return;
+  if(_saving){_pendingSave=true;return;}
   _saving = true;
+  _pendingSave = false;
   try {
     const r = await fetch('/api/data', {
       method:'POST',
@@ -1349,6 +1351,7 @@ async function saveState(){
     console.error('Error de red al guardar:', e);
   } finally {
     _saving = false;
+    if(_pendingSave) saveState();
   }
 }
 
