@@ -1308,10 +1308,8 @@ let _saving = false;
 let _lastSave = 0;
 
 function applyData(data){
-  const sinceLastSave = Date.now() - _lastSave;
-  const modalAbierto = _editObraCtx !== null ||
-    document.getElementById('modal-editar-mov').style.display==='flex';
-  if(sinceLastSave > 30000 && !modalAbierto){
+  // Solo restaurar ventas/movimientos en la carga inicial (antes de cualquier save local)
+  if(_lastSave === 0){
     state.ventas = data.ventas || [];
     state.movimientos = data.movimientos || [];
   }
