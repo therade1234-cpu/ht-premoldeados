@@ -3513,11 +3513,13 @@ function guardarEdicion(){
   document.getElementById('detalle-dia-card').scrollIntoView({behavior:'smooth'});
 }
 let _moverObraCtx=null;
+let _moverObraIdx=-1;
 function moverObraFecha(fechaStr,idx){
   const obras=state.ventas.filter(v=>v.fecha===fechaStr);
   const obra=obras[idx];
   if(!obra)return;
   _moverObraCtx={obra,fechaStr};
+  _moverObraIdx=state.ventas.indexOf(obra);
   document.getElementById('modal-fecha-subtitle').textContent='Nueva fecha para la obra de '+(obra.cliente||'este cliente');
   document.getElementById('modal-fecha-input').value=fechaStr;
   document.getElementById('modal-fecha-error').textContent='';
@@ -3536,7 +3538,7 @@ function confirmarFecha(){
   if(nuevaFecha===_moverObraCtx.fechaStr){errEl.textContent='La fecha es la misma que la actual.';return;}
   const obra=_moverObraCtx.obra;
   cerrarModalFecha();
-  const obraIdx=state.ventas.indexOf(obra);
+  const obraIdx=_moverObraIdx>=0?_moverObraIdx:state.ventas.indexOf(obra);
   if(obraIdx!==-1)state.ventas[obraIdx].fecha=nuevaFecha;
   saveState();
   const parts=nuevaFecha.split('-');
