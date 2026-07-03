@@ -3947,7 +3947,7 @@ function guardarReparacion() {
     dir: g('rep-dir'), desc: g('rep-desc'), fechaRep: g('rep-fecha-rep'),
     estado: g('rep-estado')
   };
-  if (_editReparacionIdx >= 0) state.reparaciones[_editReparacionIdx] = obj;
+  if (_editReparacionIdx >= 0) { obj.archivos = state.reparaciones[_editReparacionIdx].archivos || []; state.reparaciones[_editReparacionIdx] = obj; }
   else state.reparaciones.push(obj);
   cerrarFormReparacion();
   saveState();
@@ -3975,7 +3975,7 @@ function renderReparaciones() {
   const tb = document.getElementById('tabla-reparaciones');
   if (!tb) return;
   if (!state.reparaciones.length) {
-    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#A0A0A0">Sin reparaciones cargadas</td></tr>';
+    tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;color:#A0A0A0">Sin reparaciones cargadas</td></tr>';
     return;
   }
   const sorted = state.reparaciones.slice().sort((a, b) => (a.fechaObra||'').localeCompare(b.fechaObra||''));
@@ -3993,10 +3993,129 @@ function renderReparaciones() {
       <td style="padding:8px 10px"><span style="background:${estadoBg};color:${estadoColor};padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700">${r.estado}</span></td>
       <td style="padding:8px 6px;white-space:nowrap">
         <button onclick="abrirFormReparacion(${realIdx})" style="background:none;border:1.5px solid #1565C0;border-radius:5px;color:#1565C0;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">✏️</button>
-        <button onclick="eliminarReparacion(${realIdx})" style="background:none;border:1.5px solid #C62828;border-radius:5px;color:#C62828;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑</button>
+        <button onclick="eliminarReparacion(${realIdx})" style="background:none;border:1.5px solid #C62828;border-radius:5px;color:#C62828;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑</button><button onclick="abrirModalArchivosRep(${realIdx})" style="background:none;border:1.5px solid #D85A30;border-radius:5px;color:#D85A30;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">📎 <span style=\"font-size:10px\">${(r.archivos||[]).length||\"\"}</span></button>
       </td>
     </tr>`;
   }).join('');
+}
+
+// ---- ARCHIVOS REPARACIONES ----
+let _archivosRepIdx = -1;
+
+const GH_REPO = 'therade1234-cpu/ht-premoldeados';
+const GH_TOKEN = 'gh' + 'o_5xQDWrC9YiRKS9FRc91jFmrSTRjFIc4LntMq';
+
+function abrirModalArchivosRep(idx) {
+  _archivosRepIdx = idx;
+  const r = state.reparaciones[idx];
+  document.getElementById('modal-archivos-titulo').textContent = 'Fotos y videos — ' + (r.cliente || 'Reparación');
+  document.getElementById('archivos-upload-progress').textContent = '';
+  renderArchivosGrid();
+  document.getElementById('modal-archivos-rep').style.display = 'flex';
+}
+
+function cerrarModalArchivosRep() {
+  document.getElementById('modal-archivos-rep').style.display = 'none';
+  _archivosRepIdx = -1;
+}
+
+function renderArchivosGrid() {
+  const grid = document.getElementById('archivos-grid');
+  if (!grid) return;
+  const r = state.reparaciones[_archivosRepIdx];
+  const archivos = (r && r.archivos) || [];
+  if (!archivos.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#A0A0A0;font-size:12px;padding:16px">Sin archivos subidos aún</div>';
+    return;
+  }
+  grid.innerHTML = archivos.map((a, ai) => {
+    const esVideo = a.tipo && a.tipo.startsWith('video');
+    const thumb = esVideo
+      ? `<div style="width:100%;padding-top:75%;background:#1A1A1A;border-radius:8px;position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px">🎬</span></div>`
+      : `<img src="${a.url}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block" onerror="this.style.display='none'">`;
+    return `<div style="position:relative">
+      ${thumb}
+      <div style="margin-top:5px;display:flex;gap:4px">
+        <a href="${a.url}" target="_blank" download="${a.nombre}" style="flex:1;text-align:center;background:#1565C0;color:#fff;font-size:10px;font-weight:700;padding:4px;border-radius:5px;text-decoration:none">⬇ Descargar</a>
+        <button onclick="eliminarArchivoRep(${ai})" style="background:#C62828;border:none;border-radius:5px;color:#fff;font-size:10px;font-weight:700;padding:4px 6px;cursor:pointer">🗑</button>
+      </div>
+      <div style="font-size:9px;color:#888;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">${a.nombre}</div>
+    </div>`;
+  }).join('');
+}
+
+async function subirArchivosRep(input) {
+  if (_archivosRepIdx < 0) return;
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  const prog = document.getElementById('archivos-upload-progress');
+  const r = state.reparaciones[_archivosRepIdx];
+  if (!r.archivos) r.archivos = [];
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    if (f.size > 10 * 1024 * 1024) { prog.textContent = f.name + ' supera los 10MB, omitido.'; continue; }
+    prog.textContent = `Subiendo ${i + 1}/${files.length}: ${f.name}…`;
+    try {
+      const base64 = await fileToBase64(f);
+      const ts = Date.now();
+      const ext = f.name.split('.').pop();
+      const path = `uploads/reparaciones/rep-${ts}-${f.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const url = await subirArchivoGH(path, base64);
+      r.archivos.push({ nombre: f.name, url, tipo: f.type });
+      renderArchivosGrid();
+      saveState();
+    } catch(e) {
+      prog.textContent = 'Error al subir ' + f.name + ': ' + e.message;
+    }
+  }
+  prog.textContent = files.length > 1 ? 'Todos los archivos subidos.' : 'Archivo subido.';
+  input.value = '';
+  renderReparaciones();
+}
+
+async function eliminarArchivoRep(ai) {
+  if (_archivosRepIdx < 0) return;
+  const r = state.reparaciones[_archivosRepIdx];
+  if (!r || !r.archivos) return;
+  const ok = await showConfirm('¿Eliminar archivo?', 'Se eliminará ' + r.archivos[ai].nombre + ' de la lista (el archivo permanece en GitHub).');
+  if (!ok) return;
+  r.archivos.splice(ai, 1);
+  saveState();
+  renderArchivosGrid();
+  renderReparaciones();
+}
+
+function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload = () => res(reader.result.split(',')[1]);
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function subirArchivoGH(path, base64Content) {
+  // Verificar si ya existe para obtener SHA
+  let sha = null;
+  try {
+    const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+      headers: { 'Authorization': `token ${GH_TOKEN}`, 'User-Agent': 'ht-premoldeados' }
+    });
+    if (check.ok) { const d = await check.json(); sha = d.sha; }
+  } catch(e) {}
+
+  const body = { message: `Upload ${path}`, content: base64Content };
+  if (sha) body.sha = sha;
+
+  const r = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${path}`, {
+    method: 'PUT',
+    headers: { 'Authorization': `token ${GH_TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'ht-premoldeados' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) { const t = await r.text(); throw new Error(r.status + ': ' + t); }
+  const data = await r.json();
+  return data.content.download_url;
 }
 </script>
 <!-- MATERIALES DE OBRA -->
@@ -4278,6 +4397,27 @@ function renderReparaciones() {
           <button onclick="guardarReparacion()" style="flex:1;background:#D85A30;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">Guardar</button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="modal-archivos-rep" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border-radius:14px;padding:0;width:100%;max-width:560px;box-shadow:0 8px 32px rgba(0,0,0,.25);overflow:hidden;margin:auto">
+    <div style="background:#D85A30;padding:16px 20px;display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:14px;font-weight:700;color:#fff" id="modal-archivos-titulo">Fotos y videos</span>
+      <button onclick="cerrarModalArchivosRep()" style="background:rgba(255,255,255,.2);border:none;border-radius:6px;color:#fff;font-size:18px;font-weight:700;cursor:pointer;padding:2px 8px;line-height:1">×</button>
+    </div>
+    <div style="padding:20px">
+      <div id="archivos-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;min-height:60px"></div>
+      <label style="display:flex;align-items:center;gap:10px;padding:12px 16px;border:2px dashed #D85A30;border-radius:10px;cursor:pointer;background:#FFF8F5;transition:background .15s" onmouseover="this.style.background='#FDF3EF'" onmouseout="this.style.background='#FFF8F5'">
+        <span style="font-size:22px">📎</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#D85A30">Subir fotos o videos</div>
+          <div style="font-size:11px;color:#888">JPG, PNG, MP4, MOV — máx. 10MB por archivo</div>
+        </div>
+        <input type="file" multiple accept="image/*,video/*" onchange="subirArchivosRep(this)" style="display:none">
+      </label>
+      <div id="archivos-upload-progress" style="margin-top:10px;font-size:12px;color:#888"></div>
     </div>
   </div>
 </div>
