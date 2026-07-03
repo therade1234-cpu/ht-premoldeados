@@ -284,6 +284,8 @@ table.movs tr:hover td{background:#FAFAFA}
         <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Cliente</label>
           <input id="edit-cliente" type="text" placeholder="Nombre" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
       </div>
+      <div style="margin-bottom:10px"><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Origen de la venta</label>
+        <select id="edit-origen" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff;color:#1A1A1A"><option value="">Seleccionar...</option><option value="Google">Google</option><option value="Meta">Meta</option><option value="Google Maps">Google Maps</option><option value="Mercado Libre">Mercado Libre</option><option value="Instagram">Instagram</option><option value="Dato de Gonza">Dato de Gonza</option><option value="Dato del cel de ventas">Dato del cel de ventas</option><option value="Página web">Página web</option></select></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Teléfono</label>
           <input id="edit-tel" type="text" placeholder="11-xxxx-xxxx" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
@@ -1140,6 +1142,8 @@ table.movs tr:hover td{background:#FAFAFA}
         <div style="font-size:10px;font-weight:700;color:#993C1D;text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px">Datos del vendedor y cliente</div>
         <div class="form-group" style="margin-bottom:10px"><label class="form-label">Vendedora/or</label>
           <select id="v-vendedor"><option value="">Seleccionar...</option></select></div>
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">Origen de la venta</label>
+          <select id="v-origen"><option value="">Seleccionar...</option><option value="Google">Google</option><option value="Meta">Meta</option><option value="Google Maps">Google Maps</option><option value="Mercado Libre">Mercado Libre</option><option value="Instagram">Instagram</option><option value="Dato de Gonza">Dato de Gonza</option><option value="Dato del cel de ventas">Dato del cel de ventas</option><option value="Página web">Página web</option></select></div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Cliente</label><input type="text" id="v-cliente" placeholder="Nombre del cliente" /></div>
           <div class="form-group"><label class="form-label">Teléfono</label><input type="text" id="v-tel" placeholder="11-xxxx-xxxx" /></div>
@@ -3393,6 +3397,7 @@ function mostrarDetallesDia(fechaStr){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:12px">
         <div><span style="color:#888;font-weight:600">Cliente:</span> <span style="color:#1A1A1A;font-weight:500">${o.cliente||'—'}</span></div>
         <div><span style="color:#888;font-weight:600">Tel:</span> <span style="color:#1A1A1A">${o.tel||'—'}</span></div>
+        <div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Origen:</span> <span style="color:#1A1A1A;font-weight:600">${o.origen||'—'}</span></div>
         <div><span style="color:#888;font-weight:600">Localidad:</span> <span style="color:#1A1A1A">${o.localidad||'—'}</span></div>
         <div><span style="color:#888;font-weight:600">Dirección:</span> <span style="color:#1A1A1A">${o.direccion||'—'}</span></div>
         <div><span style="color:#888;font-weight:600">Metros:</span> <span style="color:#1A1A1A;font-weight:700">${o.metros||0} m</span></div>
@@ -3448,6 +3453,7 @@ function editarObra(fechaStr,idx){
   vs.value=obra.vendedor||'';
   // populate fields
   const set=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val||'';};
+  set('edit-origen',obra.origen);
   set('edit-cliente',obra.cliente);
   set('edit-tel',obra.tel);
   set('edit-localidad',obra.localidad);
@@ -3501,6 +3507,7 @@ function guardarEdicion(){
   const g=(id)=>{const el=document.getElementById(id);return el?el.value:'';};
   const gn=(id)=>parseFloat((g(id)||'0').replace(/\./g,'').replace(',','.'))||0;
   obra.vendedor=g('edit-vendedor');
+  obra.origen=g('edit-origen');
   obra.cliente=g('edit-cliente');
   obra.tel=g('edit-tel');
   obra.localidad=g('edit-localidad');
@@ -3632,6 +3639,7 @@ function actualizarPrecio(){
 function redondearParMetros(){}
 function cargarVenta(){
   const vend=document.getElementById('v-vendedor').value;
+  const origen=document.getElementById('v-origen').value;
   const cliente=document.getElementById('v-cliente').value.trim();
   const tel=document.getElementById('v-tel').value.trim();
   const fecha=document.getElementById('v-fecha').value;
@@ -3658,12 +3666,12 @@ function cargarVenta(){
   const resta=parseMonto(document.getElementById('v-resta').value);
   const placasReja=parseInt(document.getElementById('v-placas-reja').value)||0;
   if(!vend||!cliente||!metros||!fecha){alert('Completá al menos: vendedor, cliente, metros y fecha');return;}
-  state.ventas.push({vendedor:vend,cliente,tel,fecha,fechaVenta,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja});
+  state.ventas.push({vendedor:vend,origen,cliente,tel,fecha,fechaVenta,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja});
   const vendSel=document.getElementById('v-vendedor');
   const vendGuardado=vendSel?vendSel.value:'';
   saveState();
   // limpiar
-  ['v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-fecha-venta','v-diseno-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['v-origen','v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-fecha-venta','v-diseno-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const dcEl=document.getElementById('v-diseno-custom');if(dcEl)dcEl.style.display='none';
   if(vendSel&&vendGuardado)vendSel.value=vendGuardado;
   const dFechaParts=fecha.split('-');
