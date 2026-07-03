@@ -3879,7 +3879,77 @@ async function eliminarVisita(idx) {
   renderVisitas();
 }
 
+let visYear = new Date().getFullYear(), visMonth = new Date().getMonth(), _visDiaSel = null;
+function navVisMes(d){visMonth+=d;if(visMonth<0){visMonth=11;visYear--;}if(visMonth>11){visMonth=0;visYear++;}buildCalendarVis();}
+function buildCalendarVis(){
+  const cal=document.getElementById('calendario-vis');
+  if(!cal)return;
+  document.getElementById('vis-period-label').textContent=MESES[visMonth]+' '+visYear;
+  document.getElementById('cal-vis-titulo').textContent='Calendario — '+MESES[visMonth]+' '+visYear;
+  const firstDay=new Date(visYear,visMonth,1).getDay();
+  const daysInMonth=new Date(visYear,visMonth+1,0).getDate();
+  const visM=state.visitas.filter(v=>{if(!v.fecha)return false;const d=parseFecha(v.fecha);return d.getFullYear()===visYear&&d.getMonth()===visMonth;});
+  const hoy=new Date();
+  const DOT_COLORS=['#1565C0','#1D7A3E','#D85A30','#6A1B9A'];
+  const DOT_BG=['#E3F0FD','#E8F5E9','#FDF3EF','#F3E5F5'];
+  let html='';
+  for(let i=0;i<firstDay;i++){html+=`<div class="cal-day other"><div class="day-num">${new Date(visYear,visMonth,-firstDay+i+1).getDate()}</div></div>`;}
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${visYear}-${String(visMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const vis=visM.filter(v=>v.fecha===ds);
+    const n=vis.length;
+    const isToday=hoy.getFullYear()===visYear&&hoy.getMonth()===visMonth&&hoy.getDate()===d;
+    const dayColor=n===0?'#888':DOT_COLORS[Math.min(n,4)-1];
+    const dayBg=n===0?'':DOT_BG[Math.min(n,4)-1];
+    const dots=n>0?`<div style="display:flex;gap:3px;margin-top:5px;flex-wrap:wrap">${Array.from({length:Math.min(n,4)}).map((_,i)=>`<div style="width:9px;height:9px;border-radius:50%;background:${DOT_COLORS[i]};box-shadow:0 0 0 1.5px ${DOT_COLORS[i]}40"></div>`).join('')}${n>4?`<span style="font-size:8px;color:#6A1B9A;font-weight:700">+${n-4}</span>`:''}</div>`:'';
+    html+=`<div class="cal-day${n>0?' has-data':''}${isToday?' today':''}" onclick="clickDiaVis('${ds}')" style="cursor:pointer;${dayBg?'background:'+dayBg+';':''}${n>0?'border-color:'+dayColor+';':''}">
+      <div class="day-num" style="color:${dayColor};font-weight:${n>0?'700':'500'}">${d}</div>
+      ${dots}
+    </div>`;
+  }
+  cal.innerHTML=html;
+}
+function clickDiaVis(fechaStr){_visDiaSel=fechaStr;mostrarDetallesDiaVis(fechaStr);}
+function mostrarDetallesDiaVis(fechaStr){
+  const el=document.getElementById('detalle-dia-vis');
+  if(!el)return;
+  _visDiaSel=fechaStr;
+  const vis=state.visitas.filter(v=>v.fecha===fechaStr);
+  const partes=fechaStr.split('-');
+  const labelFecha=`${partes[2]}/${partes[1]}/${partes[0]}`;
+  if(!vis.length){
+    el.innerHTML=`<div style="color:#A0A0A0;font-size:13px;text-align:center;padding:16px">Sin visitas para el ${labelFecha}</div>`;
+    return;
+  }
+  el.innerHTML=`
+    <div style="font-size:12px;font-weight:700;color:#1565C0;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">
+      ${vis.length} visita${vis.length>1?'s':''} — ${labelFecha}
+    </div>
+    ${vis.map(v=>{
+      const realIdx=state.visitas.indexOf(v);
+      const estadoColor=v.estado==='Pendiente'?'#1565C0':v.estado==='Realizada'?'#2E7D32':'#888';
+      const estadoBg=v.estado==='Pendiente'?'#E3F0FD':v.estado==='Realizada'?'#EDF7EE':'#F5F5F5';
+      return `<div style="border:1.5px solid #90BEE8;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#F5FAFF">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:700;color:#1565C0">${v.cliente||'Sin nombre'}</span>
+          <span style="background:${estadoBg};color:${estadoColor};padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700">${v.estado||'—'}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:12px">
+          <div><span style="color:#888;font-weight:600">Tel:</span> <span style="color:#1A1A1A">${v.tel||'—'}</span></div>
+          <div><span style="color:#888;font-weight:600">Vendedor:</span> <span style="color:#1A1A1A">${v.vendedor||'—'}</span></div>
+          <div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Dirección:</span> <span style="color:#1A1A1A">${v.dir||'—'}</span></div>
+          ${v.notas?`<div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Notas:</span> <span style="color:#1A1A1A">${v.notas}</span></div>`:''}
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button onclick="abrirFormVisita(${realIdx})" style="flex:1;padding:8px;border:1.5px solid #2563EB;border-radius:8px;background:#fff;color:#2563EB;font-size:12px;font-weight:700;cursor:pointer">✏️ Editar</button>
+          <button onclick="eliminarVisita(${realIdx})" style="flex:1;padding:8px;border:1.5px solid #C62828;border-radius:8px;background:#fff;color:#C62828;font-size:12px;font-weight:700;cursor:pointer">🗑 Borrar</button>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
 function renderVisitas() {
+  buildCalendarVis();
+  if(_visDiaSel)mostrarDetallesDiaVis(_visDiaSel);
   const pendientes = state.visitas.filter(v => v.estado === 'Pendiente').length;
   const realizadas = state.visitas.filter(v => v.estado === 'Realizada').length;
   const mEl = document.getElementById('visitas-metrics');
@@ -4326,6 +4396,29 @@ async function subirArchivoGH(path, base64Content) {
   </div>
   <div class="content">
     <div id="visitas-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
+
+    <div class="two-col">
+      <div class="card">
+        <div style="display:flex;align-items:center;margin-bottom:10px">
+          <div class="card-title" id="cal-vis-titulo" style="margin:0">Calendario de visitas</div>
+          <div class="nav-btns" style="margin-left:auto">
+            <button class="nav-btn" onclick="navVisMes(-1)">&#8249;</button>
+            <span class="period-label" id="vis-period-label">—</span>
+            <button class="nav-btn" onclick="navVisMes(1)">&#8250;</button>
+          </div>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-hdr">Dom</div><div class="cal-hdr">Lun</div><div class="cal-hdr">Mar</div>
+          <div class="cal-hdr">Mié</div><div class="cal-hdr">Jue</div><div class="cal-hdr">Vie</div><div class="cal-hdr">Sáb</div>
+        </div>
+        <div class="cal-grid" id="calendario-vis"></div>
+        <div style="font-size:11px;color:#888;margin-top:10px">Los días se marcan según la <b>fecha de la visita</b>.</div>
+      </div>
+      <div class="card" id="detalle-dia-vis-card">
+        <div class="card-title">Detalle del día</div>
+        <div id="detalle-dia-vis"><div style="color:#A0A0A0;font-size:13px;text-align:center;padding:16px">Seleccioná un día del calendario para ver las visitas</div></div>
+      </div>
+    </div>
 
     <div class="card" style="padding:0;overflow:hidden">
       <div style="overflow-x:auto">
