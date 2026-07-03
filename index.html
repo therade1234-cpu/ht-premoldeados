@@ -1226,11 +1226,11 @@ table.movs tr:hover td{background:#FAFAFA}
     </div>
     <div class="card"><div class="card-title">Ventas del mes</div>
       <div class="table-wrap"><table class="movs">
-        <thead><tr><th style="width:75px">Fecha</th><th style="width:90px">Vendedor</th><th>Cliente</th>
+        <thead><tr><th style="width:75px">Fecha</th><th style="width:90px">Vendedor</th><th style="width:100px">Origen</th><th>Cliente</th>
           <th>Localidad</th><th style="width:80px">Diseño</th><th style="text-align:right;width:60px">Metros</th>
           <th style="text-align:right;width:80px">Total obra</th><th style="text-align:right;width:70px">Seña</th>
           <th style="text-align:right;width:80px">Resta</th></tr></thead>
-        <tbody id="tabla-ventas"><tr><td colspan="7" style="color:#A0A0A0;text-align:center;padding:20px">Sin ventas</td></tr></tbody>
+        <tbody id="tabla-ventas"><tr><td colspan="10" style="color:#A0A0A0;text-align:center;padding:20px">Sin ventas</td></tr></tbody>
       </table></div>
     </div>
   </div>
@@ -1984,8 +1984,8 @@ function renderVentas(){
     <div class="metric-card"><div class="metric-label">Facturado</div><div class="metric-value" style="color:#2E7D32">${fmt(total)}</div><div class="metric-month">${MESES[ventasMonth]}</div></div>`;
   buildCalendar();
   const tb=document.getElementById('tabla-ventas');
-  if(!vs.length){tb.innerHTML='<tr><td colspan="7" style="color:#A0A0A0;text-align:center;padding:20px">Sin ventas</td></tr>';return;}
-  tb.innerHTML=vs.slice().reverse().map(v=>`<tr><td>${v.fecha.slice(5)}</td><td>${v.vendedor}</td><td>${v.cliente||'—'}</td><td>${v.localidad||'—'}</td><td>${v.diseno||'—'}</td><td style="text-align:right">${v.metros} m</td><td style="text-align:right;font-weight:600;color:#2E7D32">${fmt(v.totalObra||v.metros*v.precio)}</td><td style="text-align:right;color:#993C1D">${v.sena?fmt(v.sena):'—'}</td><td style="text-align:right;font-weight:600;color:#C62828">${v.resta?fmt(v.resta):'—'}</td></tr>`).join('');
+  if(!vs.length){tb.innerHTML='<tr><td colspan="10" style="color:#A0A0A0;text-align:center;padding:20px">Sin ventas</td></tr>';return;}
+  tb.innerHTML=vs.slice().reverse().map(v=>`<tr><td>${v.fecha.slice(5)}</td><td>${v.vendedor}</td><td>${v.origen||'—'}</td><td>${v.cliente||'—'}</td><td>${v.localidad||'—'}</td><td>${v.diseno||'—'}</td><td style="text-align:right">${v.metros} m</td><td style="text-align:right;font-weight:600;color:#2E7D32">${fmt(v.totalObra||v.metros*v.precio)}</td><td style="text-align:right;color:#993C1D">${v.sena?fmt(v.sena):'—'}</td><td style="text-align:right;font-weight:600;color:#C62828">${v.resta?fmt(v.resta):'—'}</td></tr>`).join('');
 }
 function buscarCliente(q){
   const res=document.getElementById('resultado-busqueda');
