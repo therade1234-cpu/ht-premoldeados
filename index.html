@@ -3993,7 +3993,7 @@ function renderReparaciones() {
       <td style="padding:8px 10px"><span style="background:${estadoBg};color:${estadoColor};padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700">${r.estado}</span></td>
       <td style="padding:8px 6px;white-space:nowrap">
         <button onclick="abrirFormReparacion(${realIdx})" style="background:none;border:1.5px solid #1565C0;border-radius:5px;color:#1565C0;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">✏️</button>
-        <button onclick="eliminarReparacion(${realIdx})" style="background:none;border:1.5px solid #C62828;border-radius:5px;color:#C62828;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑</button><button onclick="abrirModalArchivosRep(${realIdx})" style="background:none;border:1.5px solid #D85A30;border-radius:5px;color:#D85A30;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">📎 <span style=\"font-size:10px\">${(r.archivos||[]).length||\"\"}</span></button>
+        <button onclick="eliminarReparacion(${realIdx})" style="background:none;border:1.5px solid #C62828;border-radius:5px;color:#C62828;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑</button><button onclick="abrirModalArchivosRep(${realIdx})" style="background:none;border:1.5px solid #D85A30;border-radius:5px;color:#D85A30;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px">📎 <span style="font-size:10px">${(r.archivos||[]).length||""}</span></button>
       </td>
     </tr>`;
   }).join('');
