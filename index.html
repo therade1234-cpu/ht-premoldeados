@@ -3971,7 +3971,78 @@ async function eliminarReparacion(idx) {
   renderReparaciones();
 }
 
+let repYear = new Date().getFullYear(), repMonth = new Date().getMonth(), _repDiaSel = null;
+function navRepMes(d){repMonth+=d;if(repMonth<0){repMonth=11;repYear--;}if(repMonth>11){repMonth=0;repYear++;}buildCalendarRep();}
+function buildCalendarRep(){
+  const cal=document.getElementById('calendario-rep');
+  if(!cal)return;
+  document.getElementById('rep-period-label').textContent=MESES[repMonth]+' '+repYear;
+  document.getElementById('cal-rep-titulo').textContent='Calendario — '+MESES[repMonth]+' '+repYear;
+  const firstDay=new Date(repYear,repMonth,1).getDay();
+  const daysInMonth=new Date(repYear,repMonth+1,0).getDate();
+  const repsM=state.reparaciones.filter(r=>{if(!r.fechaRep)return false;const d=parseFecha(r.fechaRep);return d.getFullYear()===repYear&&d.getMonth()===repMonth;});
+  const hoy=new Date();
+  const DOT_COLORS=['#D85A30','#1D7A3E','#1565C0','#6A1B9A'];
+  const DOT_BG=['#FDF3EF','#E8F5E9','#E3F0FD','#F3E5F5'];
+  let html='';
+  for(let i=0;i<firstDay;i++){html+=`<div class="cal-day other"><div class="day-num">${new Date(repYear,repMonth,-firstDay+i+1).getDate()}</div></div>`;}
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${repYear}-${String(repMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const reps=repsM.filter(r=>r.fechaRep===ds);
+    const n=reps.length;
+    const isToday=hoy.getFullYear()===repYear&&hoy.getMonth()===repMonth&&hoy.getDate()===d;
+    const dayColor=n===0?'#888':DOT_COLORS[Math.min(n,4)-1];
+    const dayBg=n===0?'':DOT_BG[Math.min(n,4)-1];
+    const dots=n>0?`<div style="display:flex;gap:3px;margin-top:5px;flex-wrap:wrap">${Array.from({length:Math.min(n,4)}).map((_,i)=>`<div style="width:9px;height:9px;border-radius:50%;background:${DOT_COLORS[i]};box-shadow:0 0 0 1.5px ${DOT_COLORS[i]}40"></div>`).join('')}${n>4?`<span style="font-size:8px;color:#6A1B9A;font-weight:700">+${n-4}</span>`:''}</div>`:'';
+    html+=`<div class="cal-day${n>0?' has-data':''}${isToday?' today':''}" onclick="clickDiaRep('${ds}')" style="cursor:pointer;${dayBg?'background:'+dayBg+';':''}${n>0?'border-color:'+dayColor+';':''}">
+      <div class="day-num" style="color:${dayColor};font-weight:${n>0?'700':'500'}">${d}</div>
+      ${dots}
+    </div>`;
+  }
+  cal.innerHTML=html;
+}
+function clickDiaRep(fechaStr){_repDiaSel=fechaStr;mostrarDetallesDiaRep(fechaStr);}
+function mostrarDetallesDiaRep(fechaStr){
+  const el=document.getElementById('detalle-dia-rep');
+  if(!el)return;
+  _repDiaSel=fechaStr;
+  const reps=state.reparaciones.filter(r=>r.fechaRep===fechaStr);
+  const partes=fechaStr.split('-');
+  const labelFecha=`${partes[2]}/${partes[1]}/${partes[0]}`;
+  if(!reps.length){
+    el.innerHTML=`<div style="color:#A0A0A0;font-size:13px;text-align:center;padding:16px">Sin reparaciones para el ${labelFecha}</div>`;
+    return;
+  }
+  el.innerHTML=`
+    <div style="font-size:12px;font-weight:700;color:#993C1D;text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px">
+      ${reps.length} reparaci${reps.length>1?'ones':'ón'} — ${labelFecha}
+    </div>
+    ${reps.map(r=>{
+      const realIdx=state.reparaciones.indexOf(r);
+      const estadoColor=r.estado==='Pendiente'?'#C62828':r.estado==='En proceso'?'#D85A30':'#2E7D32';
+      const estadoBg=r.estado==='Pendiente'?'#FDECEA':r.estado==='En proceso'?'#FDF3EF':'#EDF7EE';
+      return `<div style="border:1.5px solid #F0997B;border-radius:10px;padding:14px 16px;margin-bottom:10px;background:#FFF8F5">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:700;color:#D85A30">${r.cliente||'Sin nombre'}</span>
+          <span style="background:${estadoBg};color:${estadoColor};padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700">${r.estado||'—'}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:12px">
+          <div><span style="color:#888;font-weight:600">Tel:</span> <span style="color:#1A1A1A">${r.tel||'—'}</span></div>
+          <div><span style="color:#888;font-weight:600">Fecha obra:</span> <span style="color:#1A1A1A">${r.fechaObra?r.fechaObra.split('-').reverse().join('/'):'—'}</span></div>
+          <div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Dirección:</span> <span style="color:#1A1A1A">${r.dir||'—'}</span></div>
+          ${r.desc?`<div style="grid-column:1/-1"><span style="color:#888;font-weight:600">Descripción:</span> <span style="color:#1A1A1A">${r.desc}</span></div>`:''}
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button onclick="abrirFormReparacion(${realIdx})" style="flex:1;padding:8px;border:1.5px solid #2563EB;border-radius:8px;background:#fff;color:#2563EB;font-size:12px;font-weight:700;cursor:pointer">✏️ Editar</button>
+          <button onclick="abrirModalArchivosRep(${realIdx})" style="flex:1;padding:8px;border:1.5px solid #D85A30;border-radius:8px;background:#fff;color:#D85A30;font-size:12px;font-weight:700;cursor:pointer">📎 Fotos${(r.archivos||[]).length?' ('+(r.archivos||[]).length+')':''}</button>
+          <button onclick="eliminarReparacion(${realIdx})" style="flex:1;padding:8px;border:1.5px solid #C62828;border-radius:8px;background:#fff;color:#C62828;font-size:12px;font-weight:700;cursor:pointer">🗑 Borrar</button>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
 function renderReparaciones() {
+  buildCalendarRep();
+  if(_repDiaSel)mostrarDetallesDiaRep(_repDiaSel);
   const pendientes = state.reparaciones.filter(r => r.estado === 'Pendiente').length;
   const enProceso = state.reparaciones.filter(r => r.estado === 'En proceso').length;
   const realizadas = state.reparaciones.filter(r => r.estado === 'Realizada').length;
@@ -4337,6 +4408,29 @@ async function subirArchivoGH(path, base64Content) {
   </div>
   <div class="content">
     <div id="reparaciones-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
+
+    <div class="two-col">
+      <div class="card">
+        <div style="display:flex;align-items:center;margin-bottom:10px">
+          <div class="card-title" id="cal-rep-titulo" style="margin:0">Calendario de reparaciones</div>
+          <div class="nav-btns" style="margin-left:auto">
+            <button class="nav-btn" onclick="navRepMes(-1)">&#8249;</button>
+            <span class="period-label" id="rep-period-label">—</span>
+            <button class="nav-btn" onclick="navRepMes(1)">&#8250;</button>
+          </div>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-hdr">Dom</div><div class="cal-hdr">Lun</div><div class="cal-hdr">Mar</div>
+          <div class="cal-hdr">Mié</div><div class="cal-hdr">Jue</div><div class="cal-hdr">Vie</div><div class="cal-hdr">Sáb</div>
+        </div>
+        <div class="cal-grid" id="calendario-rep"></div>
+        <div style="font-size:11px;color:#888;margin-top:10px">Los días se marcan según la <b>fecha de reparación</b>.</div>
+      </div>
+      <div class="card" id="detalle-dia-rep-card">
+        <div class="card-title">Detalle del día</div>
+        <div id="detalle-dia-rep"><div style="color:#A0A0A0;font-size:13px;text-align:center;padding:16px">Seleccioná un día del calendario para ver las reparaciones</div></div>
+      </div>
+    </div>
 
     <div class="card" style="padding:0;overflow:hidden">
       <div style="overflow-x:auto">
