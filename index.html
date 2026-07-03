@@ -525,6 +525,20 @@ table.movs tr:hover td{background:#FAFAFA}
       <div class="home-btn-title">ANÁLISIS DE VENTAS</div>
       <div class="home-btn-desc">Material, diseño y zonas más vendidas</div>
     </button>
+    <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('visitas')">
+      <div class="home-btn-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="home-btn-title">VISITAS</div>
+      <div class="home-btn-desc">Futuras visitas a clientes para cerrar ventas</div>
+    </button>
+    <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('reparaciones')">
+      <div class="home-btn-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+      </div>
+      <div class="home-btn-title">REPARACIONES</div>
+      <div class="home-btn-desc">Obras con reparaciones pendientes</div>
+    </button>
   </div>
 </div>
 
@@ -1302,7 +1316,7 @@ const OC=['#D85A30','#E8744A','#993C1D','#F0997B','#BA7517','#5DCAA5','#7F77DD']
 const CAT_LABEL={obras:'Obras',senas:'Señas',publicidad:'Publicidad',sueldos:'Sueldos',fabrica:'Fábrica',materiales:'Materiales',vales:'Vales',fletes:'Fletes',ferreteria:'Ferretería',nafta:'Nafta',gastos_calle:'Gastos de calle',sueldos_oficina:'Sueldos oficina',pago_chicos_obra:'Pago semanal chicos de obra',nominas:'Nóminas',otro:'Otro'};
 
 // ---- PERSISTENCIA EN TIEMPO REAL (Vercel Edge Config) ----
-let state={ movimientos:[], ventas:[], vendedores:[] };
+let state={ movimientos:[], ventas:[], vendedores:[], visitas:[], reparaciones:[] };
 let _panelActivo = null;
 let _saving = false;
 let _lastSave = 0;
@@ -1312,6 +1326,8 @@ function applyData(data){
   if(_lastSave === 0){
     state.ventas = data.ventas || [];
     state.movimientos = data.movimientos || [];
+    state.visitas = data.visitas || [];
+    state.reparaciones = data.reparaciones || [];
   }
   state.vendedores = data.vendedores || [];
   // Restaurar nóminas completas (empleados, porDia y semanas)
@@ -1326,6 +1342,8 @@ function applyData(data){
   else if(_panelActivo==='ventas')renderVentas();
   else if(_panelActivo==='analisis')renderAnalisis();
   else if(_panelActivo==='vendedores')renderVendedores();
+  else if(_panelActivo==='visitas')renderVisitas();
+  else if(_panelActivo==='reparaciones')renderReparaciones();
 }
 
 let _pendingSave = false;
@@ -1337,7 +1355,7 @@ async function saveState(){
     const r = await fetch('/api/data', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, nomPlanilla: nomPlanilla })
+      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, nomPlanilla: nomPlanilla, visitas: state.visitas, reparaciones: state.reparaciones })
     });
     const result = await r.json();
     if(!result.ok) {
@@ -1413,6 +1431,8 @@ function openPanel(id){
     renderNominas();
   }
   else if(id==='materiales')renderMateriales();
+  else if(id==='visitas'){renderVisitas();}
+  else if(id==='reparaciones'){renderReparaciones();}
   else if(id==='recibos'){
     var hoy3=new Date();
     var s3=hoy3.getFullYear()+'-'+String(hoy3.getMonth()+1).padStart(2,'0')+'-'+String(hoy3.getDate()).padStart(2,'0');
@@ -3792,6 +3812,192 @@ filtrarCatsPorTipo();
 document.getElementById('v-fecha').value=todayStr;
 var nomF=document.getElementById('nom-fecha');if(nomF)nomF.value=todayStr;
 renderPresentismo();
+
+// ---- VISITAS ----
+let _editVisitaIdx = -1;
+
+function abrirFormVisita(idx) {
+  _editVisitaIdx = idx >= 0 ? idx : -1;
+  const f = document.getElementById('form-visita');
+  f.style.display = 'block';
+  const vs = document.getElementById('vis-vendedor');
+  vs.innerHTML = '<option value="">Seleccionar...</option>' + state.vendedores.map(v => `<option value="${v.nombre}">${v.nombre}</option>`).join('');
+  if (idx >= 0) {
+    const v = state.visitas[idx];
+    document.getElementById('vis-fecha').value = v.fecha || '';
+    document.getElementById('vis-cliente').value = v.cliente || '';
+    document.getElementById('vis-tel').value = v.tel || '';
+    document.getElementById('vis-dir').value = v.dir || '';
+    document.getElementById('vis-notas').value = v.notas || '';
+    document.getElementById('vis-estado').value = v.estado || 'Pendiente';
+    vs.value = v.vendedor || '';
+  } else {
+    document.getElementById('vis-fecha').value = '';
+    document.getElementById('vis-cliente').value = '';
+    document.getElementById('vis-tel').value = '';
+    document.getElementById('vis-dir').value = '';
+    document.getElementById('vis-notas').value = '';
+    document.getElementById('vis-estado').value = 'Pendiente';
+  }
+  f.scrollIntoView({ behavior: 'smooth' });
+}
+
+function cerrarFormVisita() {
+  document.getElementById('form-visita').style.display = 'none';
+  _editVisitaIdx = -1;
+}
+
+function guardarVisita() {
+  const g = id => document.getElementById(id).value;
+  if (!g('vis-fecha') || !g('vis-cliente')) { alert('Completá fecha y cliente'); return; }
+  const obj = {
+    fecha: g('vis-fecha'), cliente: g('vis-cliente'), tel: g('vis-tel'),
+    dir: g('vis-dir'), vendedor: g('vis-vendedor'), notas: g('vis-notas'),
+    estado: g('vis-estado')
+  };
+  if (_editVisitaIdx >= 0) state.visitas[_editVisitaIdx] = obj;
+  else state.visitas.push(obj);
+  cerrarFormVisita();
+  saveState();
+  renderVisitas();
+}
+
+async function eliminarVisita(idx) {
+  const ok = await showConfirm('¿Eliminar visita?', 'Se eliminará la visita de ' + (state.visitas[idx].cliente || 'este cliente'));
+  if (!ok) return;
+  state.visitas.splice(idx, 1);
+  saveState();
+  renderVisitas();
+}
+
+function renderVisitas() {
+  const pendientes = state.visitas.filter(v => v.estado === 'Pendiente').length;
+  const realizadas = state.visitas.filter(v => v.estado === 'Realizada').length;
+  const mEl = document.getElementById('visitas-metrics');
+  if (mEl) mEl.innerHTML =
+    `<div class="metric-card" style="border-top-color:#1565C0"><div class="metric-label">Pendientes</div><div class="metric-value" style="color:#1565C0">${pendientes}</div></div>` +
+    `<div class="metric-card" style="border-top-color:#2E7D32"><div class="metric-label">Realizadas</div><div class="metric-value" style="color:#2E7D32">${realizadas}</div></div>` +
+    `<div class="metric-card"><div class="metric-label">Total</div><div class="metric-value">${state.visitas.length}</div></div>`;
+
+  const tb = document.getElementById('tabla-visitas');
+  if (!tb) return;
+  if (!state.visitas.length) {
+    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#A0A0A0">Sin visitas cargadas</td></tr>';
+    return;
+  }
+  const sorted = state.visitas.slice().sort((a, b) => (a.fecha||'').localeCompare(b.fecha||''));
+  tb.innerHTML = sorted.map((v, i) => {
+    const realIdx = state.visitas.indexOf(v);
+    const estadoColor = v.estado === 'Pendiente' ? '#1565C0' : v.estado === 'Realizada' ? '#2E7D32' : '#888';
+    const estadoBg = v.estado === 'Pendiente' ? '#E3F0FD' : v.estado === 'Realizada' ? '#EDF7EE' : '#F5F5F5';
+    return `<tr style="border-bottom:1px solid #F0F0F0;background:${i % 2 === 0 ? '#fff' : '#FAFAFA'}">
+      <td style="padding:8px 10px;font-weight:600;color:#1A1A1A">${v.fecha ? v.fecha.split('-').reverse().join('/') : '—'}</td>
+      <td style="padding:8px 10px;font-weight:600">${v.cliente || '—'}</td>
+      <td style="padding:8px 10px;color:#555">${v.tel || '—'}</td>
+      <td style="padding:8px 10px;color:#555">${v.dir || '—'}</td>
+      <td style="padding:8px 10px;color:#555">${v.vendedor || '—'}</td>
+      <td style="padding:8px 10px;color:#555;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.notas || '—'}</td>
+      <td style="padding:8px 10px"><span style="background:${estadoBg};color:${estadoColor};padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700">${v.estado}</span></td>
+      <td style="padding:8px 6px;white-space:nowrap">
+        <button onclick="abrirFormVisita(${realIdx})" style="background:none;border:1.5px solid #1565C0;border-radius:5px;color:#1565C0;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">✏️</button>
+        <button onclick="eliminarVisita(${realIdx})" style="background:none;border:1.5px solid #C62828;border-radius:5px;color:#C62828;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ---- REPARACIONES ----
+let _editReparacionIdx = -1;
+
+function abrirFormReparacion(idx) {
+  _editReparacionIdx = idx >= 0 ? idx : -1;
+  const f = document.getElementById('form-reparacion');
+  f.style.display = 'block';
+  if (idx >= 0) {
+    const r = state.reparaciones[idx];
+    document.getElementById('rep-fecha-obra').value = r.fechaObra || '';
+    document.getElementById('rep-cliente').value = r.cliente || '';
+    document.getElementById('rep-tel').value = r.tel || '';
+    document.getElementById('rep-dir').value = r.dir || '';
+    document.getElementById('rep-desc').value = r.desc || '';
+    document.getElementById('rep-fecha-rep').value = r.fechaRep || '';
+    document.getElementById('rep-estado').value = r.estado || 'Pendiente';
+  } else {
+    document.getElementById('rep-fecha-obra').value = '';
+    document.getElementById('rep-cliente').value = '';
+    document.getElementById('rep-tel').value = '';
+    document.getElementById('rep-dir').value = '';
+    document.getElementById('rep-desc').value = '';
+    document.getElementById('rep-fecha-rep').value = '';
+    document.getElementById('rep-estado').value = 'Pendiente';
+  }
+  f.scrollIntoView({ behavior: 'smooth' });
+}
+
+function cerrarFormReparacion() {
+  document.getElementById('form-reparacion').style.display = 'none';
+  _editReparacionIdx = -1;
+}
+
+function guardarReparacion() {
+  const g = id => document.getElementById(id).value;
+  if (!g('rep-cliente')) { alert('Completá el cliente'); return; }
+  const obj = {
+    fechaObra: g('rep-fecha-obra'), cliente: g('rep-cliente'), tel: g('rep-tel'),
+    dir: g('rep-dir'), desc: g('rep-desc'), fechaRep: g('rep-fecha-rep'),
+    estado: g('rep-estado')
+  };
+  if (_editReparacionIdx >= 0) state.reparaciones[_editReparacionIdx] = obj;
+  else state.reparaciones.push(obj);
+  cerrarFormReparacion();
+  saveState();
+  renderReparaciones();
+}
+
+async function eliminarReparacion(idx) {
+  const ok = await showConfirm('¿Eliminar reparación?', 'Se eliminará la reparación de ' + (state.reparaciones[idx].cliente || 'este cliente'));
+  if (!ok) return;
+  state.reparaciones.splice(idx, 1);
+  saveState();
+  renderReparaciones();
+}
+
+function renderReparaciones() {
+  const pendientes = state.reparaciones.filter(r => r.estado === 'Pendiente').length;
+  const enProceso = state.reparaciones.filter(r => r.estado === 'En proceso').length;
+  const realizadas = state.reparaciones.filter(r => r.estado === 'Realizada').length;
+  const mEl = document.getElementById('reparaciones-metrics');
+  if (mEl) mEl.innerHTML =
+    `<div class="metric-card" style="border-top-color:#C62828"><div class="metric-label">Pendientes</div><div class="metric-value" style="color:#C62828">${pendientes}</div></div>` +
+    `<div class="metric-card" style="border-top-color:#D85A30"><div class="metric-label">En proceso</div><div class="metric-value" style="color:#D85A30">${enProceso}</div></div>` +
+    `<div class="metric-card" style="border-top-color:#2E7D32"><div class="metric-label">Realizadas</div><div class="metric-value" style="color:#2E7D32">${realizadas}</div></div>`;
+
+  const tb = document.getElementById('tabla-reparaciones');
+  if (!tb) return;
+  if (!state.reparaciones.length) {
+    tb.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#A0A0A0">Sin reparaciones cargadas</td></tr>';
+    return;
+  }
+  const sorted = state.reparaciones.slice().sort((a, b) => (a.fechaObra||'').localeCompare(b.fechaObra||''));
+  tb.innerHTML = sorted.map((r, i) => {
+    const realIdx = state.reparaciones.indexOf(r);
+    const estadoColor = r.estado === 'Pendiente' ? '#C62828' : r.estado === 'En proceso' ? '#D85A30' : '#2E7D32';
+    const estadoBg = r.estado === 'Pendiente' ? '#FDECEA' : r.estado === 'En proceso' ? '#FDF3EF' : '#EDF7EE';
+    return `<tr style="border-bottom:1px solid #F0F0F0;background:${i % 2 === 0 ? '#fff' : '#FAFAFA'}">
+      <td style="padding:8px 10px;font-weight:600;color:#1A1A1A">${r.fechaObra ? r.fechaObra.split('-').reverse().join('/') : '—'}</td>
+      <td style="padding:8px 10px;font-weight:600">${r.cliente || '—'}</td>
+      <td style="padding:8px 10px;color:#555">${r.tel || '—'}</td>
+      <td style="padding:8px 10px;color:#555">${r.dir || '—'}</td>
+      <td style="padding:8px 10px;color:#555;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.desc || '—'}</td>
+      <td style="padding:8px 10px;color:#555">${r.fechaRep ? r.fechaRep.split('-').reverse().join('/') : '—'}</td>
+      <td style="padding:8px 10px"><span style="background:${estadoBg};color:${estadoColor};padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700">${r.estado}</span></td>
+      <td style="padding:8px 6px;white-space:nowrap">
+        <button onclick="abrirFormReparacion(${realIdx})" style="background:none;border:1.5px solid #1565C0;border-radius:5px;color:#1565C0;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">✏️</button>
+        <button onclick="eliminarReparacion(${realIdx})" style="background:none;border:1.5px solid #C62828;border-radius:5px;color:#C62828;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
 </script>
 <!-- MATERIALES DE OBRA -->
 <div class="inner" id="inner-materiales">
@@ -3911,6 +4117,170 @@ renderPresentismo();
   </div>
 </div>
 
+
+<!-- PANEL VISITAS -->
+<div class="inner" id="inner-visitas">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
+    <span class="tb-title">Visitas</span>
+    <button onclick="abrirFormVisita(-1)" style="background:#D85A30;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;margin-left:auto">+ Nueva visita</button>
+  </div>
+  <div class="content">
+    <div id="visitas-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#F7F7F7;border-bottom:2px solid #E8E8E8">
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700;white-space:nowrap">Fecha visita</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Cliente</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Teléfono</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Dirección</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Vendedor</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Notas</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Estado</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-visitas">
+            <tr><td colspan="8" style="text-align:center;padding:20px;color:#A0A0A0">Sin visitas cargadas</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="form-visita" style="display:none;margin-top:16px">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:16px">Nueva visita</div>
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label">Fecha visita</label>
+            <input type="date" id="vis-fecha" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cliente</label>
+            <input type="text" id="vis-cliente" placeholder="Nombre del cliente" />
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input type="text" id="vis-tel" placeholder="Teléfono" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dirección</label>
+            <input type="text" id="vis-dir" placeholder="Dirección" />
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label">Vendedor</label>
+            <select id="vis-vendedor"><option value="">Seleccionar...</option></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estado</label>
+            <select id="vis-estado">
+              <option value="Pendiente">Pendiente</option>
+              <option value="Realizada">Realizada</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notas</label>
+          <textarea id="vis-notas" rows="3" placeholder="Notas adicionales..." style="width:100%;border:1.5px solid #E0E0E0;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button onclick="cerrarFormVisita()" style="flex:1;background:#fff;border:1.5px solid #CCC;border-radius:8px;padding:10px;font-size:13px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">Cancelar</button>
+          <button onclick="guardarVisita()" style="flex:1;background:#D85A30;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL REPARACIONES -->
+<div class="inner" id="inner-reparaciones">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
+    <span class="tb-title">Reparaciones</span>
+    <button onclick="abrirFormReparacion(-1)" style="background:#D85A30;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;margin-left:auto">+ Nueva reparación</button>
+  </div>
+  <div class="content">
+    <div id="reparaciones-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
+
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#F7F7F7;border-bottom:2px solid #E8E8E8">
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700;white-space:nowrap">Fecha obra</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Cliente</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Teléfono</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Dirección</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Descripción</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700;white-space:nowrap">Fecha reparación</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Estado</th>
+              <th style="padding:10px 10px;text-align:left;color:#6B6B6B;font-weight:700">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-reparaciones">
+            <tr><td colspan="8" style="text-align:center;padding:20px;color:#A0A0A0">Sin reparaciones cargadas</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="form-reparacion" style="display:none;margin-top:16px">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:16px">Nueva reparación</div>
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label">Fecha obra original</label>
+            <input type="date" id="rep-fecha-obra" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Cliente</label>
+            <input type="text" id="rep-cliente" placeholder="Nombre del cliente" />
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input type="text" id="rep-tel" placeholder="Teléfono" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Dirección</label>
+            <input type="text" id="rep-dir" placeholder="Dirección" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción del problema</label>
+          <textarea id="rep-desc" rows="3" placeholder="Describir el problema..." style="width:100%;border:1.5px solid #E0E0E0;border-radius:8px;padding:10px;font-size:13px;font-family:inherit;resize:vertical"></textarea>
+        </div>
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label">Fecha de reparación</label>
+            <input type="date" id="rep-fecha-rep" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estado</label>
+            <select id="rep-estado">
+              <option value="Pendiente">Pendiente</option>
+              <option value="En proceso">En proceso</option>
+              <option value="Realizada">Realizada</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button onclick="cerrarFormReparacion()" style="flex:1;background:#fff;border:1.5px solid #CCC;border-radius:8px;padding:10px;font-size:13px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">Cancelar</button>
+          <button onclick="guardarReparacion()" style="flex:1;background:#D85A30;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="modal-nuevo-empleado" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:14px;padding:26px;width:90%;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
