@@ -57,26 +57,25 @@ async function writeFiles(files) {
 function sigOf(it) {
   return [it.fecha, it.fechaObra, it.fechaRep, it.fechaVenta, it.cliente, it.tel, it.dir, it.direccion, it.localidad, it.metros, it.altura, it.diseno, it.precio, it.sena, it.totalObra, it.monto, it.cat, it.tipo, it.desc, it.notas, it.detalle, it.vendedor, it.estado].join('~');
 }
+// ID determinista derivado del contenido: misma obra -> mismo id en todos lados.
+function hashStr(s) { let h = 5381, i = s.length; while (i) { h = (h * 33) ^ s.charCodeAt(--i); } return (h >>> 0).toString(36); }
+function idFromSig(it) { const s = sigOf(it); return 'h' + hashStr(s) + s.length.toString(36); }
+function ensureIds(arr) { if (Array.isArray(arr)) { for (let i = 0; i < arr.length; i++) { const it = arr[i]; if (it && typeof it === 'object' && !it.id) it.id = idFromSig(it); } } return arr; }
 function mergeArr(existing, incoming, delSet) {
-  const out = [], seenId = {}, seenSig = {}, seenSigNoId = {};
+  const out = [], seenId = {}, seenSig = {};
   function add(it) {
     if (!it || typeof it !== 'object') return;
     const sig = sigOf(it);
     if ((it.id && delSet[it.id]) || delSet[sig]) return; // borrado (tombstone)
-    if (it.id) {
-      if (seenId[it.id]) return;
-      if (seenSigNoId[sig]) return;
-      out.push(it); seenId[it.id] = 1; seenSig[sig] = 1;
-    } else {
-      if (seenSig[sig]) return;
-      out.push(it); seenSig[sig] = 1; seenSigNoId[sig] = 1;
-    }
+    if (it.id && seenId[it.id]) return;                  // mismo id ya presente (edición)
+    if (seenSig[sig]) return;                            // MISMO CONTENIDO ya presente -> no duplicar
+    out.push(it); if (it.id) seenId[it.id] = 1; seenSig[sig] = 1;
   }
   // incoming primero: gana lo que manda el cliente (ediciones);
   // luego existing suma cualquier obra que el cliente no tenía (cargada por otro dispositivo).
   (Array.isArray(incoming) ? incoming : []).forEach(add);
   (Array.isArray(existing) ? existing : []).forEach(add);
-  return out;
+  return ensureIds(out); // el servidor deja ids deterministas canónicos
 }
 function unionDeleted(a, b) {
   const s = {};
