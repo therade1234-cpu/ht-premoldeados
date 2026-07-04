@@ -1550,7 +1550,7 @@ function resolveConfirm(val){
 function confirmarPassAdmin(){
   const pass=document.getElementById('modal-pass-input').value;
   const rol=document.getElementById('modal-admin-pass').dataset.rol||'admin';
-  const passCorrecta=rol==='admin'?'ht2026':'ventas1234';
+  const passCorrecta=rol==='admin'?'ht1234':'ventas1234';
   if(pass!==passCorrecta){
     document.getElementById('modal-pass-error').textContent='Contraseña incorrecta. Intentá de nuevo.';
     document.getElementById('modal-pass-input').value='';
