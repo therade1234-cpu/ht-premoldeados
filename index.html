@@ -1320,28 +1320,41 @@ const OC=['#D85A30','#E8744A','#993C1D','#F0997B','#BA7517','#5DCAA5','#7F77DD']
 const CAT_LABEL={obras:'Obras',senas:'Señas',publicidad:'Publicidad',sueldos:'Sueldos',fabrica:'Fábrica',materiales:'Materiales',vales:'Vales',fletes:'Fletes',ferreteria:'Ferretería',nafta:'Nafta',gastos_calle:'Gastos de calle',sueldos_oficina:'Sueldos oficina',pago_chicos_obra:'Pago semanal chicos de obra',nominas:'Nóminas',otro:'Otro'};
 
 // ---- PERSISTENCIA EN TIEMPO REAL (Vercel Edge Config) ----
-let state={ movimientos:[], ventas:[], vendedores:[], visitas:[], reparaciones:[] };
+let state={ movimientos:[], ventas:[], vendedores:[], visitas:[], reparaciones:[], _deleted:[] };
 let _panelActivo = null;
 let _saving = false;
 let _lastSave = 0;
+let _pendingSave = false;
+let _lastSnapshot = '';
 
-function applyData(data){
-  // Solo restaurar ventas/movimientos en la carga inicial (antes de cualquier save local)
-  if(_lastSave === 0){
-    state.ventas = data.ventas || [];
-    state.movimientos = data.movimientos || [];
-    state.visitas = data.visitas || [];
-    state.reparaciones = data.reparaciones || [];
+// ---- Sincronización robusta (merge) para NO pisar datos entre dispositivos ----
+function genId(){return 'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+function ensureIds(arr){if(Array.isArray(arr)){for(var i=0;i<arr.length;i++){var it=arr[i];if(it&&typeof it==='object'&&!it.id)it.id=genId();}}}
+function sigOf(it){return [it.fecha,it.fechaObra,it.fechaRep,it.fechaVenta,it.cliente,it.tel,it.dir,it.direccion,it.localidad,it.metros,it.altura,it.diseno,it.precio,it.sena,it.totalObra,it.monto,it.cat,it.tipo,it.desc,it.notas,it.detalle,it.vendedor,it.estado].join('~');}
+function tombstone(it){if(!it)return;if(!Array.isArray(state._deleted))state._deleted=[];state._deleted.push(it.id||sigOf(it));}
+function unionDeleted(a,b){var s={};(Array.isArray(a)?a:[]).forEach(function(k){s[k]=1;});(Array.isArray(b)?b:[]).forEach(function(k){s[k]=1;});return Object.keys(s);}
+function mergeArr(remote,local,deletedArr){
+  var del={};(Array.isArray(deletedArr)?deletedArr:[]).forEach(function(k){del[k]=1;});
+  var out=[],seenId={},seenSig={},seenSigNoId={};
+  function add(it){
+    if(!it||typeof it!=='object')return;
+    var sig=sigOf(it);
+    if((it.id&&del[it.id])||del[sig])return; // borrado (tombstone)
+    if(it.id){
+      if(seenId[it.id])return;               // mismo id ya presente
+      if(seenSigNoId[sig])return;            // su gemelo legacy (sin id) ya está
+      out.push(it);seenId[it.id]=1;seenSig[sig]=1;
+    }else{
+      if(seenSig[sig])return;                // ya hay un gemelo (con o sin id)
+      out.push(it);seenSig[sig]=1;seenSigNoId[sig]=1;
+    }
   }
-  state.vendedores = data.vendedores || [];
-  // Restaurar nóminas completas (empleados, porDia y semanas)
-  if(data.nomPlanilla && data.nomPlanilla.length > 0){
-    nomPlanilla = data.nomPlanilla.map(function(saved){
-      return { nombre: saved.nombre, porDia: saved.porDia||0, semanas: saved.semanas||{} };
-    });
-  }
-  const sel=document.getElementById('v-vendedor');
-  if(sel){const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');if(prev)sel.value=prev;}
+  (Array.isArray(local)?local:[]).forEach(add);   // lo local gana (mantiene ediciones sin guardar)
+  (Array.isArray(remote)?remote:[]).forEach(add); // suma lo que agregaron otros dispositivos
+  return out;
+}
+
+function renderPanelActivo(){
   if(_panelActivo==='admin')renderAdmin();
   else if(_panelActivo==='ventas')renderVentas();
   else if(_panelActivo==='analisis')renderAnalisis();
@@ -1350,16 +1363,53 @@ function applyData(data){
   else if(_panelActivo==='reparaciones')renderReparaciones();
 }
 
-let _pendingSave = false;
+function applyData(data){
+  if(!data)return;
+  var del=unionDeleted(data._deleted, state._deleted);
+  state._deleted=del;
+  state.ventas=mergeArr(data.ventas, state.ventas, del);
+  state.movimientos=mergeArr(data.movimientos, state.movimientos, del);
+  state.visitas=mergeArr(data.visitas, state.visitas, del);
+  state.reparaciones=mergeArr(data.reparaciones, state.reparaciones, del);
+  ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);
+  if(Array.isArray(data.vendedores))state.vendedores=data.vendedores;
+  // Restaurar nóminas completas (empleados, porDia y semanas)
+  if(data.nomPlanilla && data.nomPlanilla.length > 0){
+    nomPlanilla = data.nomPlanilla.map(function(saved){
+      return { nombre: saved.nombre, porDia: saved.porDia||0, semanas: saved.semanas||{} };
+    });
+  }
+  const sel=document.getElementById('v-vendedor');
+  if(sel){const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');if(prev)sel.value=prev;}
+  // Solo re-renderizar si algo cambió (evita cerrar menús / resetear la vista cada 6s)
+  var snap=JSON.stringify([state.ventas,state.movimientos,state.visitas,state.reparaciones,state.vendedores,nomPlanilla]);
+  if(snap!==_lastSnapshot){_lastSnapshot=snap;renderPanelActivo();}
+}
+
 async function saveState(){
   if(_saving){_pendingSave=true;return;}
   _saving = true;
   _pendingSave = false;
   try {
+    ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);
+    // 1) Traer lo último del servidor y COMBINARLO (no pisar cambios de otros dispositivos)
+    try {
+      const rg = await fetch('/api/data', { cache:'no-store' });
+      if(rg.ok){
+        const remote = await rg.json();
+        state._deleted = unionDeleted(remote._deleted, state._deleted);
+        if(state._deleted.length>800) state._deleted = state._deleted.slice(-800);
+        state.ventas = mergeArr(remote.ventas, state.ventas, state._deleted);
+        state.movimientos = mergeArr(remote.movimientos, state.movimientos, state._deleted);
+        state.visitas = mergeArr(remote.visitas, state.visitas, state._deleted);
+        state.reparaciones = mergeArr(remote.reparaciones, state.reparaciones, state._deleted);
+      }
+    } catch(e){}
+    // 2) Escribir el resultado combinado
     const r = await fetch('/api/data', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, nomPlanilla: nomPlanilla, visitas: state.visitas, reparaciones: state.reparaciones })
+      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, nomPlanilla: nomPlanilla, visitas: state.visitas, reparaciones: state.reparaciones, _deleted: state._deleted })
     });
     const result = await r.json();
     if(!result.ok) {
@@ -1372,16 +1422,18 @@ async function saveState(){
     console.error('Error de red al guardar:', e);
   } finally {
     _saving = false;
+    _lastSnapshot=JSON.stringify([state.ventas,state.movimientos,state.visitas,state.reparaciones,state.vendedores,nomPlanilla]);
+    renderPanelActivo();
     if(_pendingSave) saveState();
   }
 }
 
 // Cargar datos al inicio
-fetch('/api/data').then(r=>r.json()).then(applyData).catch(()=>{});
+fetch('/api/data',{cache:'no-store'}).then(r=>r.json()).then(applyData).catch(()=>{});
 
-// Polling cada 6 segundos para sincronizar cambios de otras PCs
+// Polling cada 6 segundos para sincronizar cambios de otras PCs (ahora combina, no pisa)
 setInterval(function(){
-  if(!_saving && Date.now()-_lastSave>10000) fetch('/api/data').then(r=>r.json()).then(applyData).catch(()=>{});
+  if(!_saving) fetch('/api/data',{cache:'no-store'}).then(r=>r.json()).then(applyData).catch(()=>{});
 }, 6000);
 const _hoy=new Date();
 let curYear=_hoy.getFullYear(), curMonth=_hoy.getMonth(), curSemana=0, curView='semana';
@@ -1921,6 +1973,7 @@ async function borrarMov(idx){
   if(!m)return;
   const ok=await showConfirm('Eliminar movimiento','¿Eliminar '+CAT_LABEL[m.cat]+' '+fmt(m.monto)+'?');
   if(!ok)return;
+  tombstone(m);
   state.movimientos.splice(idx,1);
   saveState();
   renderAdmin();
@@ -3432,6 +3485,7 @@ async function borrarObra(fechaStr,idx){
   const ok=await showConfirm('¿Borrar obra?','Se eliminará la obra de '+(obra.cliente||'este cliente')+'. Esta acción no se puede deshacer.');
   if(!ok)return;
   const globalIdx=state.ventas.indexOf(obra);
+  tombstone(obra);
   if(globalIdx!==-1)state.ventas.splice(globalIdx,1);
   saveState();
   mostrarDetallesDia(fechaStr);
@@ -3874,6 +3928,7 @@ function guardarVisita() {
 async function eliminarVisita(idx) {
   const ok = await showConfirm('¿Eliminar visita?', 'Se eliminará la visita de ' + (state.visitas[idx].cliente || 'este cliente'));
   if (!ok) return;
+  tombstone(state.visitas[idx]);
   state.visitas.splice(idx, 1);
   saveState();
   renderVisitas();
@@ -4036,6 +4091,7 @@ function guardarReparacion() {
 async function eliminarReparacion(idx) {
   const ok = await showConfirm('¿Eliminar reparación?', 'Se eliminará la reparación de ' + (state.reparaciones[idx].cliente || 'este cliente'));
   if (!ok) return;
+  tombstone(state.reparaciones[idx]);
   state.reparaciones.splice(idx, 1);
   saveState();
   renderReparaciones();
