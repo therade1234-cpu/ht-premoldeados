@@ -1497,6 +1497,7 @@ function semanas(y,m){
 // ---- NAVEGACIÓN ----
 function openPanel(id){
   _panelActivo=id;
+  try{localStorage.setItem('ht-panel',id);}catch(e){}
   document.getElementById('home').style.display='none';
   document.querySelectorAll('.inner').forEach(el=>el.classList.remove('active'));
   document.getElementById('inner-'+id).classList.add('active');
@@ -1566,12 +1567,26 @@ function confirmarPassAdmin(){
   }
   cerrarModalPass();
   rolActual=rol;
+  try{localStorage.setItem('ht-rol',rol);}catch(e){}
   document.getElementById('login-screen').style.display='none';
   document.getElementById('home').style.display='flex';
+  aplicarRolBotones(rol);
+}
+function aplicarRolBotones(rol){
   document.querySelectorAll('.home-btn').forEach(function(b){
     if(rol==='admin'){b.style.display=b.classList.contains('rol-admin')?'':'none';}
     else{b.style.display=b.classList.contains('rol-vendedor')?'':'none';}
   });
+}
+function panelPermitido(panel,rol){
+  var btns=document.querySelectorAll('.home-btn');
+  for(var i=0;i<btns.length;i++){
+    var oc=btns[i].getAttribute('onclick')||'';
+    if(oc.indexOf("openPanel('"+panel+"')")>=0){
+      return rol==='admin'?btns[i].classList.contains('rol-admin'):btns[i].classList.contains('rol-vendedor');
+    }
+  }
+  return false;
 }
 function cerrarModalPass(){
   document.getElementById('modal-admin-pass').style.display='none';
@@ -1588,13 +1603,31 @@ function toggleTema(){
 }
 (function(){if(localStorage.getItem('ht-tema')==='dark')setTema(true);})();
 function cerrarSesion(){
+  _panelActivo=null;
+  try{localStorage.removeItem('ht-rol');localStorage.removeItem('ht-panel');}catch(e){}
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('home').style.display='none';
   document.querySelectorAll('.inner').forEach(function(el){el.classList.remove('active');});
 }
 function goHome(){
+  _panelActivo=null;
+  try{localStorage.removeItem('ht-panel');}catch(e){}
   document.getElementById('home').style.display='flex';
   document.querySelectorAll('.inner').forEach(el=>el.classList.remove('active'));
+}
+// Restaurar sesión y panel al recargar la página (no volver al inicio)
+function restaurarSesion(){
+  var rol;try{rol=localStorage.getItem('ht-rol');}catch(e){}
+  if(rol!=='admin'&&rol!=='vendedor')return; // sin sesión guardada -> queda en login
+  rolActual=rol;
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('home').style.display='flex';
+  aplicarRolBotones(rol);
+  var panel;try{panel=localStorage.getItem('ht-panel');}catch(e){}
+  if(!panel)return;
+  var abrir=function(){ if(document.getElementById('inner-'+panel)&&panelPermitido(panel,rol)&&_panelActivo!==panel)openPanel(panel); };
+  if(document.getElementById('inner-'+panel))abrir();               // panel ya disponible (ej: ventas)
+  else document.addEventListener('DOMContentLoaded',abrir);         // paneles definidos más abajo (materiales, visitas, reparaciones)
 }
 
 // ---- ADMIN ----
@@ -4362,6 +4395,9 @@ async function subirArchivoGH(path, base64Content) {
   const data = await r.json();
   return data.content.download_url;
 }
+
+// Al recargar, restaurar la sesión y el panel activo (sin volver al inicio)
+restaurarSesion();
 </script>
 <!-- MATERIALES DE OBRA -->
 <div class="inner" id="inner-materiales">
