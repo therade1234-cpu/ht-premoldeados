@@ -156,6 +156,11 @@ html[data-theme="dark"] .btn-tema{border-color:#2A5580;color:#8BAECB;background:
 .metric-month{font-size:10px;color:var(--or-d);font-weight:500;margin-top:3px}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
 @media(max-width:600px){.two-col{grid-template-columns:1fr}.home-grid{grid-template-columns:1fr 1fr}}
+#toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(24px);background:#1A1A1A;color:#fff;padding:15px 26px;border-radius:12px;font-size:15px;font-weight:600;box-shadow:0 10px 34px rgba(0,0,0,.28);z-index:5000;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;max-width:90%;text-align:center;display:flex;align-items:center;gap:10px}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.exito{background:#1B7A3E}
+#toast.error{background:#C62828}
+#toast.info{background:#1565C0}
 .card{background:#fff;border:1px solid #E8E8E8;border-radius:10px;padding:16px 18px;margin-bottom:14px}
 .card-title{font-size:11px;font-weight:700;color:#993C1D;margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
@@ -375,6 +380,9 @@ table.movs tr:hover td{background:#FAFAFA}
     </div>
   </div>
 </div>
+
+<!-- AVISO / CONFIRMACIÓN -->
+<div id="toast"></div>
 
 <!-- MODAL CONTRASEÑA ADMIN -->
 <div id="modal-admin-pass" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center">
@@ -1354,6 +1362,20 @@ function mergeArr(remote,local,deletedArr){
   return out;
 }
 
+let _toastTimer=null;
+function showToast(msg,tipo){
+  const t=document.getElementById('toast');
+  if(!t)return;
+  t.className='';
+  t.classList.add(tipo||'info');
+  t.textContent=msg;
+  void t.offsetWidth; // forzar reflow para reiniciar la animación
+  t.classList.add('show');
+  if(_toastTimer)clearTimeout(_toastTimer);
+  const dur=tipo==='error'?6000:3200;
+  _toastTimer=setTimeout(function(){t.classList.remove('show');},dur);
+}
+
 function renderPanelActivo(){
   if(_panelActivo==='admin')renderAdmin();
   else if(_panelActivo==='ventas')renderVentas();
@@ -1387,9 +1409,10 @@ function applyData(data){
 }
 
 async function saveState(){
-  if(_saving){_pendingSave=true;return;}
+  if(_saving){_pendingSave=true;return true;}
   _saving = true;
   _pendingSave = false;
+  let _ok=false;
   try {
     ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);
     // 1) Traer lo último del servidor y COMBINARLO (no pisar cambios de otros dispositivos)
@@ -1417,6 +1440,7 @@ async function saveState(){
       window._lastSaveError = result.error;
     } else {
       _lastSave = Date.now();
+      _ok = true;
     }
   } catch(e) {
     console.error('Error de red al guardar:', e);
@@ -1426,6 +1450,7 @@ async function saveState(){
     renderPanelActivo();
     if(_pendingSave) saveState();
   }
+  return _ok;
 }
 
 // Cargar datos al inicio
@@ -3554,7 +3579,7 @@ function editCalcResta(){
   const sena=parseFloat((document.getElementById('edit-sena').value||'').replace(/\./g,'').replace(',','.'))||0;
   document.getElementById('edit-resta').value=total-sena;
 }
-function guardarEdicion(){
+async function guardarEdicion(){
   if(!_editObraCtx)return;
   // Usar el índice guardado para obtener la referencia actual en state.ventas (evita stale ref por polling)
   const obra=_editObraIdx>=0&&state.ventas[_editObraIdx]?state.ventas[_editObraIdx]:_editObraCtx;
@@ -3586,13 +3611,17 @@ function guardarEdicion(){
   obra.totalObra=gn('edit-total-obra');
   obra.sena=gn('edit-sena');
   obra.resta=gn('edit-resta');
+  const nombreCli=obra.cliente||'cliente';
   cerrarModalEditar();
-  saveState();
   const parts=obra.fecha.split('-');
   ventasYear=parseInt(parts[0]);ventasMonth=parseInt(parts[1])-1;
   renderVentas();
   mostrarDetallesDia(obra.fecha);
   document.getElementById('detalle-dia-card').scrollIntoView({behavior:'smooth'});
+  showToast('Guardando cambios...','info');
+  const ok=await saveState();
+  if(ok)showToast('✓ Cambios de '+nombreCli+' guardados correctamente','exito');
+  else showToast('⚠ No se pudieron guardar los cambios. Revisá la conexión.','error');
 }
 let _moverObraCtx=null;
 let _moverObraIdx=-1;
@@ -3691,7 +3720,7 @@ function actualizarPrecio(){
   }
 }
 function redondearParMetros(){}
-function cargarVenta(){
+async function cargarVenta(){
   const vend=document.getElementById('v-vendedor').value;
   const origen=document.getElementById('v-origen').value;
   const cliente=document.getElementById('v-cliente').value.trim();
@@ -3723,7 +3752,6 @@ function cargarVenta(){
   state.ventas.push({vendedor:vend,origen,cliente,tel,fecha,fechaVenta,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja});
   const vendSel=document.getElementById('v-vendedor');
   const vendGuardado=vendSel?vendSel.value:'';
-  saveState();
   // limpiar
   ['v-origen','v-cliente','v-tel','v-localidad','v-direccion','v-metros','v-altura','v-distribucion','v-desmonte','v-encadenado','v-gorros','v-columnas','v-agua','v-luz','v-detalle','v-flete','v-precio','v-total-obra','v-sena','v-resta','v-placas-reja','v-fecha-venta','v-diseno-custom'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const dcEl=document.getElementById('v-diseno-custom');if(dcEl)dcEl.style.display='none';
@@ -3731,6 +3759,10 @@ function cargarVenta(){
   const dFechaParts=fecha.split('-');
   ventasYear=parseInt(dFechaParts[0]);ventasMonth=parseInt(dFechaParts[1])-1;
   renderVentas();
+  showToast('Guardando obra de '+cliente+'...','info');
+  const ok=await saveState();
+  if(ok)showToast('✓ Obra de '+cliente+' guardada correctamente','exito');
+  else showToast('⚠ No se pudo guardar. Revisá la conexión e intentá de nuevo.','error');
 }
 
 // ---- ANÁLISIS ----
