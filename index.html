@@ -1342,26 +1342,20 @@ function hashStr(s){var h=5381,i=s.length;while(i){h=(h*33)^s.charCodeAt(--i);}r
 function idFromSig(it){var s=sigOf(it);return 'h'+hashStr(s)+s.length.toString(36);}
 function ensureIds(arr){if(Array.isArray(arr)){for(var i=0;i<arr.length;i++){var it=arr[i];if(it&&typeof it==='object'&&!it.id)it.id=idFromSig(it);}}}
 function tombstone(it){if(!it)return;if(!Array.isArray(state._deleted))state._deleted=[];state._deleted.push(it.id||idFromSig(it));state._deleted.push(sigOf(it));}
+// Marca SOLO la firma de contenido (para usar ANTES de mover/editar: borra la versión vieja aunque el id no coincida entre dispositivos)
+function tombstoneSig(it){if(!it)return;if(!Array.isArray(state._deleted))state._deleted=[];state._deleted.push(sigOf(it));}
 function unionDeleted(a,b){var s={};(Array.isArray(a)?a:[]).forEach(function(k){s[k]=1;});(Array.isArray(b)?b:[]).forEach(function(k){s[k]=1;});return Object.keys(s);}
 function mergeArr(remote,local,deletedArr){
   var del={};(Array.isArray(deletedArr)?deletedArr:[]).forEach(function(k){del[k]=1;});
   var out=[],seenId={},seenSig={};
-  function add(it){
-    if(!it||typeof it!=='object')return;
-    var sig=sigOf(it);
-    if((it.id&&del[it.id])||del[sig])return; // borrado (tombstone)
-    if(it.id&&seenId[it.id])return;          // mismo id ya presente (edición: gana lo local)
-    if(seenSig[sig])return;                  // MISMO CONTENIDO ya presente -> no duplicar
-    out.push(it);if(it.id)seenId[it.id]=1;seenSig[sig]=1;
-  }
-  (Array.isArray(local)?local:[]).forEach(add);   // lo local gana (mantiene ediciones sin guardar)
-  (Array.isArray(remote)?remote:[]).forEach(add); // suma lo que agregaron otros dispositivos
+  function dup(it){var sig=sigOf(it);return (it.id&&seenId[it.id])||seenSig[sig];}
+  function keep(it){out.push(it);if(it.id)seenId[it.id]=1;seenSig[sigOf(it)]=1;}
+  // 1) Ítems PRESENTES localmente: siempre se conservan (inmunes a tombstones; solo se evita duplicar).
+  //    Así, mover/editar y "volver atrás" nunca borra ni duplica una obra que tenés a la vista.
+  (Array.isArray(local)?local:[]).forEach(function(it){if(it&&typeof it==='object'&&!dup(it))keep(it);});
+  // 2) Ítems del SERVIDOR: se descartan si están borrados (tombstone) o si ya están presentes.
+  (Array.isArray(remote)?remote:[]).forEach(function(it){if(!it||typeof it!=='object')return;var sig=sigOf(it);if((it.id&&del[it.id])||del[sig])return;if(dup(it))return;keep(it);});
   return out;
-}
-// Hace que todos los dispositivos adopten el mismo id (el del servidor) para cada obra según su contenido
-function reconcileIds(remoteArr,localArr){
-  var map={};(Array.isArray(remoteArr)?remoteArr:[]).forEach(function(it){if(it&&it.id)map[sigOf(it)]=it.id;});
-  (Array.isArray(localArr)?localArr:[]).forEach(function(it){if(it){var s=sigOf(it);if(map[s]&&it.id!==map[s])it.id=map[s];}});
 }
 
 let _toastTimer=null;
@@ -1389,11 +1383,6 @@ function renderPanelActivo(){
 
 function applyData(data){
   if(!data)return;
-  // Adoptar los ids del servidor por contenido (todos los dispositivos convergen al mismo id)
-  reconcileIds(data.ventas, state.ventas);
-  reconcileIds(data.movimientos, state.movimientos);
-  reconcileIds(data.visitas, state.visitas);
-  reconcileIds(data.reparaciones, state.reparaciones);
   var del=unionDeleted(data._deleted, state._deleted);
   state._deleted=del;
   state.ventas=mergeArr(data.ventas, state.ventas, del);
@@ -3621,8 +3610,9 @@ function editCalcResta(){
 }
 async function guardarEdicion(){
   if(!_editObraCtx)return;
-  // Usar el índice guardado para obtener la referencia actual en state.ventas (evita stale ref por polling)
-  const obra=_editObraIdx>=0&&state.ventas[_editObraIdx]?state.ventas[_editObraIdx]:_editObraCtx;
+  // Usar la REFERENCIA directa al objeto editado (estable ante el polling que reemplaza el array)
+  const obra=_editObraCtx;
+  tombstoneSig(obra); // marca la versión ANTERIOR como borrada (evita que reaparezca duplicada al editar)
   const g=(id)=>{const el=document.getElementById(id);return el?el.value:'';};
   const gn=(id)=>parseFloat((g(id)||'0').replace(/\./g,'').replace(',','.'))||0;
   obra.vendedor=g('edit-vendedor');
@@ -3651,6 +3641,7 @@ async function guardarEdicion(){
   obra.totalObra=gn('edit-total-obra');
   obra.sena=gn('edit-sena');
   obra.resta=gn('edit-resta');
+  if(state.ventas.indexOf(obra)===-1)state.ventas.push(obra); // por si el polling reemplazó el array
   const nombreCli=obra.cliente||'cliente';
   cerrarModalEditar();
   const parts=obra.fecha.split('-');
@@ -3689,8 +3680,11 @@ function confirmarFecha(){
   if(nuevaFecha===_moverObraCtx.fechaStr){errEl.textContent='La fecha es la misma que la actual.';return;}
   const obra=_moverObraCtx.obra;
   cerrarModalFecha();
-  const obraIdx=_moverObraIdx>=0?_moverObraIdx:state.ventas.indexOf(obra);
-  if(obraIdx!==-1)state.ventas[obraIdx].fecha=nuevaFecha;
+  if(!obra)return;
+  tombstoneSig(obra); // marca la versión con la fecha VIEJA como borrada (evita que reaparezca duplicada)
+  // Mutar el objeto por REFERENCIA (robusto: el polling reemplaza el array y los índices quedan viejos)
+  obra.fecha=nuevaFecha;
+  if(state.ventas.indexOf(obra)===-1)state.ventas.push(obra); // por si el array fue reemplazado
   saveState();
   const parts=nuevaFecha.split('-');
   ventasYear=parseInt(parts[0]);ventasMonth=parseInt(parts[1])-1;
@@ -3990,7 +3984,7 @@ function guardarVisita() {
     dir: g('vis-dir'), vendedor: g('vis-vendedor'), notas: g('vis-notas'),
     estado: g('vis-estado')
   };
-  if (_editVisitaIdx >= 0) state.visitas[_editVisitaIdx] = obj;
+  if (_editVisitaIdx >= 0) { tombstoneSig(state.visitas[_editVisitaIdx]); state.visitas[_editVisitaIdx] = obj; }
   else state.visitas.push(obj);
   cerrarFormVisita();
   saveState();
@@ -4153,7 +4147,7 @@ function guardarReparacion() {
     dir: g('rep-dir'), desc: g('rep-desc'), fechaRep: g('rep-fecha-rep'),
     estado: g('rep-estado')
   };
-  if (_editReparacionIdx >= 0) { obj.archivos = state.reparaciones[_editReparacionIdx].archivos || []; state.reparaciones[_editReparacionIdx] = obj; }
+  if (_editReparacionIdx >= 0) { obj.archivos = state.reparaciones[_editReparacionIdx].archivos || []; tombstoneSig(state.reparaciones[_editReparacionIdx]); state.reparaciones[_editReparacionIdx] = obj; }
   else state.reparaciones.push(obj);
   cerrarFormReparacion();
   saveState();

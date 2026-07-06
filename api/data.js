@@ -63,18 +63,13 @@ function idFromSig(it) { const s = sigOf(it); return 'h' + hashStr(s) + s.length
 function ensureIds(arr) { if (Array.isArray(arr)) { for (let i = 0; i < arr.length; i++) { const it = arr[i]; if (it && typeof it === 'object' && !it.id) it.id = idFromSig(it); } } return arr; }
 function mergeArr(existing, incoming, delSet) {
   const out = [], seenId = {}, seenSig = {};
-  function add(it) {
-    if (!it || typeof it !== 'object') return;
-    const sig = sigOf(it);
-    if ((it.id && delSet[it.id]) || delSet[sig]) return; // borrado (tombstone)
-    if (it.id && seenId[it.id]) return;                  // mismo id ya presente (edición)
-    if (seenSig[sig]) return;                            // MISMO CONTENIDO ya presente -> no duplicar
-    out.push(it); if (it.id) seenId[it.id] = 1; seenSig[sig] = 1;
-  }
-  // incoming primero: gana lo que manda el cliente (ediciones);
-  // luego existing suma cualquier obra que el cliente no tenía (cargada por otro dispositivo).
-  (Array.isArray(incoming) ? incoming : []).forEach(add);
-  (Array.isArray(existing) ? existing : []).forEach(add);
+  function dup(it) { const sig = sigOf(it); return (it.id && seenId[it.id]) || seenSig[sig]; }
+  function keep(it) { out.push(it); if (it.id) seenId[it.id] = 1; seenSig[sigOf(it)] = 1; }
+  // incoming (lo que manda el cliente = lo que TIENE presente): inmune a tombstones.
+  // Un ítem presente nunca se borra por accidente; solo se evita duplicar.
+  (Array.isArray(incoming) ? incoming : []).forEach(function (it) { if (it && typeof it === 'object' && !dup(it)) keep(it); });
+  // existing (guardado en el servidor): se descarta si está borrado (tombstone) o ya presente.
+  (Array.isArray(existing) ? existing : []).forEach(function (it) { if (!it || typeof it !== 'object') return; const sig = sigOf(it); if ((it.id && delSet[it.id]) || delSet[sig]) return; if (dup(it)) return; keep(it); });
   return ensureIds(out); // el servidor deja ids deterministas canónicos
 }
 function unionDeleted(a, b) {
