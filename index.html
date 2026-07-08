@@ -1383,6 +1383,10 @@ function renderPanelActivo(){
 
 function applyData(data){
   if(!data)return;
+  // ¿El usuario está tipeando en un campo? No pisar su entrada ni re-renderizar encima.
+  var ae=document.activeElement;
+  var editando=ae&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName);
+  var editandoNominas=editando&&!!(ae.closest&&ae.closest('#inner-nominas'));
   var del=unionDeleted(data._deleted, state._deleted);
   state._deleted=del;
   state.ventas=mergeArr(data.ventas, state.ventas, del);
@@ -1391,17 +1395,18 @@ function applyData(data){
   state.reparaciones=mergeArr(data.reparaciones, state.reparaciones, del);
   ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);
   if(Array.isArray(data.vendedores))state.vendedores=data.vendedores;
-  // Restaurar nóminas completas (empleados, porDia y semanas)
-  if(data.nomPlanilla && data.nomPlanilla.length > 0){
+  // Restaurar nóminas completas (empleados, porDia y semanas).
+  // NO reemplazar mientras el usuario edita nóminas (perdería lo que está cargando) ni si este equipo tiene cambios sin sincronizar.
+  if(data.nomPlanilla && data.nomPlanilla.length > 0 && !editandoNominas && !_nomDirty){
     nomPlanilla = data.nomPlanilla.map(function(saved){
       return { nombre: saved.nombre, porDia: saved.porDia||0, semanas: saved.semanas||{} };
     });
   }
   const sel=document.getElementById('v-vendedor');
-  if(sel){const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');if(prev)sel.value=prev;}
-  // Solo re-renderizar si algo cambió (evita cerrar menús / resetear la vista cada 6s)
+  if(sel && !editando){const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');if(prev)sel.value=prev;}
+  // Solo re-renderizar si algo cambió y el usuario NO está tipeando (evita borrar lo que está escribiendo)
   var snap=JSON.stringify([state.ventas,state.movimientos,state.visitas,state.reparaciones,state.vendedores,nomPlanilla]);
-  if(snap!==_lastSnapshot){_lastSnapshot=snap;renderPanelActivo();}
+  if(snap!==_lastSnapshot && !editando){_lastSnapshot=snap;renderPanelActivo();}
 }
 
 async function saveState(){
@@ -1428,7 +1433,7 @@ async function saveState(){
     const r = await fetch('/api/data', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, nomPlanilla: nomPlanilla, visitas: state.visitas, reparaciones: state.reparaciones, _deleted: state._deleted })
+      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, nomPlanilla: (_nomDirty ? nomPlanilla : undefined), visitas: state.visitas, reparaciones: state.reparaciones, _deleted: state._deleted })
     });
     const result = await r.json();
     if(!result.ok) {
@@ -2855,6 +2860,7 @@ let nominas=[];
 const NOM_TIPO={sueldo:'Sueldo',anticipo:'Anticipo',bono:'Bono',liquidacion:'Liquidación',otro:'Otro'};
 
 // Datos precargados del CSV Junio 2026
+let _nomDirty=false; // este dispositivo editó la nómina en esta sesión (solo entonces se envía al servidor)
 let nomPlanilla = [
   {nombre:"Pablo Fraites",porDia:100000,semanas:{}},
   {nombre:"David Ruiz",porDia:100000,semanas:{}},
@@ -2931,18 +2937,18 @@ function confirmarNuevoEmpleado(){
   if(!nombre){alert('Ingresá un nombre');return;}
   nomPlanilla.push({nombre:nombre,porDia:jornal,semanas:{}});
   document.getElementById('modal-nuevo-empleado').style.display='none';
+  _nomDirty=true;
   renderNominas();
   saveState();
-  saveState();
 }
-function nomRenombrar(idx,val){var n=val.trim();if(n&&nomPlanilla[idx]){nomPlanilla[idx].nombre=n;saveState();}}
+function nomRenombrar(idx,val){var n=val.trim();if(n&&nomPlanilla[idx]){nomPlanilla[idx].nombre=n;_nomDirty=true;saveState();}}
 async function nomEliminar(idx){
   var nombre=nomPlanilla[idx]?nomPlanilla[idx].nombre:'este empleado';
   const ok=await showConfirm('¿Eliminar empleado?','Se eliminará a '+nombre+' de la planilla.');
   if(!ok)return;
   nomPlanilla.splice(idx,1);
+  _nomDirty=true;
   renderNominas();
-  saveState();
   saveState();
 }
 function nomSetDia(idx,val){
@@ -2952,6 +2958,7 @@ function nomSetDia(idx,val){
   var s=nomDatosSemana(r);
   for(var j=0;j<6;j++){if(s.dias[j]>0)s.dias[j]=m;}
   nomRecalcTotal(r);
+  _nomDirty=true;
   renderNominas();
   saveState();
 }
@@ -2960,6 +2967,7 @@ function nomTogglePresente(idx,diaIdx){
   var s=nomDatosSemana(r);
   s.dias[diaIdx]=s.dias[diaIdx]>0?0:(r.porDia||0);
   nomRecalcTotal(r);
+  _nomDirty=true;
   renderNominas();
   saveState();
 }
@@ -2968,6 +2976,7 @@ function nomSetValeDia(idx,diaIdx,val){
   var s=nomDatosSemana(r);
   s.valesDias[diaIdx]=parseMonto(val)||0;
   nomRecalcTotal(r);
+  _nomDirty=true;
   renderNominas();
   saveState();
 }
@@ -2976,6 +2985,7 @@ function nomSetExtras(idx,val){
   var s=nomDatosSemana(r);
   s.extras=parseMonto(val)||0;
   nomRecalcTotal(r);
+  _nomDirty=true;
   renderNominas();
   saveState();
 }
@@ -2984,6 +2994,7 @@ function nomSetDesc(idx,val){
   var s=nomDatosSemana(r);
   s.desc=parseMonto(val)||0;
   nomRecalcTotal(r);
+  _nomDirty=true;
   renderNominas();
   saveState();
 }

@@ -78,6 +78,21 @@ function unionDeleted(a, b) {
   (Array.isArray(b) ? b : []).forEach(k => { s[k] = 1; });
   return Object.keys(s);
 }
+// Merge de nómina: la lista de empleados que manda el cliente manda (permite borrar/agregar),
+// pero las SEMANAS se unen con las guardadas (nunca se pierde una semana cargada por otro admin).
+function mergeNomina(existing, incoming) {
+  existing = Array.isArray(existing) ? existing : [];
+  incoming = Array.isArray(incoming) ? incoming : [];
+  if (!incoming.length) return existing;
+  const exMap = {};
+  existing.forEach(function (e) { if (e && e.nombre) exMap[e.nombre.toLowerCase()] = e; });
+  return incoming.map(function (inc) {
+    if (!inc || !inc.nombre) return inc;
+    const ex = exMap[inc.nombre.toLowerCase()];
+    const semanas = ex ? Object.assign({}, ex.semanas || {}, inc.semanas || {}) : (inc.semanas || {});
+    return { nombre: inc.nombre, porDia: inc.porDia || (ex && ex.porDia) || 0, semanas: semanas };
+  });
+}
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -115,7 +130,7 @@ module.exports = async function handler(req, res) {
         reparaciones: mergeArr(existing.reparaciones, body.reparaciones, delSet),
         // Config: si el cliente manda vacío, se conserva lo que ya había (no se borra por accidente).
         vendedores: (Array.isArray(body.vendedores) && body.vendedores.length) ? body.vendedores : (existing.vendedores || []),
-        nomPlanilla: (Array.isArray(body.nomPlanilla) && body.nomPlanilla.length) ? body.nomPlanilla : (existing.nomPlanilla || []),
+        nomPlanilla: (Array.isArray(body.nomPlanilla) && body.nomPlanilla.length) ? mergeNomina(existing.nomPlanilla, body.nomPlanilla) : (existing.nomPlanilla || []),
         _deleted: deleted,
       };
 
