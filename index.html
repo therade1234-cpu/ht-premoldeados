@@ -72,6 +72,7 @@ html[data-theme="dark"] [style*="border-color:#E8E8E8"],html[data-theme="dark"] 
 html[data-theme="dark"] #login-screen{background:#163559!important}
 html[data-theme="dark"] #login-screen button[onclick*="loginComo('admin')"]{background:#1D4575!important;border-color:#D85A30!important}
 html[data-theme="dark"] #login-screen button[onclick*="loginComo('vendedor')"]{background:#1D4575!important;border-color:#4A90D9!important}
+html[data-theme="dark"] #login-screen button[onclick*="loginComo('marketing')"]{background:#1D4575!important;border-color:#B57BD8!important}
 /* Modals */
 html[data-theme="dark"] #modal-confirm>div,html[data-theme="dark"] #modal-admin-pass>div,html[data-theme="dark"] #modal-fecha>div,html[data-theme="dark"] #modal-editar>div,html[data-theme="dark"] #modal-editar-mov>div{background:#1D4575!important;color:#E8F1FA!important}
 html[data-theme="dark"] #modal-editar [style*="border-bottom:1px solid #F0E0D6"]{border-color:#2A5580!important}
@@ -438,6 +439,13 @@ table.movs tr:hover td{background:#FAFAFA}
       <div style="font-size:17px;font-weight:700;color:#1A1A1A;margin-bottom:4px">Vendedor</div>
       <div style="font-size:12px;color:#888">Lista de precios, ventas y comisiones</div>
     </button>
+    <button onclick="loginComo('marketing')" style="background:#fff;border:2px solid #6A1B9A;border-radius:14px;padding:28px 36px;cursor:pointer;min-width:230px;transition:all .15s;font-family:inherit" onmouseover="this.style.background='#F6EFFA';this.style.transform='translateY(-3px)'" onmouseout="this.style.background='#fff';this.style.transform='translateY(0)'">
+      <div style="width:52px;height:52px;border-radius:12px;background:#F6EFFA;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#6A1B9A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+      </div>
+      <div style="font-size:17px;font-weight:700;color:#1A1A1A;margin-bottom:4px">Marketing</div>
+      <div style="font-size:12px;color:#888">Métricas y origen de las ventas</div>
+    </button>
   </div>
 </div>
 
@@ -528,12 +536,19 @@ table.movs tr:hover td{background:#FAFAFA}
       <div class="home-btn-title">VENDEDORES</div>
       <div class="home-btn-desc">Pagos, comisiones y metros vendidos</div>
     </button>
-    <button class="home-btn rol-admin" onclick="openPanel('analisis')">
+    <button class="home-btn rol-admin rol-marketing" onclick="openPanel('analisis')">
       <div class="home-btn-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg>
       </div>
       <div class="home-btn-title">ANÁLISIS DE VENTAS</div>
       <div class="home-btn-desc">Material, diseño y zonas más vendidas</div>
+    </button>
+    <button class="home-btn rol-admin rol-marketing" onclick="openPanel('marketing')">
+      <div class="home-btn-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
+      </div>
+      <div class="home-btn-title">MARKETING</div>
+      <div class="home-btn-desc">Métricas y origen de las ventas</div>
     </button>
     <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('visitas')">
       <div class="home-btn-icon-wrap">
@@ -1268,6 +1283,47 @@ table.movs tr:hover td{background:#FAFAFA}
   </div>
 </div>
 
+<!-- MARKETING -->
+<div class="inner" id="inner-marketing">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
+    <span class="tb-title">Marketing — origen de ventas</span>
+    <div class="nav-btns" style="margin-left:auto">
+      <button class="nav-btn" onclick="navMktMes(-1)">&#8249;</button>
+      <span class="period-label" id="mkt-period-label">—</span>
+      <button class="nav-btn" onclick="navMktMes(1)">&#8250;</button>
+    </div>
+  </div>
+  <div class="content">
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <button id="mkt-tab-mes" onclick="mktSetTab('mes')" style="padding:7px 16px;border:2px solid #6A1B9A;background:#6A1B9A;color:#fff;font-size:13px;font-weight:700;cursor:pointer;border-radius:8px;font-family:inherit">Este mes</button>
+      <button id="mkt-tab-anual" onclick="mktSetTab('anual')" style="padding:7px 16px;border:2px solid #6A1B9A;background:#fff;color:#6A1B9A;font-size:13px;font-weight:700;cursor:pointer;border-radius:8px;font-family:inherit">Año completo</button>
+      <button id="mkt-tab-todo" onclick="mktSetTab('todo')" style="padding:7px 16px;border:2px solid #6A1B9A;background:#fff;color:#6A1B9A;font-size:13px;font-weight:700;cursor:pointer;border-radius:8px;font-family:inherit">Histórico total</button>
+    </div>
+    <div class="metric-grid" id="mkt-metrics"></div>
+    <div class="card">
+      <div class="card-title">Ventas por origen — de mayor a menor</div>
+      <div id="mkt-chart"><div style="color:#A0A0A0;font-size:12px;text-align:center;padding:28px 0">Sin datos</div></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#F7F7F7;border-bottom:2px solid #E8E8E8">
+              <th style="padding:10px 12px;text-align:left;color:#6B6B6B;font-weight:700">Origen</th>
+              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Ventas</th>
+              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">%</th>
+              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Metros</th>
+              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Facturado</th>
+            </tr>
+          </thead>
+          <tbody id="mkt-tabla"><tr><td colspan="5" style="text-align:center;padding:20px;color:#A0A0A0">Sin ventas</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- VENDEDORES -->
 <div class="inner" id="inner-vendedores">
   <div class="topbar">
@@ -1376,6 +1432,7 @@ function renderPanelActivo(){
   if(_panelActivo==='admin')renderAdmin();
   else if(_panelActivo==='ventas')renderVentas();
   else if(_panelActivo==='analisis')renderAnalisis();
+  else if(_panelActivo==='marketing')renderMarketing();
   else if(_panelActivo==='vendedores')renderVendedores();
   else if(_panelActivo==='visitas')renderVisitas();
   else if(_panelActivo==='reparaciones')renderReparaciones();
@@ -1498,6 +1555,7 @@ function openPanel(id){
   if(id==='admin')renderAdmin();
   else if(id==='ventas')renderVentas();
   else if(id==='analisis')renderAnalisis();
+  else if(id==='marketing')renderMarketing();
   else if(id==='vendedores')renderVendedores();
   else if(id==='precios')renderPrecios();
   else if(id==='precios-portones')renderPortones();
@@ -1532,7 +1590,7 @@ function loginComo(rol){
   document.getElementById('modal-pass-input').value='';
   document.getElementById('modal-pass-error').textContent='';
   document.getElementById('modal-admin-pass').dataset.rol=rol;
-  document.getElementById('modal-pass-titulo').textContent=rol==='admin'?'Acceso Administrativo':'Acceso Vendedor';
+  document.getElementById('modal-pass-titulo').textContent={admin:'Acceso Administrativo',vendedor:'Acceso Vendedor',marketing:'Acceso Marketing'}[rol]||'Acceso';
   document.getElementById('modal-pass-subtitulo').textContent='Ingresá la contraseña para continuar';
   setTimeout(()=>document.getElementById('modal-pass-input').focus(),50);
 }
@@ -1552,7 +1610,7 @@ function resolveConfirm(val){
 function confirmarPassAdmin(){
   const pass=document.getElementById('modal-pass-input').value;
   const rol=document.getElementById('modal-admin-pass').dataset.rol||'admin';
-  const passCorrecta=rol==='admin'?'ht1234':'ventas1234';
+  const passCorrecta={admin:'ht1234',vendedor:'ventas1234',marketing:'marketing1234'}[rol]||'ht1234';
   if(pass!==passCorrecta){
     document.getElementById('modal-pass-error').textContent='Contraseña incorrecta. Intentá de nuevo.';
     document.getElementById('modal-pass-input').value='';
@@ -1568,8 +1626,7 @@ function confirmarPassAdmin(){
 }
 function aplicarRolBotones(rol){
   document.querySelectorAll('.home-btn').forEach(function(b){
-    if(rol==='admin'){b.style.display=b.classList.contains('rol-admin')?'':'none';}
-    else{b.style.display=b.classList.contains('rol-vendedor')?'':'none';}
+    b.style.display=b.classList.contains('rol-'+rol)?'':'none';
   });
 }
 function panelPermitido(panel,rol){
@@ -1577,7 +1634,7 @@ function panelPermitido(panel,rol){
   for(var i=0;i<btns.length;i++){
     var oc=btns[i].getAttribute('onclick')||'';
     if(oc.indexOf("openPanel('"+panel+"')")>=0){
-      return rol==='admin'?btns[i].classList.contains('rol-admin'):btns[i].classList.contains('rol-vendedor');
+      return btns[i].classList.contains('rol-'+rol);
     }
   }
   return false;
@@ -3808,6 +3865,91 @@ async function cargarVenta(){
   const ok=await saveState();
   if(ok)showToast('✓ Obra de '+cliente+' guardada correctamente','exito');
   else showToast('⚠ No se pudo guardar. Revisá la conexión e intentá de nuevo.','error');
+}
+
+// ---- MARKETING (origen de ventas) ----
+let mktYear=_hoy.getFullYear(), mktMonth=_hoy.getMonth(), mktTab='mes';
+const MKT_COLORS=['#6A1B9A','#D85A30','#1565C0','#1B7A3E','#E8744A','#BA7517','#993C1D','#8E24AA'];
+function navMktMes(d){mktMonth+=d;if(mktMonth<0){mktMonth=11;mktYear--;}if(mktMonth>11){mktMonth=0;mktYear++;}renderMarketing();}
+function mktSetTab(t){
+  mktTab=t;
+  ['mes','anual','todo'].forEach(function(x){
+    var b=document.getElementById('mkt-tab-'+x);if(!b)return;
+    b.style.background=x===t?'#6A1B9A':'#fff';b.style.color=x===t?'#fff':'#6A1B9A';
+  });
+  renderMarketing();
+}
+function renderMarketing(){
+  var navWrap=document.querySelector('#inner-marketing .nav-btns');
+  if(navWrap)navWrap.style.visibility=(mktTab==='mes')?'visible':'hidden';
+  var label=document.getElementById('mkt-period-label');
+  if(label)label.textContent=MESES[mktMonth]+' '+mktYear;
+  // filtrar ventas del período
+  var vs=state.ventas.filter(function(v){
+    var d=parseFecha(v.fecha);
+    if(mktTab==='mes')return d.getFullYear()===mktYear&&d.getMonth()===mktMonth;
+    if(mktTab==='anual')return d.getFullYear()===mktYear;
+    return true; // todo
+  });
+  var perLabel=mktTab==='mes'?(MESES[mktMonth]+' '+mktYear):mktTab==='anual'?('Año '+mktYear):'Histórico total';
+  // agrupar por origen
+  var grupos={};
+  vs.forEach(function(v){
+    var o=(v.origen&&v.origen.trim())?v.origen.trim():'Sin especificar';
+    if(!grupos[o])grupos[o]={ventas:0,metros:0,fact:0};
+    grupos[o].ventas++;
+    grupos[o].metros+=v.metros||0;
+    grupos[o].fact+=(v.totalObra||(v.metros||0)*(v.precio||0));
+  });
+  var arr=Object.keys(grupos).map(function(k){return Object.assign({origen:k},grupos[k]);});
+  arr.sort(function(a,b){return b.ventas-a.ventas;});
+  var totV=vs.length, totM=vs.reduce(function(s,v){return s+(v.metros||0);},0), totF=arr.reduce(function(s,g){return s+g.fact;},0);
+  var sinEsp=grupos['Sin especificar']?grupos['Sin especificar'].ventas:0;
+  // métricas
+  var mEl=document.getElementById('mkt-metrics');
+  if(mEl)mEl.innerHTML=
+    '<div class="metric-card" style="border-top-color:#6A1B9A"><div class="metric-label">Ventas</div><div class="metric-value">'+totV+'</div><div class="metric-month">'+perLabel+'</div></div>'+
+    '<div class="metric-card"><div class="metric-label">Metros</div><div class="metric-value">'+totM.toFixed(1)+' m</div><div class="metric-month">'+perLabel+'</div></div>'+
+    '<div class="metric-card"><div class="metric-label">Facturado</div><div class="metric-value" style="color:#2E7D32">'+fmt(totF)+'</div><div class="metric-month">'+perLabel+'</div></div>'+
+    '<div class="metric-card" style="border-top-color:'+(sinEsp>0?'#C62828':'#2E7D32')+'"><div class="metric-label">Sin origen cargado</div><div class="metric-value" style="color:'+(sinEsp>0?'#C62828':'#2E7D32')+'">'+sinEsp+'</div><div class="metric-month">de '+totV+' ventas</div></div>';
+  // gráfico de barras por origen
+  var chart=document.getElementById('mkt-chart');
+  if(chart){
+    if(!arr.length){chart.innerHTML='<div style="color:#A0A0A0;font-size:12px;text-align:center;padding:28px 0">Sin ventas en el período</div>';}
+    else{
+      var maxV=Math.max.apply(null,arr.map(function(g){return g.ventas;}));
+      chart.innerHTML=arr.map(function(g,i){
+        var pct=totV>0?Math.round((g.ventas/totV)*100):0;
+        var w=maxV>0?Math.round((g.ventas/maxV)*100):0;
+        var col=MKT_COLORS[i%MKT_COLORS.length];
+        return '<div style="margin-bottom:11px">'+
+          '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">'+
+            '<span style="color:#1A1A1A;font-weight:600">'+g.origen+'</span>'+
+            '<span style="color:#6B6B6B"><b style="color:'+col+'">'+g.ventas+'</b> ventas · '+pct+'%</span>'+
+          '</div>'+
+          '<div style="background:#F0F0F0;border-radius:5px;height:16px;overflow:hidden"><div style="width:'+w+'%;height:16px;border-radius:5px;background:'+col+'"></div></div>'+
+        '</div>';
+      }).join('');
+    }
+  }
+  // tabla
+  var tb=document.getElementById('mkt-tabla');
+  if(tb){
+    if(!arr.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:#A0A0A0">Sin ventas</td></tr>';}
+    else{
+      tb.innerHTML=arr.map(function(g,i){
+        var pct=totV>0?Math.round((g.ventas/totV)*100):0;
+        var col=MKT_COLORS[i%MKT_COLORS.length];
+        return '<tr style="border-bottom:1px solid #F0F0F0;background:'+(i%2===0?'#fff':'#FAFAFA')+'">'+
+          '<td style="padding:9px 12px;font-weight:600"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:'+col+';margin-right:7px"></span>'+g.origen+'</td>'+
+          '<td style="padding:9px 12px;text-align:right;font-weight:700">'+g.ventas+'</td>'+
+          '<td style="padding:9px 12px;text-align:right;color:#6B6B6B">'+pct+'%</td>'+
+          '<td style="padding:9px 12px;text-align:right">'+g.metros.toFixed(1)+' m</td>'+
+          '<td style="padding:9px 12px;text-align:right;color:#2E7D32;font-weight:600">'+fmt(g.fact)+'</td>'+
+        '</tr>';
+      }).join('');
+    }
+  }
 }
 
 // ---- ANÁLISIS ----
