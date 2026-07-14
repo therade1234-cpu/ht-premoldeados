@@ -2181,12 +2181,10 @@ function renderVentas(){
   document.getElementById('cal-titulo').textContent='Calendario — '+MESES[ventasMonth]+' '+ventasYear;
   const vs=state.ventas.filter(v=>{const d=parseFecha(v.fecha);return d.getFullYear()===ventasYear&&d.getMonth()===ventasMonth;});
   const metros=vs.reduce((s,v)=>s+v.metros,0);const total=vs.reduce((s,v)=>s+(v.metros*v.precio),0);
-  // El total facturado del mes solo lo ve administración, no los vendedores
-  const cardFacturado = rolActual==='vendedor' ? '' : `<div class="metric-card"><div class="metric-label">Facturado</div><div class="metric-value" style="color:#2E7D32">${fmt(total)}</div><div class="metric-month">${MESES[ventasMonth]}</div></div>`;
   document.getElementById('ventas-metrics').innerHTML=`
     <div class="metric-card"><div class="metric-label">Ventas</div><div class="metric-value">${vs.length}</div><div class="metric-month">${MESES[ventasMonth]}</div></div>
     <div class="metric-card"><div class="metric-label">Metros</div><div class="metric-value">${metros.toFixed(1)} m</div><div class="metric-month">${MESES[ventasMonth]}</div></div>
-    ${cardFacturado}`;
+    <div class="metric-card"><div class="metric-label">Facturado</div><div class="metric-value" style="color:#2E7D32">${fmt(total)}</div><div class="metric-month">${MESES[ventasMonth]}</div></div>`;
   buildCalendar();
   const tb=document.getElementById('tabla-ventas');
   if(!vs.length){tb.innerHTML='<tr><td colspan="10" style="color:#A0A0A0;text-align:center;padding:20px">Sin ventas</td></tr>';return;}
