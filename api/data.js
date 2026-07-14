@@ -1,7 +1,7 @@
 const GIST_ID = '40cf94a8e912e794fb9d156e43f1e56b';
 const GIST_TOKEN = process.env.GITHUB_TOKEN || 'gh' + 'o_5xQDWrC9YiRKS9FRc91jFmrSTRjFIc4LntMq';
 
-const EMPTY = { movimientos: [], ventas: [], vendedores: [], visitas: [], reparaciones: [], campanias: [], mktMedia: [], nomPlanilla: [], _deleted: [] };
+const EMPTY = { movimientos: [], ventas: [], vendedores: [], visitas: [], reparaciones: [], campanias: [], mktMedia: [], stock: [], nomPlanilla: [], _deleted: [] };
 
 // Lectura tolerante (para GET): si algo falla devuelve estructura vacía.
 async function readData() {
@@ -55,7 +55,7 @@ async function writeFiles(files) {
 
 // ---- Combinado (merge) idéntico al del cliente ----
 function sigOf(it) {
-  return [it.fecha, it.fechaObra, it.fechaRep, it.fechaVenta, it.cliente, it.tel, it.dir, it.direccion, it.localidad, it.metros, it.altura, it.diseno, it.precio, it.sena, it.totalObra, it.monto, it.cat, it.tipo, it.desc, it.notas, it.detalle, it.vendedor, it.estado, it.canal, it.msj, it.gasto, it.url, it.nombre].join('~');
+  return [it.fecha, it.fechaObra, it.fechaRep, it.fechaVenta, it.cliente, it.tel, it.dir, it.direccion, it.localidad, it.metros, it.altura, it.diseno, it.precio, it.sena, it.totalObra, it.monto, it.cat, it.tipo, it.desc, it.notas, it.detalle, it.vendedor, it.estado, it.canal, it.msj, it.gasto, it.url, it.nombre, it.categoria, it.cantidad].join('~');
 }
 // ID determinista derivado del contenido: misma obra -> mismo id en todos lados.
 function hashStr(s) { let h = 5381, i = s.length; while (i) { h = (h * 33) ^ s.charCodeAt(--i); } return (h >>> 0).toString(36); }
@@ -130,6 +130,7 @@ module.exports = async function handler(req, res) {
         reparaciones: mergeArr(existing.reparaciones, body.reparaciones, delSet),
         campanias: mergeArr(existing.campanias, body.campanias, delSet),
         mktMedia: mergeArr(existing.mktMedia, body.mktMedia, delSet),
+        stock: mergeArr(existing.stock, body.stock, delSet),
         // Config: si el cliente manda vacío, se conserva lo que ya había (no se borra por accidente).
         vendedores: (Array.isArray(body.vendedores) && body.vendedores.length) ? body.vendedores : (existing.vendedores || []),
         nomPlanilla: (Array.isArray(body.nomPlanilla) && body.nomPlanilla.length) ? mergeNomina(existing.nomPlanilla, body.nomPlanilla) : (existing.nomPlanilla || []),

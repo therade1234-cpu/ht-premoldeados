@@ -523,6 +523,13 @@ table.movs tr:hover td{background:#FAFAFA}
       <div class="home-btn-title">MATERIALES DE OBRA</div>
       <div class="home-btn-desc">Placas, pilares y gorritos por semana o mes</div>
     </button>
+    <button class="home-btn rol-admin rol-produccion" onclick="openPanel('stock')">
+      <div class="home-btn-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M21 8V21H3V8"/><rect x="1" y="3" width="22" height="5" rx="1"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+      </div>
+      <div class="home-btn-title">STOCK DISPONIBLE</div>
+      <div class="home-btn-desc">Inventario de materiales disponibles</div>
+    </button>
     <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('precios')">
       <div class="home-btn-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -1360,7 +1367,7 @@ const OC=['#D85A30','#E8744A','#993C1D','#F0997B','#BA7517','#5DCAA5','#7F77DD']
 const CAT_LABEL={obras:'Obras',senas:'Señas',publicidad:'Publicidad',sueldos:'Sueldos',fabrica:'Fábrica',materiales:'Materiales',vales:'Vales',fletes:'Fletes',ferreteria:'Ferretería',nafta:'Nafta',gastos_calle:'Gastos de calle',sueldos_oficina:'Sueldos oficina',pago_chicos_obra:'Pago semanal chicos de obra',nominas:'Nóminas',otro:'Otro'};
 
 // ---- PERSISTENCIA EN TIEMPO REAL (Vercel Edge Config) ----
-let state={ movimientos:[], ventas:[], vendedores:[], visitas:[], reparaciones:[], campanias:[], mktMedia:[], _deleted:[] };
+let state={ movimientos:[], ventas:[], vendedores:[], visitas:[], reparaciones:[], campanias:[], mktMedia:[], stock:[], _deleted:[] };
 let _panelActivo = null;
 let _saving = false;
 let _lastSave = 0;
@@ -1368,7 +1375,7 @@ let _pendingSave = false;
 let _lastSnapshot = '';
 
 // ---- Sincronización robusta (merge) para NO pisar NI duplicar datos entre dispositivos ----
-function sigOf(it){return [it.fecha,it.fechaObra,it.fechaRep,it.fechaVenta,it.cliente,it.tel,it.dir,it.direccion,it.localidad,it.metros,it.altura,it.diseno,it.precio,it.sena,it.totalObra,it.monto,it.cat,it.tipo,it.desc,it.notas,it.detalle,it.vendedor,it.estado,it.canal,it.msj,it.gasto,it.url,it.nombre].join('~');}
+function sigOf(it){return [it.fecha,it.fechaObra,it.fechaRep,it.fechaVenta,it.cliente,it.tel,it.dir,it.direccion,it.localidad,it.metros,it.altura,it.diseno,it.precio,it.sena,it.totalObra,it.monto,it.cat,it.tipo,it.desc,it.notas,it.detalle,it.vendedor,it.estado,it.canal,it.msj,it.gasto,it.url,it.nombre,it.categoria,it.cantidad].join('~');}
 // ID DETERMINISTA: derivado del contenido -> la MISMA obra tiene el MISMO id en todos los dispositivos (no se duplica)
 function hashStr(s){var h=5381,i=s.length;while(i){h=(h*33)^s.charCodeAt(--i);}return (h>>>0).toString(36);}
 function idFromSig(it){var s=sigOf(it);return 'h'+hashStr(s)+s.length.toString(36);}
@@ -1412,6 +1419,7 @@ function renderPanelActivo(){
   else if(_panelActivo==='vendedores')renderVendedores();
   else if(_panelActivo==='visitas')renderVisitas();
   else if(_panelActivo==='reparaciones')renderReparaciones();
+  else if(_panelActivo==='stock')renderStock();
 }
 
 function applyData(data){
@@ -1427,8 +1435,9 @@ function applyData(data){
   state.visitas=mergeArr(data.visitas, state.visitas, del);
   state.reparaciones=mergeArr(data.reparaciones, state.reparaciones, del);
   state.campanias=mergeArr(data.campanias, state.campanias, del);
+  state.stock=mergeArr(data.stock, state.stock, del);
   state.mktMedia=mergeArr(data.mktMedia, state.mktMedia, del);
-  ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);ensureIds(state.campanias);ensureIds(state.mktMedia);
+  ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);ensureIds(state.campanias);ensureIds(state.mktMedia);ensureIds(state.stock);
   if(Array.isArray(data.vendedores))state.vendedores=data.vendedores;
   // Restaurar nóminas completas (empleados, porDia y semanas).
   // NO reemplazar mientras el usuario edita nóminas (perdería lo que está cargando) ni si este equipo tiene cambios sin sincronizar.
@@ -1440,7 +1449,7 @@ function applyData(data){
   const sel=document.getElementById('v-vendedor');
   if(sel && !editando){const prev=sel.value;sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(function(v){return'<option value="'+v.nombre+'">'+v.nombre+'</option>';}).join('');if(prev)sel.value=prev;}
   // Solo re-renderizar si algo cambió y el usuario NO está tipeando (evita borrar lo que está escribiendo)
-  var snap=JSON.stringify([state.ventas,state.movimientos,state.visitas,state.reparaciones,state.campanias,state.mktMedia,state.vendedores,nomPlanilla]);
+  var snap=JSON.stringify([state.ventas,state.movimientos,state.visitas,state.reparaciones,state.campanias,state.mktMedia,state.stock,state.vendedores,nomPlanilla]);
   if(snap!==_lastSnapshot && !editando){_lastSnapshot=snap;renderPanelActivo();}
 }
 
@@ -1450,7 +1459,7 @@ async function saveState(){
   _pendingSave = false;
   let _ok=false;
   try {
-    ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);ensureIds(state.campanias);ensureIds(state.mktMedia);
+    ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);ensureIds(state.campanias);ensureIds(state.mktMedia);ensureIds(state.stock);
     // 1) Traer lo último del servidor y COMBINARLO (no pisar cambios de otros dispositivos)
     try {
       const rg = await fetch('/api/data', { cache:'no-store' });
@@ -1463,6 +1472,7 @@ async function saveState(){
         state.visitas = mergeArr(remote.visitas, state.visitas, state._deleted);
         state.reparaciones = mergeArr(remote.reparaciones, state.reparaciones, state._deleted);
         state.campanias = mergeArr(remote.campanias, state.campanias, state._deleted);
+        state.stock = mergeArr(remote.stock, state.stock, state._deleted);
         state.mktMedia = mergeArr(remote.mktMedia, state.mktMedia, state._deleted);
       }
     } catch(e){}
@@ -1470,7 +1480,7 @@ async function saveState(){
     const r = await fetch('/api/data', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, nomPlanilla: (_nomDirty ? nomPlanilla : undefined), visitas: state.visitas, reparaciones: state.reparaciones, campanias: state.campanias, mktMedia: state.mktMedia, _deleted: state._deleted })
+      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, nomPlanilla: (_nomDirty ? nomPlanilla : undefined), visitas: state.visitas, reparaciones: state.reparaciones, campanias: state.campanias, mktMedia: state.mktMedia, stock: state.stock, _deleted: state._deleted })
     });
     const result = await r.json();
     if(!result.ok) {
@@ -1484,7 +1494,7 @@ async function saveState(){
     console.error('Error de red al guardar:', e);
   } finally {
     _saving = false;
-    _lastSnapshot=JSON.stringify([state.ventas,state.movimientos,state.visitas,state.reparaciones,state.campanias,state.mktMedia,state.vendedores,nomPlanilla]);
+    _lastSnapshot=JSON.stringify([state.ventas,state.movimientos,state.visitas,state.reparaciones,state.campanias,state.mktMedia,state.stock,state.vendedores,nomPlanilla]);
     renderPanelActivo();
     if(_pendingSave) saveState();
   }
@@ -1552,6 +1562,7 @@ function openPanel(id){
     renderNominas();
   }
   else if(id==='materiales'){matHoy();renderMateriales();}
+  else if(id==='stock')renderStock();
   else if(id==='visitas'){renderVisitas();}
   else if(id==='reparaciones'){renderReparaciones();}
   else if(id==='recibos'){
@@ -2325,6 +2336,72 @@ function calcResumenMateriales(ventas){
   return grupos;
 }
 
+// ---- STOCK DISPONIBLE ----
+let _editStockIdx=-1;
+function stockCatColor(c){return {Placas:'#D85A30',Pilares:'#1565C0',Gorros:'#1B7A3E',Columnas:'#6A1B9A',Portones:'#BA7517',Otro:'#888'}[c]||'#888';}
+function abrirFormStock(idx){
+  _editStockIdx=idx;
+  document.getElementById('form-stock-titulo').textContent=idx>=0?'Editar item':'Nuevo item';
+  if(idx>=0&&state.stock[idx]){var it=state.stock[idx];document.getElementById('st-nombre').value=it.nombre||'';document.getElementById('st-categoria').value=it.categoria||'Placas';document.getElementById('st-cantidad').value=(it.cantidad!=null?it.cantidad:0);}
+  else{document.getElementById('st-nombre').value='';document.getElementById('st-categoria').value='Placas';document.getElementById('st-cantidad').value='';}
+  document.getElementById('form-stock').style.display='block';
+}
+function cerrarFormStock(){document.getElementById('form-stock').style.display='none';_editStockIdx=-1;}
+function guardarStock(){
+  var nombre=document.getElementById('st-nombre').value.trim();
+  var categoria=document.getElementById('st-categoria').value;
+  var cantidad=parseInt(document.getElementById('st-cantidad').value)||0;
+  if(!nombre){alert('Poné un nombre al item');return;}
+  if(_editStockIdx>=0&&state.stock[_editStockIdx]){var it=state.stock[_editStockIdx];tombstoneSig(it);it.nombre=nombre;it.categoria=categoria;it.cantidad=cantidad;if(state.stock.indexOf(it)===-1)state.stock.push(it);}
+  else{state.stock.push({nombre:nombre,categoria:categoria,cantidad:cantidad});}
+  ensureIds(state.stock);
+  cerrarFormStock();renderStock();saveState();
+}
+function stockAjustar(id,delta){
+  var it=state.stock.find(function(s){return s.id===id;});
+  if(!it)return;
+  tombstoneSig(it);
+  it.cantidad=Math.max(0,(parseInt(it.cantidad)||0)+delta);
+  renderStock();saveState();
+}
+async function eliminarStock(id){
+  var it=state.stock.find(function(s){return s.id===id;});
+  if(!it)return;
+  var ok=await showConfirm('¿Eliminar item?','Se eliminará "'+(it.nombre||'este item')+'" del stock.');
+  if(!ok)return;
+  tombstone(it);var idx=state.stock.indexOf(it);if(idx>=0)state.stock.splice(idx,1);
+  renderStock();saveState();
+}
+function renderStock(){
+  ensureIds(state.stock);
+  var items=state.stock.slice();
+  var totalUnid=items.reduce(function(s,i){return s+(parseInt(i.cantidad)||0);},0);
+  var sinStock=items.filter(function(i){return (parseInt(i.cantidad)||0)<=0;}).length;
+  var mEl=document.getElementById('stock-metrics');
+  if(mEl)mEl.innerHTML=
+    '<div class="metric-card"><div class="metric-label">Items</div><div class="metric-value">'+items.length+'</div></div>'+
+    '<div class="metric-card"><div class="metric-label">Unidades totales</div><div class="metric-value">'+totalUnid.toLocaleString('es-AR')+'</div></div>'+
+    '<div class="metric-card" style="border-top-color:'+(sinStock>0?'#C62828':'#2E7D32')+'"><div class="metric-label">Sin stock</div><div class="metric-value" style="color:'+(sinStock>0?'#C62828':'#2E7D32')+'">'+sinStock+'</div></div>';
+  var tb=document.getElementById('tabla-stock');
+  if(!tb)return;
+  if(!items.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:20px;color:#A0A0A0">Sin items cargados</td></tr>';return;}
+  items.sort(function(a,b){return (a.categoria||'').localeCompare(b.categoria||'')||(a.nombre||'').localeCompare(b.nombre||'');});
+  tb.innerHTML=items.map(function(it,i){
+    var c=parseInt(it.cantidad)||0, col=stockCatColor(it.categoria), gi=state.stock.indexOf(it);
+    return '<tr style="border-bottom:1px solid #F0F0F0;background:'+(i%2===0?'#fff':'#FAFAFA')+'">'+
+      '<td style="padding:9px 12px;font-weight:600">'+(it.nombre||'—')+'</td>'+
+      '<td style="padding:9px 12px"><span style="background:'+col+'22;color:'+col+';padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700">'+(it.categoria||'—')+'</span></td>'+
+      '<td style="padding:9px 12px;text-align:center;white-space:nowrap">'+
+        '<button onclick="stockAjustar(\''+it.id+'\',-1)" style="width:26px;height:26px;border:1px solid #E0E0E0;background:#fff;border-radius:6px;cursor:pointer;font-weight:700;font-size:15px;color:#C62828;vertical-align:middle">−</button>'+
+        '<span style="display:inline-block;min-width:46px;font-weight:800;font-size:15px;color:'+(c<=0?'#C62828':'#1A1A1A')+'">'+c+'</span>'+
+        '<button onclick="stockAjustar(\''+it.id+'\',1)" style="width:26px;height:26px;border:1px solid #E0E0E0;background:#fff;border-radius:6px;cursor:pointer;font-weight:700;font-size:15px;color:#2E7D32;vertical-align:middle">+</button>'+
+      '</td>'+
+      '<td style="padding:9px 12px;text-align:right;white-space:nowrap">'+
+        '<button onclick="abrirFormStock('+gi+')" style="background:none;border:1.5px solid #1565C0;border-radius:5px;color:#1565C0;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">✏️</button>'+
+        '<button onclick="eliminarStock(\''+it.id+'\')" style="background:none;border:1.5px solid #C62828;border-radius:5px;color:#C62828;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑</button>'+
+      '</td></tr>';
+  }).join('');
+}
 function renderMateriales(){
   // Label período
   var ss=semanas(matYear,matMonth);
@@ -4457,6 +4534,50 @@ async function subirArchivoGH(path, base64Content) {
 // Al recargar, restaurar la sesión y el panel activo (sin volver al inicio)
 restaurarSesion();
 </script>
+<!-- STOCK DISPONIBLE -->
+<div class="inner" id="inner-stock">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
+    <span class="tb-title">Stock disponible</span>
+    <button onclick="abrirFormStock(-1)" style="background:#D85A30;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;margin-left:auto">+ Nuevo item</button>
+  </div>
+  <div class="content">
+    <div id="stock-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
+    <div id="form-stock" style="display:none;margin-bottom:16px">
+      <div class="card">
+        <div class="card-title" id="form-stock-titulo" style="margin-bottom:14px">Nuevo item</div>
+        <div class="two-col">
+          <div class="form-group"><label class="form-label">Item</label>
+            <input type="text" id="st-nombre" placeholder="Ej: Placa símil piedra 2,00m" /></div>
+          <div class="form-group"><label class="form-label">Categoría</label>
+            <select id="st-categoria"><option>Placas</option><option>Pilares</option><option>Gorros</option><option>Columnas</option><option>Portones</option><option>Otro</option></select></div>
+        </div>
+        <div class="form-group"><label class="form-label">Cantidad disponible</label>
+          <input type="number" id="st-cantidad" placeholder="0" min="0" /></div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <button onclick="cerrarFormStock()" style="flex:1;background:#fff;border:1.5px solid #CCC;border-radius:8px;padding:10px;font-size:13px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">Cancelar</button>
+          <button onclick="guardarStock()" style="flex:1;background:#D85A30;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">Guardar</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#F7F7F7;border-bottom:2px solid #E8E8E8">
+              <th style="padding:10px 12px;text-align:left;color:#6B6B6B;font-weight:700">Item</th>
+              <th style="padding:10px 12px;text-align:left;color:#6B6B6B;font-weight:700">Categoría</th>
+              <th style="padding:10px 12px;text-align:center;color:#6B6B6B;font-weight:700">Disponible</th>
+              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-stock"><tr><td colspan="4" style="text-align:center;padding:20px;color:#A0A0A0">Sin items cargados</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MATERIALES DE OBRA -->
 <div class="inner" id="inner-materiales">
   <div class="topbar">
