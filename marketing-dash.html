@@ -369,6 +369,35 @@
       </div>
     </div>
 
+    <div id="view-geografico" style="display:none">
+      <div class="head" style="padding:26px 0 10px">
+        <div>
+          <h1>Reporte geográfico <span class="demo-tag">Demo · datos de ejemplo</span></h1>
+          <div class="sub">De dónde llegan la mayoría de las consultas</div>
+        </div>
+        <div class="seg" id="geo-seg">
+          <button data-g="ciudad" class="on">Por ciudad</button>
+          <button data-g="provincia">Por provincia</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Mapa de consultas por zona</div>
+        <div id="geo-map" style="height:380px;border-radius:12px;overflow:hidden;background:var(--surface-2)"></div>
+      </div>
+      <div class="card">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="9" y2="18"/></svg></span>Top zonas por consultas</div>
+        <div id="geo-bars"></div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th id="geo-th">Ciudad</th><th class="r">Consultas</th><th class="r">Gasto</th><th class="r">Costo por consulta</th></tr></thead>
+            <tbody id="geo-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div id="view-soon" style="display:none">
       <div class="head" style="padding:26px 0 10px"><div><h1 id="soon-title">Próximamente</h1><div class="sub">Esta sección la armamos en el próximo paso.</div></div></div>
       <div class="card" style="text-align:center;padding:52px 20px;color:var(--faint);font-size:14px">🚧 En construcción — decime si querés que siga con esta pestaña.</div>
@@ -568,12 +597,75 @@
   }
   ['h-desde','h-hasta','h-orden'].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('change',paintHist);});
 
+  // ---- GEOGRÁFICO (mapa + zonas) ----
+  var geoData={
+    ciudad:[
+      {name:'Buenos Aires',lat:-34.61,lng:-58.45,consultas:5838,gasto:6539309},
+      {name:'Ciudad Autónoma de Buenos Aires',lat:-34.61,lng:-58.38,consultas:457,gasto:487786},
+      {name:'Colonia Department',lat:-34.47,lng:-57.84,consultas:0,gasto:7},
+      {name:'Unknown',lat:null,lng:null,consultas:0,gasto:14}
+    ],
+    provincia:[
+      {name:'Buenos Aires',lat:-36.2,lng:-59.8,consultas:6120,gasto:6900000},
+      {name:'CABA',lat:-34.61,lng:-58.38,consultas:457,gasto:487786},
+      {name:'Santa Fe',lat:-31.6,lng:-60.7,consultas:118,gasto:132400},
+      {name:'Córdoba',lat:-31.4,lng:-64.2,consultas:64,gasto:71200},
+      {name:'Unknown',lat:null,lng:null,consultas:0,gasto:14}
+    ]
+  };
+  var geoMode='ciudad', geoMap=null, geoLayer=null;
+  function loadLeaflet(cb){
+    if(window.L){cb();return;}
+    var css=document.createElement('link');css.rel='stylesheet';css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(css);
+    var s=document.createElement('script');s.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';s.onload=cb;s.onerror=function(){};document.head.appendChild(s);
+  }
+  function initGeo(){
+    loadLeaflet(function(){
+      if(!window.L)return;
+      if(!geoMap){
+        geoMap=L.map('geo-map',{scrollWheelZoom:false}).setView([-38,-63],4);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:12,attribution:'© OpenStreetMap'}).addTo(geoMap);
+        geoLayer=L.layerGroup().addTo(geoMap);
+      }
+      setTimeout(function(){geoMap.invalidateSize();paintGeo();},120);
+    });
+  }
+  function paintGeo(){
+    var data=geoData[geoMode];
+    var maxG=Math.max.apply(null,data.map(function(z){return z.consultas;}))||1;
+    if(geoMap&&geoLayer){
+      geoLayer.clearLayers();
+      var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()||'#F5820A';
+      data.filter(function(z){return z.lat!=null&&z.consultas>0;}).forEach(function(z){
+        var r=7+Math.sqrt(z.consultas)*0.75;
+        L.circleMarker([z.lat,z.lng],{radius:r,color:accent,weight:1.5,fillColor:accent,fillOpacity:.35})
+          .bindPopup('<b>'+z.name+'</b><br>'+numf(z.consultas)+' consultas').addTo(geoLayer);
+      });
+    }
+    document.getElementById('geo-bars').innerHTML=data.slice().sort(function(a,b){return b.consultas-a.consultas;}).map(function(z){
+      var w=Math.round(z.consultas/maxG*100);
+      return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:11px">'+
+        '<div style="width:130px;flex-shrink:0;font-size:12px;color:var(--muted);text-align:right;line-height:1.2">'+z.name+'</div>'+
+        '<div style="flex:1;background:var(--surface-2);border-radius:5px;height:22px;overflow:hidden"><div style="width:'+w+'%;height:100%;background:var(--accent);border-radius:5px"></div></div>'+
+        '<div style="width:60px;flex-shrink:0;font-size:13px;font-weight:700;text-align:right" class="num">'+numf(z.consultas)+'</div>'+
+      '</div>';
+    }).join('');
+    document.getElementById('geo-rows').innerHTML=data.slice().sort(function(a,b){return b.consultas-a.consultas;}).map(function(z){
+      return '<tr><td><div class="cname">'+z.name+'</div><div class="bar"><i style="width:'+(z.consultas/maxG*100)+'%"></i></div></td>'+
+        '<td class="r num" style="font-weight:700">'+numf(z.consultas)+'</td>'+
+        '<td class="r num">'+money(z.gasto)+'</td>'+
+        '<td class="r num mono">'+(z.consultas?money(z.gasto/z.consultas):'—')+'</td></tr>';
+    }).join('');
+    document.getElementById('geo-th').textContent=geoMode==='ciudad'?'Ciudad':'Provincia';
+  }
+  document.getElementById('geo-seg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;[].forEach.call(this.children,function(x){x.classList.remove('on');});b.classList.add('on');geoMode=b.dataset.g;paintGeo();});
+
   // ---- navegación entre pestañas ----
-  var VISTAS={dashboard:'view-dashboard',historial:'view-historial'};
-  var NOMBRES={geografico:'Geográfico',videos:'Videos',campanias:'Campañas',ingresos:'Ingresos',reportes:'Reportes',config:'Configuración'};
+  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico'};
+  var NOMBRES={videos:'Videos',campanias:'Campañas',ingresos:'Ingresos',reportes:'Reportes',config:'Configuración'};
   function showView(v){
-    ['view-dashboard','view-historial','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
-    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); }
+    ['view-dashboard','view-historial','view-geografico','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} }
     else { document.getElementById('view-soon').style.display=''; document.getElementById('soon-title').textContent=NOMBRES[v]||'Próximamente'; }
     [].forEach.call(document.querySelectorAll('#navtabs .tab'),function(b){b.classList.toggle('on',b.dataset.view===v);});
     try{window.scrollTo(0,0);}catch(e){}
