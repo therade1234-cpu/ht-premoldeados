@@ -16,13 +16,13 @@
   }
   @media (prefers-color-scheme:dark){
     :root{
-      --bg:#161009; --surface:#211913; --surface-2:#2A2018; --raise:#2E241B;
-      --border:#3A2C20; --line:rgba(255,240,230,.07);
-      --text:#F4ECE3; --muted:#A2907E; --faint:#7C6C5D;
-      --accent:#EA7A45; --accent-2:#F3A278; --accent-ghost:rgba(234,122,69,.15);
-      --good:#4FC07C; --good-ghost:rgba(79,192,124,.15);
-      --bad:#F0705A; --bad-ghost:rgba(240,112,90,.15);
-      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+      --bg:#111114; --surface:#1B1B20; --surface-2:#26262C; --raise:#26262C;
+      --border:#2F2F36; --line:rgba(255,255,255,.06);
+      --text:#F3F3F6; --muted:#9A9AA4; --faint:#6E6E78;
+      --accent:#F5820A; --accent-2:#F9A748; --accent-ghost:rgba(245,130,10,.14);
+      --good:#4FC07C; --good-ghost:rgba(79,192,124,.14);
+      --bad:#F0705A; --bad-ghost:rgba(240,112,90,.14);
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.5);
     }
   }
   :root[data-theme="light"]{
@@ -35,13 +35,13 @@
     --shadow:0 1px 2px rgba(30,20,12,.04),0 8px 24px rgba(30,20,12,.05);
   }
   :root[data-theme="dark"]{
-    --bg:#161009; --surface:#211913; --surface-2:#2A2018; --raise:#2E241B;
-    --border:#3A2C20; --line:rgba(255,240,230,.07);
-    --text:#F4ECE3; --muted:#A2907E; --faint:#7C6C5D;
-    --accent:#EA7A45; --accent-2:#F3A278; --accent-ghost:rgba(234,122,69,.15);
-    --good:#4FC07C; --good-ghost:rgba(79,192,124,.15);
-    --bad:#F0705A; --bad-ghost:rgba(240,112,90,.15);
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    --bg:#111114; --surface:#1B1B20; --surface-2:#26262C; --raise:#26262C;
+    --border:#2F2F36; --line:rgba(255,255,255,.06);
+    --text:#F3F3F6; --muted:#9A9AA4; --faint:#6E6E78;
+    --accent:#F5820A; --accent-2:#F9A748; --accent-ghost:rgba(245,130,10,.14);
+    --good:#4FC07C; --good-ghost:rgba(79,192,124,.14);
+    --bad:#F0705A; --bad-ghost:rgba(240,112,90,.14);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.5);
   }
 
   *{box-sizing:border-box}
@@ -410,7 +410,7 @@
       var pct=(r[1]/maxLine)*100; var last=i===rows.length-1;
       return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0">'+
         '<div style="width:100%;height:170px;display:flex;align-items:flex-end;justify-content:center">'+
-          '<div title="'+numf(r[1])+'" style="width:60%;max-width:34px;height:'+pct+'%;border-radius:6px 6px 3px 3px;background:'+(last?'linear-gradient(180deg,var(--accent),var(--accent-2))':'linear-gradient(180deg,color-mix(in srgb,var(--accent) 60%,transparent),color-mix(in srgb,var(--accent) 30%,transparent))')+'"></div>'+
+          '<div title="'+numf(r[1])+'" style="width:60%;max-width:34px;height:'+pct+'%;border-radius:5px 5px 2px 2px;background:'+(last?'linear-gradient(180deg,var(--accent-2),var(--accent))':'var(--accent)')+'"></div>'+
         '</div>'+
         '<div style="font-size:11px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums">'+r[0]+'</div>'+
       '</div>';
