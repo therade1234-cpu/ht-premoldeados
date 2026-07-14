@@ -1551,7 +1551,7 @@ function openPanel(id){
     }
     renderNominas();
   }
-  else if(id==='materiales')renderMateriales();
+  else if(id==='materiales'){matHoy();renderMateriales();}
   else if(id==='visitas'){renderVisitas();}
   else if(id==='reparaciones'){renderReparaciones();}
   else if(id==='recibos'){
@@ -2206,6 +2206,15 @@ function buildCalendar(){
 
 // ---- MATERIALES DE OBRA ----
 let matTab='semana', matYear=2026, matMonth=5, matSemana=0;
+// Ubica el módulo de materiales en la fecha de HOY (mes y semana actual)
+function matHoy(){
+  var h=new Date();
+  matYear=h.getFullYear(); matMonth=h.getMonth();
+  var d=h.getDate();
+  var ss=semanas(matYear,matMonth);
+  var idx=ss.findIndex(function(s){return d>=s.start&&d<=s.end;});
+  matSemana=idx>=0?idx:0;
+}
 
 function matSetTab(t){
   matTab=t;
