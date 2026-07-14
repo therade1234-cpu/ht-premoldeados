@@ -166,6 +166,9 @@
   .empty{color:var(--faint);font-size:13px;padding:8px 0}
   .demo-tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
     color:var(--accent);background:var(--accent-ghost);padding:3px 9px;border-radius:20px;margin-left:10px;vertical-align:middle}
+  .hinput{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;
+    padding:9px 12px;font:inherit;font-size:13px;color-scheme:dark}
+  .hinput:focus{outline:2px solid var(--accent);outline-offset:1px}
 
   @media (max-width:880px){
     .col-4,.col-6,.col-8{grid-column:span 12}
@@ -182,21 +185,22 @@
         <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><rect x="3" y="13" width="6" height="8" rx="1"/><rect x="9" y="9" width="6" height="12" rx="1"/><rect x="15" y="5" width="6" height="16" rx="1"/></svg></div>
         <div><b>HT Premoldeados</b><span>Pulse · Marketing</span></div>
       </div>
-      <div class="tabs">
-        <button class="tab on">Dashboard</button>
-        <button class="tab">Historial</button>
-        <button class="tab">Geográfico</button>
-        <button class="tab">Videos</button>
-        <button class="tab">Campañas</button>
-        <button class="tab">Ingresos</button>
-        <button class="tab">Reportes</button>
-        <button class="tab">Configuración</button>
+      <div class="tabs" id="navtabs">
+        <button class="tab on" data-view="dashboard">Dashboard</button>
+        <button class="tab" data-view="historial">Historial</button>
+        <button class="tab" data-view="geografico">Geográfico</button>
+        <button class="tab" data-view="videos">Videos</button>
+        <button class="tab" data-view="campanias">Campañas</button>
+        <button class="tab" data-view="ingresos">Ingresos</button>
+        <button class="tab" data-view="reportes">Reportes</button>
+        <button class="tab" data-view="config">Configuración</button>
       </div>
       <button class="icon-btn" title="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
     </div>
   </nav>
 
   <div class="wrap">
+    <div id="view-dashboard">
     <div class="head">
       <div>
         <h1>Panel de marketing <span class="demo-tag" id="modo">Demo · datos de ejemplo</span></h1>
@@ -331,6 +335,43 @@
         <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></span>Plataformas conectadas</div>
         <div class="plat-grid" id="plats"></div>
       </div>
+    </div>
+    </div><!-- /view-dashboard -->
+
+    <div id="view-historial" style="display:none">
+      <div class="head" style="padding:26px 0 10px">
+        <div>
+          <h1>Historial de anuncios <span class="demo-tag" id="modo2">Demo · datos de ejemplo</span></h1>
+          <div class="sub">Todas las campañas y anuncios con sus métricas diarias</div>
+        </div>
+      </div>
+      <div class="card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <input type="date" id="h-desde" class="hinput" aria-label="Desde">
+        <span class="mono">a</span>
+        <input type="date" id="h-hasta" class="hinput" aria-label="Hasta">
+        <select id="h-orden" class="hinput">
+          <option value="fecha">Ordenar por fecha</option>
+          <option value="consultas">Más consultas</option>
+          <option value="gasto">Mayor gasto</option>
+          <option value="cpc">Mayor costo por consulta</option>
+        </select>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;margin-top:16px">
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th>Fecha</th><th>Campaña</th><th>Anuncio</th><th>Ciudad</th>
+              <th class="r">Consultas</th><th class="r">Gasto</th><th class="r">Costo/consulta</th>
+            </tr></thead>
+            <tbody id="hist-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-soon" style="display:none">
+      <div class="head" style="padding:26px 0 10px"><div><h1 id="soon-title">Próximamente</h1><div class="sub">Esta sección la armamos en el próximo paso.</div></div></div>
+      <div class="card" style="text-align:center;padding:52px 20px;color:var(--faint);font-size:14px">🚧 En construcción — decime si querés que siga con esta pestaña.</div>
     </div>
   </div>
 </div>
@@ -481,6 +522,63 @@
   }).join('');
 
   paintVideos(); paintCamps(); paintLocs();
+
+  // ---- HISTORIAL de anuncios (métricas diarias) ----
+  var hist=[
+    {fecha:'2026-07-13',camp:'Leads_Calificados',anuncio:'18/5',ciudad:'CABA',consultas:0,gasto:3},
+    {fecha:'2026-07-13',camp:'Leads_Calificados',anuncio:'29/6',ciudad:'Buenos Aires',consultas:0,gasto:220},
+    {fecha:'2026-07-13',camp:'Pri (ABO) 26',anuncio:'1/7',ciudad:'Buenos Aires',consultas:1,gasto:51},
+    {fecha:'2026-07-13',camp:'Pri (ABO) 26',anuncio:'23/6',ciudad:'CABA',consultas:1,gasto:1308},
+    {fecha:'2026-07-13',camp:'Pri (ABO) 26',anuncio:'23/6',ciudad:'Buenos Aires',consultas:14,gasto:10308},
+    {fecha:'2026-07-12',camp:'Ivan (CBO) 26',anuncio:'26/8',ciudad:'Buenos Aires',consultas:22,gasto:20394},
+    {fecha:'2026-07-12',camp:'Carla (ABO) 26',anuncio:'antes y despues',ciudad:'Buenos Aires',consultas:18,gasto:17820},
+    {fecha:'2026-07-12',camp:'Caro (ABO) 26',anuncio:'26/8',ciudad:'CABA',consultas:5,gasto:6100},
+    {fecha:'2026-07-11',camp:'Ivan (CBO) 26',anuncio:'23/6',ciudad:'Buenos Aires',consultas:19,gasto:18240},
+    {fecha:'2026-07-11',camp:'Pri (ABO) 26',anuncio:'1/7',ciudad:'Buenos Aires',consultas:12,gasto:12840},
+    {fecha:'2026-07-10',camp:'Carla (ABO) 26',anuncio:'26/8',ciudad:'Buenos Aires',consultas:16,gasto:14400},
+    {fecha:'2026-07-10',camp:'Leads_Calificados',anuncio:'18/5',ciudad:'CABA',consultas:2,gasto:5400},
+    {fecha:'2026-07-09',camp:'Caro (ABO) 26',anuncio:'antes y despues',ciudad:'Buenos Aires',consultas:13,gasto:14690},
+    {fecha:'2026-07-09',camp:'Ivan (CBO) 26',anuncio:'26/8',ciudad:'CABA',consultas:4,gasto:4200},
+    {fecha:'2026-07-08',camp:'Pri (ABO) 26',anuncio:'23/6',ciudad:'Buenos Aires',consultas:21,gasto:16800},
+    {fecha:'2026-07-08',camp:'Carla (ABO) 26',anuncio:'1/7',ciudad:'Buenos Aires',consultas:9,gasto:8640},
+    {fecha:'2026-07-08',camp:'Caro (ABO) 26',anuncio:'26/8',ciudad:'CABA',consultas:3,gasto:3900},
+    {fecha:'2026-07-07',camp:'Ivan (CBO) 26',anuncio:'antes y despues',ciudad:'Buenos Aires',consultas:17,gasto:15300}
+  ];
+  function paintHist(){
+    var desde=document.getElementById('h-desde').value, hasta=document.getElementById('h-hasta').value, orden=document.getElementById('h-orden').value;
+    var rows=hist.filter(function(r){ if(desde&&r.fecha<desde)return false; if(hasta&&r.fecha>hasta)return false; return true; });
+    rows.sort(function(a,b){
+      if(orden==='consultas')return b.consultas-a.consultas;
+      if(orden==='gasto')return b.gasto-a.gasto;
+      if(orden==='cpc'){var ca=a.consultas?a.gasto/a.consultas:-1,cb=b.consultas?b.gasto/b.consultas:-1;return cb-ca;}
+      return b.fecha.localeCompare(a.fecha)||b.consultas-a.consultas;
+    });
+    var tb=document.getElementById('hist-rows');
+    if(!rows.length){tb.innerHTML='<tr><td colspan="7" class="empty" style="text-align:center;padding:22px">Sin datos en el rango elegido</td></tr>';return;}
+    tb.innerHTML=rows.map(function(r){
+      return '<tr>'+
+        '<td class="num mono" style="white-space:nowrap">'+r.fecha+'</td>'+
+        '<td class="cname">'+r.camp+'</td>'+
+        '<td class="mono">'+r.anuncio+'</td>'+
+        '<td>'+r.ciudad+'</td>'+
+        '<td class="r num" style="font-weight:700;color:'+(r.consultas>0?'var(--accent)':'var(--faint)')+'">'+numf(r.consultas)+'</td>'+
+        '<td class="r num">'+money(r.gasto)+'</td>'+
+        '<td class="r num mono">'+(r.consultas?money(r.gasto/r.consultas):'—')+'</td></tr>';
+    }).join('');
+  }
+  ['h-desde','h-hasta','h-orden'].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('change',paintHist);});
+
+  // ---- navegación entre pestañas ----
+  var VISTAS={dashboard:'view-dashboard',historial:'view-historial'};
+  var NOMBRES={geografico:'Geográfico',videos:'Videos',campanias:'Campañas',ingresos:'Ingresos',reportes:'Reportes',config:'Configuración'};
+  function showView(v){
+    ['view-dashboard','view-historial','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); }
+    else { document.getElementById('view-soon').style.display=''; document.getElementById('soon-title').textContent=NOMBRES[v]||'Próximamente'; }
+    [].forEach.call(document.querySelectorAll('#navtabs .tab'),function(b){b.classList.toggle('on',b.dataset.view===v);});
+    try{window.scrollTo(0,0);}catch(e){}
+  }
+  document.getElementById('navtabs').addEventListener('click',function(e){var b=e.target.closest('.tab');if(b&&b.dataset.view)showView(b.dataset.view);});
 
   // ---- datos REALES de Meta Ads (si /api/meta está configurado) ----
   function pct(cur,prev){ if(prev==null||prev===0) return 0; return Math.round((cur-prev)/prev*100); }
