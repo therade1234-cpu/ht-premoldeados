@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>HT Premoldeados — Marketing</title></head>
+<body style="margin:0">
+<title>HT Premoldeados — Marketing</title>
+<style>
+  :root{
+    --bg:#FBF6F1; --surface:#FFFFFF; --surface-2:#F5EEE6; --raise:#FFFFFF;
+    --border:#EBDFD3; --line:rgba(30,20,12,.07);
+    --text:#241B13; --muted:#8A7869; --faint:#B4A597;
+    --accent:#D85A30; --accent-2:#F0997B; --accent-ghost:rgba(216,90,48,.12);
+    --good:#1E8A4E; --good-ghost:rgba(30,138,78,.12);
+    --bad:#C63F27; --bad-ghost:rgba(198,63,39,.12);
+    --shadow:0 1px 2px rgba(30,20,12,.04),0 8px 24px rgba(30,20,12,.05);
+    --r:16px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#161009; --surface:#211913; --surface-2:#2A2018; --raise:#2E241B;
+      --border:#3A2C20; --line:rgba(255,240,230,.07);
+      --text:#F4ECE3; --muted:#A2907E; --faint:#7C6C5D;
+      --accent:#EA7A45; --accent-2:#F3A278; --accent-ghost:rgba(234,122,69,.15);
+      --good:#4FC07C; --good-ghost:rgba(79,192,124,.15);
+      --bad:#F0705A; --bad-ghost:rgba(240,112,90,.15);
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#FBF6F1; --surface:#FFFFFF; --surface-2:#F5EEE6; --raise:#FFFFFF;
+    --border:#EBDFD3; --line:rgba(30,20,12,.07);
+    --text:#241B13; --muted:#8A7869; --faint:#B4A597;
+    --accent:#D85A30; --accent-2:#F0997B; --accent-ghost:rgba(216,90,48,.12);
+    --good:#1E8A4E; --good-ghost:rgba(30,138,78,.12);
+    --bad:#C63F27; --bad-ghost:rgba(198,63,39,.12);
+    --shadow:0 1px 2px rgba(30,20,12,.04),0 8px 24px rgba(30,20,12,.05);
+  }
+  :root[data-theme="dark"]{
+    --bg:#161009; --surface:#211913; --surface-2:#2A2018; --raise:#2E241B;
+    --border:#3A2C20; --line:rgba(255,240,230,.07);
+    --text:#F4ECE3; --muted:#A2907E; --faint:#7C6C5D;
+    --accent:#EA7A45; --accent-2:#F3A278; --accent-ghost:rgba(234,122,69,.15);
+    --good:#4FC07C; --good-ghost:rgba(79,192,124,.15);
+    --bad:#F0705A; --bad-ghost:rgba(240,112,90,.15);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0}
+  .app{
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--text);
+    min-height:100vh; -webkit-font-smoothing:antialiased;
+  }
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+  /* NAV */
+  .nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+  .nav-in{display:flex;align-items:center;gap:18px;height:62px;max-width:1180px;margin:0 auto;padding:0 20px}
+  .brand{display:flex;align-items:center;gap:10px;flex-shrink:0}
+  .logo{width:34px;height:34px;border-radius:9px;background:
+    linear-gradient(135deg,var(--accent),#9c3c1d);display:grid;place-items:center;flex-shrink:0}
+  .logo svg{width:19px;height:19px}
+  .brand b{font-size:15px;font-weight:800;letter-spacing:-.01em;line-height:1}
+  .brand span{display:block;font-size:9px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;margin-top:2px}
+  .tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{border:0;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:600;
+    padding:8px 13px;border-radius:9px;cursor:pointer;white-space:nowrap;transition:.15s}
+  .tab:hover{color:var(--text);background:var(--surface-2)}
+  .tab.on{color:#fff;background:var(--accent)}
+  .icon-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--surface);
+    color:var(--muted);display:grid;place-items:center;cursor:pointer;flex-shrink:0}
+  .icon-btn:hover{color:var(--accent)}
+
+  /* HEADER */
+  .head{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between;padding:26px 0 4px}
+  .head h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+  .head .sub{color:var(--muted);font-size:13.5px;margin-top:4px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .chip{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);
+    border-radius:11px;padding:9px 13px;font-size:13px;color:var(--muted);cursor:pointer}
+  .chip svg{width:14px;height:14px;color:var(--accent)}
+  .seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:3px}
+  .seg button{border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);
+    padding:6px 15px;border-radius:8px;cursor:pointer;transition:.15s}
+  .seg button.on{background:var(--accent);color:#fff;box-shadow:var(--shadow)}
+
+  /* BANNER */
+  .banner{display:flex;gap:13px;align-items:center;background:linear-gradient(100deg,var(--accent-ghost),transparent 70%);
+    border:1px solid var(--border);border-radius:var(--r);padding:15px 18px;margin:18px 0}
+  .banner .spark{width:34px;height:34px;border-radius:10px;background:var(--accent);display:grid;place-items:center;flex-shrink:0}
+  .banner .spark svg{width:18px;height:18px}
+  .banner p{margin:0;font-size:14.5px;line-height:1.45}
+  .banner b{color:var(--accent)}
+
+  /* GRID */
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr);padding-bottom:40px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow)}
+  .col-4{grid-column:span 4} .col-6{grid-column:span 6} .col-8{grid-column:span 8} .col-12{grid-column:span 12}
+
+  .klabel{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:11.5px;font-weight:700;
+    letter-spacing:.07em;text-transform:uppercase}
+  .kico{width:26px;height:26px;border-radius:8px;background:var(--accent-ghost);display:grid;place-items:center;color:var(--accent)}
+  .kico svg{width:15px;height:15px}
+  .kval{font-size:34px;font-weight:800;letter-spacing:-.03em;margin:12px 0 2px;line-height:1}
+  .krow{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+  .ksub{font-size:12.5px;color:var(--muted)}
+  .delta{font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px}
+  .delta.up{color:var(--good);background:var(--good-ghost)}
+  .delta.down{color:var(--bad);background:var(--bad-ghost)}
+  .kspark{margin-top:14px}
+
+  .ctitle{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:16px}
+  .ctitle .kico{width:28px;height:28px}
+
+  /* videos */
+  .vrow{display:flex;align-items:center;gap:13px;padding:11px 0;border-top:1px solid var(--line)}
+  .vrow:first-of-type{border-top:0}
+  .vrank{font-size:15px;font-weight:800;color:var(--accent);width:16px;text-align:center;flex-shrink:0}
+  .vthumb{width:46px;height:46px;border-radius:10px;flex-shrink:0;background:
+    linear-gradient(135deg,var(--surface-2),var(--border));display:grid;place-items:center;color:var(--faint);overflow:hidden}
+  .vthumb svg{width:18px;height:18px}
+  .vname{font-size:14px;font-weight:700}
+  .vmeta{font-size:12px;color:var(--muted);margin-top:2px}
+  .vmeta b{color:var(--accent)}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  thead th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--faint);padding:0 0 11px;border-bottom:1px solid var(--border)}
+  thead th.r,tbody td.r{text-align:right}
+  tbody td{padding:12px 0;border-top:1px solid var(--line);vertical-align:middle}
+  tbody tr:first-child td{border-top:0}
+  .cname{font-weight:700}
+  .bar{height:6px;border-radius:4px;background:var(--surface-2);overflow:hidden;margin-top:6px}
+  .bar>i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent-2))}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px}
+  .pill .dot{width:7px;height:7px;border-radius:50%}
+  .pill.act{color:var(--good);background:var(--good-ghost)} .pill.act .dot{background:var(--good)}
+  .pill.pau{color:var(--muted);background:var(--surface-2)} .pill.pau .dot{background:var(--faint)}
+  .mono{color:var(--muted)}
+
+  /* platforms */
+  .plat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .plat{border:1px solid var(--border);border-radius:13px;padding:16px 12px;text-align:center;position:relative;background:var(--surface)}
+  .plat.soon{opacity:.5}
+  .plat .pico{width:34px;height:34px;margin:0 auto 8px;display:grid;place-items:center}
+  .plat .pico svg{width:26px;height:26px}
+  .plat .pn{font-size:13px;font-weight:700}
+  .plat .ps{font-size:11px;font-weight:700;margin-top:2px}
+  .plat .ps.ok{color:var(--good)} .plat .ps.wait{color:var(--faint)}
+  .plat .badge{position:absolute;top:9px;right:9px;width:15px;height:15px;border-radius:50%;background:var(--good);
+    display:grid;place-items:center}
+  .plat .badge svg{width:9px;height:9px;color:#fff}
+
+  .social{display:flex;gap:28px;flex-wrap:wrap;align-items:center}
+  .social .av{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#9c3c1d);
+    display:grid;place-items:center;flex-shrink:0}
+  .social .st{text-align:center}
+  .social .st b{display:block;font-size:22px;font-weight:800;letter-spacing:-.02em}
+  .social .st span{font-size:11.5px;color:var(--muted)}
+
+  .empty{color:var(--faint);font-size:13px;padding:8px 0}
+  .demo-tag{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+    color:var(--accent);background:var(--accent-ghost);padding:3px 9px;border-radius:20px;margin-left:10px;vertical-align:middle}
+
+  @media (max-width:880px){
+    .col-4,.col-6,.col-8{grid-column:span 12}
+    .plat-grid{grid-template-columns:repeat(2,1fr)}
+    .head h1{font-size:22px}
+    .kval{font-size:30px}
+  }
+</style>
+
+<div class="app">
+  <nav class="nav">
+    <div class="nav-in">
+      <div class="brand">
+        <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><rect x="3" y="13" width="6" height="8" rx="1"/><rect x="9" y="9" width="6" height="12" rx="1"/><rect x="15" y="5" width="6" height="16" rx="1"/></svg></div>
+        <div><b>HT Premoldeados</b><span>Pulse · Marketing</span></div>
+      </div>
+      <div class="tabs">
+        <button class="tab on">Dashboard</button>
+        <button class="tab">Historial</button>
+        <button class="tab">Geográfico</button>
+        <button class="tab">Videos</button>
+        <button class="tab">Campañas</button>
+        <button class="tab">Ingresos</button>
+        <button class="tab">Reportes</button>
+        <button class="tab">Configuración</button>
+      </div>
+      <button class="icon-btn" title="Salir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+    </div>
+  </nav>
+
+  <div class="wrap">
+    <div class="head">
+      <div>
+        <h1>Panel de marketing <span class="demo-tag">Demo · datos de ejemplo</span></h1>
+        <div class="sub">Resultados de tus campañas de Meta Ads · consultas por WhatsApp</div>
+      </div>
+      <div class="controls">
+        <button class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Todos los códigos postales</button>
+        <div class="seg" id="seg">
+          <button data-p="semana">Semana</button>
+          <button data-p="mes" class="on">Mes</button>
+          <button data-p="hist">Histórico</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="banner">
+      <div class="spark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 9.2l-4.6 3.6L17 19l-5-3.5L7 19l1.6-6.2L4 9.2l6.1-.4z"/></svg></div>
+      <p id="banner">—</p>
+    </div>
+
+    <div class="grid">
+      <!-- KPIs -->
+      <div class="card col-4">
+        <div class="krow"><div class="klabel"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Consultas recibidas</div><span class="delta" id="d1"></span></div>
+        <div class="kval num" id="v1"></div>
+        <div class="ksub">Mensajes de WhatsApp en el período</div>
+        <div class="kspark" id="s1"></div>
+      </div>
+      <div class="card col-4">
+        <div class="krow"><div class="klabel"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Costo por consulta</div><span class="delta" id="d2"></span></div>
+        <div class="kval num" id="v2"></div>
+        <div class="ksub">Promedio de inversión por mensaje</div>
+        <div class="kspark" id="s2"></div>
+      </div>
+      <div class="card col-4">
+        <div class="krow"><div class="klabel"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></span>Gasto total</div><span class="delta" id="d3"></span></div>
+        <div class="kval num" id="v3"></div>
+        <div class="ksub">Inversión en publicidad</div>
+        <div class="kspark" id="s3"></div>
+      </div>
+
+      <!-- weekly chart -->
+      <div class="card col-8">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Consultas por semana</div>
+        <div id="weekly"></div>
+      </div>
+
+      <!-- top videos -->
+      <div class="card col-4">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></span>Videos que más venden</div>
+        <div id="videos"></div>
+      </div>
+
+      <!-- campaigns -->
+      <div class="card col-7">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l9-3 9 3v4l-9 3-9-3z"/><path d="M3 12l9 3 9-3M3 16l9 3 9-3"/></svg></span>Resultados por campaña</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Campaña</th><th>Estado</th><th class="r">Consultas</th><th class="r">Gasto</th><th class="r">Costo x consulta</th></tr></thead>
+            <tbody id="camps"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- localidad -->
+      <div class="card col-5">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>Rendimiento por localidad</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Zona</th><th class="r">Consultas</th><th class="r">Gasto</th><th class="r">C x C</th></tr></thead>
+            <tbody id="locs"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- tráfico web -->
+      <div class="card col-6">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg></span>Tráfico web</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px 10px">
+          <div><div class="kval num" style="font-size:26px">4.820</div><div class="ksub">Visitas del sitio</div></div>
+          <div><div class="kval num" style="font-size:26px">3.140</div><div class="ksub">Usuarios únicos</div></div>
+          <div><div class="kval num" style="font-size:26px">1:42</div><div class="ksub">Duración media</div></div>
+          <div><div class="kval num" style="font-size:26px">46%</div><div class="ksub">Tasa de rebote</div></div>
+        </div>
+        <div class="kspark" id="web-spark"></div>
+        <div class="ksub" style="margin-top:10px;color:var(--faint)">Fuente: Google Analytics · datos de ejemplo</div>
+      </div>
+
+      <!-- visitas web vs consultas -->
+      <div class="card col-6">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="3" y1="20" x2="21" y2="20"/></svg></span>Visitas web vs. consultas</div>
+        <div style="margin-top:4px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span class="mono">Visitas al sitio</span><b class="num">4.820</b></div>
+          <div class="bar" style="height:12px"><i style="width:100%;background:linear-gradient(90deg,#9c9c9c,#c4c4c4)"></i></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin:14px 0 5px"><span class="mono">Consultas por WhatsApp</span><b class="num" style="color:var(--accent)">1.620</b></div>
+          <div class="bar" style="height:12px"><i style="width:34%"></i></div>
+        </div>
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+          <span class="ksub">Tasa de conversión web → consulta</span>
+          <span class="pill act" style="font-size:14px"><span class="dot"></span>34%</span>
+        </div>
+      </div>
+
+      <!-- gasto por plataforma -->
+      <div class="card col-7">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l9-3 9 3v4l-9 3-9-3z"/></svg></span>Gasto total por plataforma</div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Plataforma</th><th class="r">Gasto</th><th class="r">Consultas</th><th class="r">Costo x consulta</th></tr></thead>
+            <tbody>
+              <tr><td class="cname">Meta Ads <span class="mono" style="font-weight:400">(Instagram + Facebook)</span></td><td class="r num" id="plat-gasto"></td><td class="r num" id="plat-cons"></td><td class="r num" id="plat-cpc"></td></tr>
+              <tr><td class="cname">Google Ads</td><td class="r mono">—</td><td class="r mono">—</td><td class="r mono">—</td></tr>
+              <tr><td class="cname">TikTok Ads</td><td class="r mono">—</td><td class="r mono">—</td><td class="r mono">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- tiktok social -->
+      <div class="card col-5">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l7-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/></svg></span>TikTok</div>
+        <div class="social">
+          <div class="av"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"><rect x="3" y="13" width="6" height="8" rx="1"/><rect x="9" y="9" width="6" height="12" rx="1"/><rect x="15" y="5" width="6" height="16" rx="1"/></svg></div>
+          <div class="st"><b class="num">469</b><span>Seguidores</span></div>
+          <div class="st"><b class="num">1.582</b><span>Me gusta</span></div>
+          <div class="st"><b class="num">198</b><span>Videos</span></div>
+        </div>
+      </div>
+
+      <!-- plataformas conectadas -->
+      <div class="card col-12">
+        <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></span>Plataformas conectadas</div>
+        <div class="plat-grid" id="plats"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var money=function(n){return '$'+Math.round(n).toLocaleString('es-AR');};
+  var numf=function(n){return Math.round(n).toLocaleString('es-AR');};
+
+  // Datos de EJEMPLO por período
+  var data={
+    semana:{
+      consultas:{v:210,delta:-14,good:false}, cpc:{v:1090,delta:-5,good:true}, gasto:{v:228900,delta:-9,good:null},
+      weekly:[['Lun',18],['Mar',24],['Mié',33],['Jue',41],['Vie',38],['Sáb',36],['Dom',20]],
+      wlabel:'Consultas por día'
+    },
+    mes:{
+      consultas:{v:1620,delta:-36,good:false}, cpc:{v:1145,delta:3,good:false}, gasto:{v:1855360,delta:34,good:null},
+      weekly:[['25 may',120],['01 jun',680],['08 jun',420],['15 jun',480],['22 jun',640],['29 jun',790],['06 jul',910],['13 jul',150]],
+      wlabel:'Consultas por semana'
+    },
+    hist:{
+      consultas:{v:8420,delta:12,good:true}, cpc:{v:1180,delta:-2,good:true}, gasto:{v:9935000,delta:18,good:null},
+      weekly:[['Mar',980],['Abr',1120],['May',1340],['Jun',2010],['Jul',1620],['Ago',1350]],
+      wlabel:'Consultas por mes'
+    }
+  };
+
+  var videos=[
+    {r:1,name:'26/8',consultas:323,cpc:927},
+    {r:2,name:'23/6',consultas:257,cpc:1006},
+    {r:3,name:'antes y después',consultas:253,cpc:1490}
+  ];
+  var camps=[
+    {name:'Ivan (CBO) 26',estado:'act',consultas:402,gasto:411774,cpc:1024},
+    {name:'Carla (ABO) 26',estado:'act',consultas:392,gasto:376899,cpc:961},
+    {name:'Pri (ABO) 26',estado:'act',consultas:383,gasto:409919,cpc:1070},
+    {name:'Caro (ABO) 26',estado:'act',consultas:338,gasto:375893,cpc:1112},
+    {name:'Leads_Calificados',estado:'pau',consultas:105,gasto:280875,cpc:2675}
+  ];
+  var locs=[
+    {name:'Buenos Aires',consultas:1526,gasto:1742180,cpc:1142},
+    {name:'CABA',consultas:94,gasto:113168,cpc:1204},
+    {name:'Otras / sin dato',consultas:0,gasto:12,cpc:null}
+  ];
+  var plats=[
+    {n:'Meta Ads',s:'Conectado',ok:true,c:'#0866FF',ic:'<circle cx="9" cy="12" r="7"/><circle cx="15" cy="12" r="7"/>'},
+    {n:'Instagram',s:'Conectado',ok:true,c:'#E1306C',ic:'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/>'},
+    {n:'Facebook',s:'Conectado',ok:true,c:'#0866FF',ic:'<path d="M14 9V7c0-1 .5-2 2-2h2V2h-3c-3 0-4 2-4 4v3H8v3h3v8h3v-8h3l1-3z"/>'},
+    {n:'Messenger',s:'Conectado',ok:true,c:'#A033FF',ic:'<path d="M12 2C6.5 2 2 6 2 11c0 2.7 1.3 5.1 3.4 6.7V22l3.1-1.7c1.1.3 2.3.5 3.5.5 5.5 0 10-4 10-9S17.5 2 12 2z"/>'},
+    {n:'Google Ads',s:'Próximamente',ok:false,c:'#8A7869',ic:'<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>'},
+    {n:'Google Maps',s:'Próximamente',ok:false,c:'#8A7869',ic:'<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>'},
+    {n:'TikTok',s:'Próximamente',ok:false,c:'#8A7869',ic:'<path d="M9 18V5l7-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>'},
+    {n:'Mercado Libre',s:'Próximamente',ok:false,c:'#8A7869',ic:'<ellipse cx="12" cy="12" rx="9" ry="6"/><path d="M7 12c2 2 8 2 10 0"/>'}
+  ];
+
+  function delta(el,d,good){
+    var up=d>=0; var isGood = good===null ? up : (good===up ? true : good);
+    // good===true means "up is good"; we pass good as whether current dir is good
+    var cls = good===null ? (up?'up':'down') : (good?'up':'down');
+    el.className='delta '+cls;
+    el.innerHTML=(up?'▲':'▼')+' '+Math.abs(d)+'% vs anterior';
+  }
+  function spark(el,vals,accent){
+    var w=220,h=40,max=Math.max.apply(null,vals),min=Math.min.apply(null,vals);
+    var pts=vals.map(function(v,i){var x=i/(vals.length-1)*w;var y=h-4-((v-min)/((max-min)||1))*(h-8);return x+','+y;});
+    var area='M0,'+h+' L'+pts.join(' L')+' L'+w+','+h+' Z';
+    el.innerHTML='<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="40" preserveAspectRatio="none">'+
+      '<path d="'+area+'" fill="var(--accent-ghost)"/>'+
+      '<polyline points="'+pts.join(' ')+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>'+
+      '<circle cx="'+w+'" cy="'+pts[pts.length-1].split(',')[1]+'" r="3" fill="var(--accent)"/></svg>';
+  }
+  function weekly(el,rows,label){
+    var vals=rows.map(function(r){return r[1];}); var max=Math.max.apply(null,vals);
+    var maxLine=Math.ceil(max/250)*250||max;
+    var bars=rows.map(function(r,i){
+      var pct=(r[1]/maxLine)*100; var last=i===rows.length-1;
+      return '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0">'+
+        '<div style="width:100%;height:170px;display:flex;align-items:flex-end;justify-content:center">'+
+          '<div title="'+numf(r[1])+'" style="width:60%;max-width:34px;height:'+pct+'%;border-radius:6px 6px 3px 3px;background:'+(last?'linear-gradient(180deg,var(--accent),var(--accent-2))':'linear-gradient(180deg,color-mix(in srgb,var(--accent) 60%,transparent),color-mix(in srgb,var(--accent) 30%,transparent))')+'"></div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums">'+r[0]+'</div>'+
+      '</div>';
+    }).join('');
+    el.innerHTML='<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-bottom:6px"><span>'+label+'</span><span>máx '+numf(maxLine)+'</span></div>'+
+      '<div style="display:flex;align-items:flex-end;gap:6px">'+bars+'</div>';
+  }
+
+  function render(p){
+    var d=data[p];
+    document.getElementById('v1').textContent=numf(d.consultas.v);
+    document.getElementById('v2').textContent=money(d.cpc.v);
+    document.getElementById('v3').textContent=money(d.gasto.v);
+    delta(document.getElementById('d1'),d.consultas.delta,d.consultas.good);
+    delta(document.getElementById('d2'),d.cpc.delta,d.cpc.good);
+    var d3=document.getElementById('d3'); d3.className='delta '+(d.gasto.delta>=0?'up':'down'); d3.innerHTML=(d.gasto.delta>=0?'▲':'▼')+' '+Math.abs(d.gasto.delta)+'% vs anterior';
+    var wv=d.weekly.map(function(r){return r[1];});
+    spark(document.getElementById('s1'),wv);
+    spark(document.getElementById('s2'),wv.slice().reverse());
+    spark(document.getElementById('s3'),wv);
+    weekly(document.getElementById('weekly'),d.weekly,d.wlabel);
+    var best=videos[0].name;
+    document.getElementById('banner').innerHTML='En este período recibiste <b>'+numf(d.consultas.v)+' consultas</b> con una inversión de <b>'+money(d.gasto.v)+'</b>. Tu mejor video es <b>«'+best+'»</b>.';
+    document.getElementById('plat-gasto').textContent=money(d.gasto.v);
+    document.getElementById('plat-cons').textContent=numf(d.consultas.v);
+    document.getElementById('plat-cpc').textContent=money(d.cpc.v);
+  }
+
+  // videos list
+  document.getElementById('videos').innerHTML=videos.map(function(v){
+    return '<div class="vrow"><div class="vrank num">'+v.r+'</div>'+
+      '<div class="vthumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>'+
+      '<div style="min-width:0"><div class="vname">'+v.name+'</div><div class="vmeta"><b>'+numf(v.consultas)+'</b> consultas · '+money(v.cpc)+' x consulta</div></div></div>';
+  }).join('');
+
+  // campaigns
+  var maxC=Math.max.apply(null,camps.map(function(c){return c.consultas;}));
+  document.getElementById('camps').innerHTML=camps.map(function(c){
+    return '<tr><td><div class="cname">'+c.name+'</div><div class="bar"><i style="width:'+(c.consultas/maxC*100)+'%"></i></div></td>'+
+      '<td><span class="pill '+c.estado+'"><span class="dot"></span>'+(c.estado==='act'?'Activa':'Pausada')+'</span></td>'+
+      '<td class="r num" style="font-weight:700">'+numf(c.consultas)+'</td>'+
+      '<td class="r num">'+money(c.gasto)+'</td>'+
+      '<td class="r num" style="color:'+(c.cpc>1500?'var(--bad)':'var(--text)')+'">'+money(c.cpc)+'</td></tr>';
+  }).join('');
+
+  // localidad
+  var maxL=Math.max.apply(null,locs.map(function(l){return l.consultas;}))||1;
+  document.getElementById('locs').innerHTML=locs.map(function(l){
+    return '<tr><td><div class="cname">'+l.name+'</div><div class="bar"><i style="width:'+(l.consultas/maxL*100)+'%"></i></div></td>'+
+      '<td class="r num" style="font-weight:700">'+numf(l.consultas)+'</td>'+
+      '<td class="r num">'+money(l.gasto)+'</td>'+
+      '<td class="r num mono">'+(l.cpc?money(l.cpc):'—')+'</td></tr>';
+  }).join('');
+
+  // platforms
+  document.getElementById('plats').innerHTML=plats.map(function(p){
+    return '<div class="plat'+(p.ok?'':' soon')+'">'+
+      (p.ok?'<div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>':'')+
+      '<div class="pico"><svg viewBox="0 0 24 24" fill="none" stroke="'+p.c+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+p.ic+'</svg></div>'+
+      '<div class="pn">'+p.n+'</div><div class="ps '+(p.ok?'ok':'wait')+'">'+p.s+'</div></div>';
+  }).join('');
+
+  // period toggle
+  document.getElementById('seg').addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b)return;
+    [].forEach.call(this.children,function(x){x.classList.remove('on');});
+    b.classList.add('on'); render(b.dataset.p);
+  });
+
+  spark(document.getElementById('web-spark'),[280,340,300,410,380,460,520,480]);
+
+  render('mes');
+})();
+</script>
+</body></html>
