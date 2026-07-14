@@ -199,7 +199,7 @@
   <div class="wrap">
     <div class="head">
       <div>
-        <h1>Panel de marketing <span class="demo-tag">Demo · datos de ejemplo</span></h1>
+        <h1>Panel de marketing <span class="demo-tag" id="modo">Demo · datos de ejemplo</span></h1>
         <div class="sub">Resultados de tus campañas de Meta Ads · consultas por WhatsApp</div>
       </div>
       <div class="controls">
@@ -439,33 +439,40 @@
     document.getElementById('plat-cpc').textContent=money(d.cpc.v);
   }
 
-  // videos list
-  document.getElementById('videos').innerHTML=videos.map(function(v){
-    return '<div class="vrow"><div class="vrank num">'+v.r+'</div>'+
-      '<div class="vthumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>'+
-      '<div style="min-width:0"><div class="vname">'+v.name+'</div><div class="vmeta"><b>'+numf(v.consultas)+'</b> consultas · '+money(v.cpc)+' x consulta</div></div></div>';
-  }).join('');
+  // ---- pintado repintable (funciona con datos demo o reales) ----
+  function paintVideos(){
+    var el=document.getElementById('videos');
+    if(!videos.length){el.innerHTML='<div class="empty">Sin videos con consultas en el período</div>';return;}
+    el.innerHTML=videos.map(function(v,i){
+      var cpc=v.cpc!=null?v.cpc:(v.consultas?v.gasto/v.consultas:0);
+      return '<div class="vrow"><div class="vrank num">'+(v.r||i+1)+'</div>'+
+        '<div class="vthumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>'+
+        '<div style="min-width:0"><div class="vname">'+v.name+'</div><div class="vmeta"><b>'+numf(v.consultas)+'</b> consultas · '+money(cpc)+' x consulta</div></div></div>';
+    }).join('');
+  }
+  function paintCamps(){
+    var maxC=Math.max.apply(null,camps.map(function(c){return c.consultas;}))||1;
+    document.getElementById('camps').innerHTML=camps.map(function(c){
+      var cpc=c.cpc!=null?c.cpc:(c.consultas?c.gasto/c.consultas:0);
+      return '<tr><td><div class="cname">'+c.name+'</div><div class="bar"><i style="width:'+(c.consultas/maxC*100)+'%"></i></div></td>'+
+        '<td><span class="pill '+c.estado+'"><span class="dot"></span>'+(c.estado==='act'?'Activa':'Pausada')+'</span></td>'+
+        '<td class="r num" style="font-weight:700">'+numf(c.consultas)+'</td>'+
+        '<td class="r num">'+money(c.gasto)+'</td>'+
+        '<td class="r num" style="color:'+(cpc>1500?'var(--bad)':'var(--text)')+'">'+money(cpc)+'</td></tr>';
+    }).join('');
+  }
+  function paintLocs(){
+    var maxL=Math.max.apply(null,locs.map(function(l){return l.consultas;}))||1;
+    document.getElementById('locs').innerHTML=locs.map(function(l){
+      var cpc=l.cpc!=null?l.cpc:(l.consultas?l.gasto/l.consultas:null);
+      return '<tr><td><div class="cname">'+l.name+'</div><div class="bar"><i style="width:'+(l.consultas/maxL*100)+'%"></i></div></td>'+
+        '<td class="r num" style="font-weight:700">'+numf(l.consultas)+'</td>'+
+        '<td class="r num">'+money(l.gasto)+'</td>'+
+        '<td class="r num mono">'+(cpc?money(cpc):'—')+'</td></tr>';
+    }).join('');
+  }
 
-  // campaigns
-  var maxC=Math.max.apply(null,camps.map(function(c){return c.consultas;}));
-  document.getElementById('camps').innerHTML=camps.map(function(c){
-    return '<tr><td><div class="cname">'+c.name+'</div><div class="bar"><i style="width:'+(c.consultas/maxC*100)+'%"></i></div></td>'+
-      '<td><span class="pill '+c.estado+'"><span class="dot"></span>'+(c.estado==='act'?'Activa':'Pausada')+'</span></td>'+
-      '<td class="r num" style="font-weight:700">'+numf(c.consultas)+'</td>'+
-      '<td class="r num">'+money(c.gasto)+'</td>'+
-      '<td class="r num" style="color:'+(c.cpc>1500?'var(--bad)':'var(--text)')+'">'+money(c.cpc)+'</td></tr>';
-  }).join('');
-
-  // localidad
-  var maxL=Math.max.apply(null,locs.map(function(l){return l.consultas;}))||1;
-  document.getElementById('locs').innerHTML=locs.map(function(l){
-    return '<tr><td><div class="cname">'+l.name+'</div><div class="bar"><i style="width:'+(l.consultas/maxL*100)+'%"></i></div></td>'+
-      '<td class="r num" style="font-weight:700">'+numf(l.consultas)+'</td>'+
-      '<td class="r num">'+money(l.gasto)+'</td>'+
-      '<td class="r num mono">'+(l.cpc?money(l.cpc):'—')+'</td></tr>';
-  }).join('');
-
-  // platforms
+  // platforms (fijo)
   document.getElementById('plats').innerHTML=plats.map(function(p){
     return '<div class="plat'+(p.ok?'':' soon')+'">'+
       (p.ok?'<div class="badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>':'')+
@@ -473,16 +480,54 @@
       '<div class="pn">'+p.n+'</div><div class="ps '+(p.ok?'ok':'wait')+'">'+p.s+'</div></div>';
   }).join('');
 
+  paintVideos(); paintCamps(); paintLocs();
+
+  // ---- datos REALES de Meta Ads (si /api/meta está configurado) ----
+  function pct(cur,prev){ if(prev==null||prev===0) return 0; return Math.round((cur-prev)/prev*100); }
+  function bucket(serie,tipo){
+    if(!serie||!serie.length) return [['—',0]];
+    if(tipo==='semana'){
+      var dd=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+      return serie.map(function(d){var t=new Date(d.fecha+'T00:00:00');return [dd[(t.getDay()+6)%7],d.consultas];});
+    }
+    var n=serie.length,g=Math.min(8,n),size=Math.ceil(n/g),out=[];
+    for(var i=0;i<n;i+=size){var ch=serie.slice(i,i+size);out.push([ch[0].fecha.slice(5).split('-').reverse().join('/'),ch.reduce(function(s,x){return s+x.consultas;},0)]);}
+    return out;
+  }
+  function setModo(txt,cls){var b=document.getElementById('modo');if(b){b.textContent=txt;b.style.background=cls==='live'?'var(--good-ghost)':'var(--accent-ghost)';b.style.color=cls==='live'?'var(--good)':'var(--accent)';}}
+  async function sync(p){
+    try{
+      var res=await fetch('/api/meta?range='+p,{cache:'no-store'});
+      var j=await res.json();
+      if(!j||j.configured===false){ setModo('Demo · datos de ejemplo','demo'); return; }
+      if(j.error){ setModo('Demo · Meta no respondió','demo'); return; }
+      if(!j.totales){ setModo('Demo · datos de ejemplo','demo'); return; }
+      var t=j.totales, cpc=t.consultas?t.gasto/t.consultas:0, cpcPrev=t.consultasPrev?t.gastoPrev/t.consultasPrev:null;
+      data[p]={
+        consultas:{v:t.consultas,delta:pct(t.consultas,t.consultasPrev),good:pct(t.consultas,t.consultasPrev)>=0},
+        cpc:{v:cpc,delta:pct(cpc,cpcPrev),good:pct(cpc,cpcPrev)<=0},
+        gasto:{v:t.gasto,delta:pct(t.gasto,t.gastoPrev),good:null},
+        weekly:bucket(j.serie,p), wlabel:'Consultas'
+      };
+      if(j.campanias&&j.campanias.length) camps=j.campanias.map(function(c){return {name:c.nombre,estado:c.estado||'act',consultas:c.consultas,gasto:c.gasto,cpc:c.consultas?c.gasto/c.consultas:0};});
+      if(j.videos&&j.videos.length) videos=j.videos.map(function(v,i){return {r:i+1,name:v.nombre,consultas:v.consultas,gasto:v.gasto,cpc:v.consultas?v.gasto/v.consultas:0};});
+      if(j.localidades&&j.localidades.length) locs=j.localidades.map(function(l){return {name:l.nombre,consultas:l.consultas,gasto:l.gasto,cpc:l.consultas?l.gasto/l.consultas:null};});
+      setModo('En vivo · Meta Ads','live');
+      render(p); paintVideos(); paintCamps(); paintLocs();
+    }catch(e){ setModo('Demo · datos de ejemplo','demo'); }
+  }
+
   // period toggle
   document.getElementById('seg').addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b)return;
     [].forEach.call(this.children,function(x){x.classList.remove('on');});
-    b.classList.add('on'); render(b.dataset.p);
+    b.classList.add('on'); render(b.dataset.p); sync(b.dataset.p);
   });
 
   spark(document.getElementById('web-spark'),[280,340,300,410,380,460,520,480]);
 
   render('mes');
+  sync('mes');
 })();
 </script>
 </body></html>
