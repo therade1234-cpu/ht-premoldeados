@@ -73,6 +73,7 @@ html[data-theme="dark"] #login-screen{background:#163559!important}
 html[data-theme="dark"] #login-screen button[onclick*="loginComo('admin')"]{background:#1D4575!important;border-color:#D85A30!important}
 html[data-theme="dark"] #login-screen button[onclick*="loginComo('vendedor')"]{background:#1D4575!important;border-color:#4A90D9!important}
 html[data-theme="dark"] #login-screen button[onclick*="loginComo('marketing')"]{background:#1D4575!important;border-color:#B57BD8!important}
+html[data-theme="dark"] #login-screen button[onclick*="loginComo('produccion')"]{background:#1D4575!important;border-color:#4FB477!important}
 /* Modals */
 html[data-theme="dark"] #modal-confirm>div,html[data-theme="dark"] #modal-admin-pass>div,html[data-theme="dark"] #modal-fecha>div,html[data-theme="dark"] #modal-editar>div,html[data-theme="dark"] #modal-editar-mov>div{background:#1D4575!important;color:#E8F1FA!important}
 html[data-theme="dark"] #modal-editar [style*="border-bottom:1px solid #F0E0D6"]{border-color:#2A5580!important}
@@ -446,6 +447,13 @@ table.movs tr:hover td{background:#FAFAFA}
       <div style="font-size:17px;font-weight:700;color:#1A1A1A;margin-bottom:4px">Marketing</div>
       <div style="font-size:12px;color:#888">Métricas y origen de las ventas</div>
     </button>
+    <button onclick="loginComo('produccion')" style="background:#fff;border:2px solid #1B7A3E;border-radius:14px;padding:28px 36px;cursor:pointer;min-width:230px;transition:all .15s;font-family:inherit" onmouseover="this.style.background='#EEF7F0';this.style.transform='translateY(-3px)'" onmouseout="this.style.background='#fff';this.style.transform='translateY(0)'">
+      <div style="width:52px;height:52px;border-radius:12px;background:#EEF7F0;display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#1B7A3E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="26" height="26"><path d="M2 20h20"/><path d="M4 20V8l6-4 6 4v12"/><path d="M9 20v-5h2v5"/><path d="M16 20V11l4-2v11"/></svg>
+      </div>
+      <div style="font-size:17px;font-weight:700;color:#1A1A1A;margin-bottom:4px">Producción</div>
+      <div style="font-size:12px;color:#888">Materiales de obra</div>
+    </button>
   </div>
 </div>
 
@@ -508,7 +516,7 @@ table.movs tr:hover td{background:#FAFAFA}
       <div class="home-btn-title">NÓMINAS</div>
       <div class="home-btn-desc">Sueldos y pagos del personal</div>
     </button>
-    <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('materiales')">
+    <button class="home-btn rol-vendedor rol-admin rol-produccion" onclick="openPanel('materiales')">
       <div class="home-btn-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><line x1="2" y1="9" x2="22" y2="9"/><line x1="8" y1="3" x2="8" y2="9"/><line x1="16" y1="3" x2="16" y2="9"/></svg>
       </div>
@@ -1562,7 +1570,7 @@ function loginComo(rol){
   document.getElementById('modal-pass-input').value='';
   document.getElementById('modal-pass-error').textContent='';
   document.getElementById('modal-admin-pass').dataset.rol=rol;
-  document.getElementById('modal-pass-titulo').textContent={admin:'Acceso Administrativo',vendedor:'Acceso Vendedor',marketing:'Acceso Marketing'}[rol]||'Acceso';
+  document.getElementById('modal-pass-titulo').textContent={admin:'Acceso Administrativo',vendedor:'Acceso Vendedor',marketing:'Acceso Marketing',produccion:'Acceso Producción'}[rol]||'Acceso';
   document.getElementById('modal-pass-subtitulo').textContent='Ingresá la contraseña para continuar';
   setTimeout(()=>document.getElementById('modal-pass-input').focus(),50);
 }
@@ -1582,7 +1590,7 @@ function resolveConfirm(val){
 function confirmarPassAdmin(){
   const pass=document.getElementById('modal-pass-input').value;
   const rol=document.getElementById('modal-admin-pass').dataset.rol||'admin';
-  const passCorrecta={admin:'ht1234',vendedor:'ventas1234',marketing:'mkt1234'}[rol]||'ht1234';
+  const passCorrecta={admin:'ht1234',vendedor:'ventas1234',marketing:'mkt1234',produccion:'prod1234'}[rol]||'ht1234';
   if(pass!==passCorrecta){
     document.getElementById('modal-pass-error').textContent='Contraseña incorrecta. Intentá de nuevo.';
     document.getElementById('modal-pass-input').value='';
