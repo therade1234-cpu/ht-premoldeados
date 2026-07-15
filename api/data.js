@@ -55,7 +55,7 @@ async function writeFiles(files) {
 
 // ---- Combinado (merge) idéntico al del cliente ----
 function sigOf(it) {
-  return [it.fecha, it.fechaObra, it.fechaRep, it.fechaVenta, it.cliente, it.tel, it.dir, it.direccion, it.localidad, it.metros, it.altura, it.diseno, it.precio, it.sena, it.totalObra, it.monto, it.cat, it.tipo, it.desc, it.notas, it.detalle, it.vendedor, it.estado, it.canal, it.msj, it.gasto, it.url, it.nombre, it.categoria, it.cantidad].join('~');
+  return [it.fecha, it.fechaObra, it.fechaRep, it.fechaVenta, it.cliente, it.tel, it.dir, it.direccion, it.localidad, it.metros, it.altura, it.diseno, it.precio, it.sena, it.totalObra, it.monto, it.cat, it.tipo, it.desc, it.notas, it.detalle, it.vendedor, it.estado, it.canal, it.msj, it.gasto, it.url, it.nombre, it.categoria, it.cantidad, it.seccion, it.clave].join('~');
 }
 // ID determinista derivado del contenido: misma obra -> mismo id en todos lados.
 function hashStr(s) { let h = 5381, i = s.length; while (i) { h = (h * 33) ^ s.charCodeAt(--i); } return (h >>> 0).toString(36); }

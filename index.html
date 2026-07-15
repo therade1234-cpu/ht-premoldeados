@@ -1375,7 +1375,7 @@ let _pendingSave = false;
 let _lastSnapshot = '';
 
 // ---- Sincronización robusta (merge) para NO pisar NI duplicar datos entre dispositivos ----
-function sigOf(it){return [it.fecha,it.fechaObra,it.fechaRep,it.fechaVenta,it.cliente,it.tel,it.dir,it.direccion,it.localidad,it.metros,it.altura,it.diseno,it.precio,it.sena,it.totalObra,it.monto,it.cat,it.tipo,it.desc,it.notas,it.detalle,it.vendedor,it.estado,it.canal,it.msj,it.gasto,it.url,it.nombre,it.categoria,it.cantidad].join('~');}
+function sigOf(it){return [it.fecha,it.fechaObra,it.fechaRep,it.fechaVenta,it.cliente,it.tel,it.dir,it.direccion,it.localidad,it.metros,it.altura,it.diseno,it.precio,it.sena,it.totalObra,it.monto,it.cat,it.tipo,it.desc,it.notas,it.detalle,it.vendedor,it.estado,it.canal,it.msj,it.gasto,it.url,it.nombre,it.categoria,it.cantidad,it.seccion,it.clave].join('~');}
 // ID DETERMINISTA: derivado del contenido -> la MISMA obra tiene el MISMO id en todos los dispositivos (no se duplica)
 function hashStr(s){var h=5381,i=s.length;while(i){h=(h*33)^s.charCodeAt(--i);}return (h>>>0).toString(36);}
 function idFromSig(it){var s=sigOf(it);return 'h'+hashStr(s)+s.length.toString(36);}
@@ -2336,87 +2336,82 @@ function calcResumenMateriales(ventas){
   return grupos;
 }
 
-// ---- STOCK DISPONIBLE (descuento automático el día de la obra) ----
-let _editStockIdx=-1;
-var STOCK_CATS=['Paneles','Placas','Placas reja','Pilares','Gorritos','Otro'];
-function stockCatColor(c){return {Paneles:'#993C1D',Placas:'#D85A30','Placas reja':'#E8744A',Pilares:'#1565C0',Gorritos:'#1B7A3E',Otro:'#888'}[c]||'#888';}
-// Cuánto consume UNA obra de una categoría de material (usa el cálculo de materiales de obra)
-function consumoStock(v,categoria){
-  var m=calcMaterialesVenta(v);
-  if(categoria==='Paneles')return m.paneles||0;
-  if(categoria==='Placas')return (m.placasComunes||0)+(m.terminales||0);
-  if(categoria==='Placas reja')return m.placasReja||0;
-  if(categoria==='Pilares')return m.pilaresQty||0;
-  if(categoria==='Gorritos')return m.gorritos||0;
-  return 0; // "Otro" = manual, no descuenta
-}
+// ---- STOCK DISPONIBLE (organizado por material; descuenta el día de la obra) ----
 function stockHoyStr(){var h=new Date();return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');}
-function abrirFormStock(idx){
-  _editStockIdx=idx;
-  document.getElementById('form-stock-titulo').textContent=idx>=0?'Editar material':'Nuevo material';
-  if(idx>=0&&state.stock[idx]){var it=state.stock[idx];document.getElementById('st-nombre').value=it.nombre||'';document.getElementById('st-categoria').value=it.categoria||'Placas';document.getElementById('st-cantidad').value=(it.cantidad!=null?it.cantidad:0);}
-  else{document.getElementById('st-nombre').value='';document.getElementById('st-categoria').value='Placas';document.getElementById('st-cantidad').value='';}
-  document.getElementById('form-stock').style.display='block';
+function disenoKey(d){d=(d||'Sin diseño').trim();if(d.toLowerCase().indexOf('doble vista')===0)return 'Doble vista';return d||'Sin diseño';}
+// Cuánto consume UNA obra de una fila (sección + clave), usando el cálculo de materiales de obra
+function consumoRow(v,seccion,clave){
+  var m=calcMaterialesVenta(v);
+  if(seccion==='reja')return m.placasReja||0;
+  if(seccion==='gorritos')return m.gorritos||0;
+  if(seccion==='placas')return disenoKey(v.diseno)===clave?((m.placasComunes||0)+(m.terminales||0)):0;
+  if(seccion==='columnas')return m.pilarTipo===clave?(m.pilaresQty||0):0;
+  return 0;
 }
-function cerrarFormStock(){document.getElementById('form-stock').style.display='none';_editStockIdx=-1;}
-function guardarStock(){
-  var categoria=document.getElementById('st-categoria').value;
-  var nombre=document.getElementById('st-nombre').value.trim()||categoria;
-  var cantidad=parseInt(document.getElementById('st-cantidad').value)||0;
+function stockItem(seccion,clave){return state.stock.find(function(s){return s.seccion===seccion&&s.clave===clave;});}
+function stockSetBase(seccion,clave,nombre,val){
+  var v=Math.max(0,parseInt(val)||0);
+  var it=stockItem(seccion,clave);
   var fecha=stockHoyStr();
-  if(_editStockIdx>=0&&state.stock[_editStockIdx]){var it=state.stock[_editStockIdx];tombstoneSig(it);it.nombre=nombre;it.categoria=categoria;it.cantidad=cantidad;it.fecha=fecha;if(state.stock.indexOf(it)===-1)state.stock.push(it);}
-  else{state.stock.push({nombre:nombre,categoria:categoria,cantidad:cantidad,fecha:fecha});}
+  if(it){tombstoneSig(it);it.cantidad=v;it.fecha=fecha;it.nombre=nombre;if(state.stock.indexOf(it)===-1)state.stock.push(it);}
+  else{state.stock.push({seccion:seccion,clave:clave,nombre:nombre,cantidad:v,fecha:fecha});}
   ensureIds(state.stock);
-  cerrarFormStock();renderStock();saveState();
-}
-async function eliminarStock(id){
-  var it=state.stock.find(function(s){return s.id===id;});
-  if(!it)return;
-  var ok=await showConfirm('¿Eliminar material?','Se quitará "'+(it.nombre||'este material')+'" del stock.');
-  if(!ok)return;
-  tombstone(it);var idx=state.stock.indexOf(it);if(idx>=0)state.stock.splice(idx,1);
-  renderStock();saveState();
+  saveState();renderStock();
 }
 function renderStock(){
   ensureIds(state.stock);
   var hoyD=new Date();hoyD.setHours(0,0,0,0);
-  var items=state.stock.slice().sort(function(a,b){return STOCK_CATS.indexOf(a.categoria)-STOCK_CATS.indexOf(b.categoria)||(a.nombre||'').localeCompare(b.nombre||'');});
-  var sinStock=0, porUsarTot=0;
-  var filas=items.map(function(it){
-    var base=parseInt(it.cantidad)||0, usado=0, porUsar=0;
-    var refD=it.fecha?parseFecha(it.fecha):null; if(refD)refD.setHours(0,0,0,0);
-    if(it.categoria&&it.categoria!=='Otro'){
-      state.ventas.forEach(function(v){
+  // Detectar qué diseños de placa y si hay placa reja en las obras
+  var disenos={}, hayReja=false;
+  (state.ventas||[]).forEach(function(v){
+    var m=calcMaterialesVenta(v);
+    if(((m.placasComunes||0)+(m.terminales||0))>0) disenos[disenoKey(v.diseno)]=true;
+    if((m.placasReja||0)>0) hayReja=true;
+  });
+  var disList=Object.keys(disenos).sort();
+  var secciones=[
+    {tit:'Placas — por diseño', rows: disList.map(function(d){return {seccion:'placas',clave:d,nombre:d};}).concat(hayReja?[{seccion:'reja',clave:'reja',nombre:'Placas reja'}]:[])},
+    {tit:'Columnas / pilares — por medida', rows:[
+      {seccion:'columnas',clave:'2,80',nombre:'Columna 2,80 m'},
+      {seccion:'columnas',clave:'3,40',nombre:'Columna 3,40 m'},
+      {seccion:'columnas',clave:'4,00',nombre:'Columna 4,00 m'}]},
+    {tit:'Gorritos', rows:[{seccion:'gorritos',clave:'gorritos',nombre:'Gorritos'}]}
+  ];
+  var sinStock=0, porUsarTot=0, html='';
+  secciones.forEach(function(sec){
+    html+='<tr style="background:#F3ECE4"><td colspan="5" style="padding:9px 12px;font-weight:800;color:#993C1D;font-size:11px;text-transform:uppercase;letter-spacing:.05em">'+sec.tit+'</td></tr>';
+    if(!sec.rows.length){ html+='<tr><td colspan="5" style="padding:12px;color:#A0A0A0;font-size:12px">Todavía no hay obras con este material.</td></tr>'; return; }
+    sec.rows.forEach(function(r){
+      var it=stockItem(r.seccion,r.clave);
+      var base=it?(parseInt(it.cantidad)||0):0;
+      var refD=(it&&it.fecha)?parseFecha(it.fecha):null; if(refD)refD.setHours(0,0,0,0);
+      var usado=0, porUsar=0;
+      (state.ventas||[]).forEach(function(v){
         if(!v.fecha)return; var f=parseFecha(v.fecha); if(isNaN(f))return; f.setHours(0,0,0,0);
-        var c=consumoStock(v,it.categoria);
-        if(f>hoyD){porUsar+=c;}
-        else if(refD&&f>refD){usado+=c;}
+        var c=consumoRow(v,r.seccion,r.clave);
+        if(f>hoyD)porUsar+=c; else if(refD&&f>refD)usado+=c;
       });
-    }
-    var disp=base-usado; if(disp<=0)sinStock++; porUsarTot+=porUsar;
-    var col=stockCatColor(it.categoria), gi=state.stock.indexOf(it);
-    var dcol=disp<=0?'#C62828':disp<10?'#D85A30':'#2E7D32';
-    return '<tr style="border-bottom:1px solid #F0F0F0">'+
-      '<td style="padding:10px 12px;font-weight:600">'+(it.nombre||'—')+'</td>'+
-      '<td style="padding:10px 12px"><span style="background:'+col+'22;color:'+col+';padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700">'+(it.categoria||'—')+'</span></td>'+
-      '<td style="padding:10px 12px;text-align:right">'+base+'</td>'+
-      '<td style="padding:10px 12px;text-align:right;color:'+(usado>0?'#C62828':'#A0A0A0')+'">'+(usado>0?('−'+usado):'0')+'</td>'+
-      '<td style="padding:10px 12px;text-align:right"><b style="color:'+dcol+';font-size:15px">'+disp+'</b></td>'+
-      '<td style="padding:10px 12px;text-align:right;color:'+(porUsar>0?'#1565C0':'#A0A0A0')+'">'+(porUsar>0?porUsar:'—')+'</td>'+
-      '<td style="padding:10px 8px;text-align:right;white-space:nowrap">'+
-        '<button onclick="abrirFormStock('+gi+')" style="background:none;border:1.5px solid #1565C0;border-radius:5px;color:#1565C0;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">✏️</button>'+
-        '<button onclick="eliminarStock(\''+it.id+'\')" style="background:none;border:1.5px solid #C62828;border-radius:5px;color:#C62828;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑</button>'+
-      '</td></tr>';
+      var disp=base-usado; if(it&&disp<=0)sinStock++; porUsarTot+=porUsar;
+      var dcol=disp<=0?'#C62828':disp<10?'#D85A30':'#2E7D32';
+      var claveEsc=String(r.clave).replace(/["'\\]/g,''), nomEsc=String(r.nombre).replace(/["'\\]/g,'');
+      html+='<tr style="border-bottom:1px solid #F0F0F0">'+
+        '<td style="padding:9px 12px 9px 22px;font-weight:600">'+r.nombre+'</td>'+
+        '<td style="padding:9px 12px;text-align:right"><input type="number" min="0" value="'+base+'" onchange="stockSetBase(\''+r.seccion+'\',\''+claveEsc+'\',\''+nomEsc+'\',this.value)" style="width:76px;text-align:right;border:1px solid #D8CFC6;border-radius:6px;padding:5px 7px;font-family:inherit;font-size:13px;background:#fff"></td>'+
+        '<td style="padding:9px 12px;text-align:right;color:'+(usado>0?'#C62828':'#A0A0A0')+'">'+(usado>0?('−'+usado):'0')+'</td>'+
+        '<td style="padding:9px 12px;text-align:right"><b style="color:'+dcol+';font-size:15px">'+disp+'</b></td>'+
+        '<td style="padding:9px 12px;text-align:right;color:'+(porUsar>0?'#1565C0':'#A0A0A0')+'">'+(porUsar>0?porUsar:'—')+'</td>'+
+      '</tr>';
+    });
   });
   var mEl=document.getElementById('stock-metrics');
   if(mEl)mEl.innerHTML=
-    '<div class="metric-card"><div class="metric-label">Materiales cargados</div><div class="metric-value">'+items.length+'</div></div>'+
+    '<div class="metric-card"><div class="metric-label">Diseños de placa</div><div class="metric-value">'+disList.length+'</div></div>'+
     '<div class="metric-card" style="border-top-color:'+(sinStock>0?'#C62828':'#2E7D32')+'"><div class="metric-label">Sin stock</div><div class="metric-value" style="color:'+(sinStock>0?'#C62828':'#2E7D32')+'">'+sinStock+'</div></div>'+
     '<div class="metric-card" style="border-top-color:#1565C0"><div class="metric-label">Por usar (obras próximas)</div><div class="metric-value" style="color:#1565C0">'+porUsarTot.toLocaleString('es-AR')+'</div></div>';
   var tb=document.getElementById('tabla-stock');
-  if(!tb)return;
-  tb.innerHTML=items.length?filas.join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#A0A0A0">Sin materiales cargados. Agregá con "+ Nuevo material".</td></tr>';
+  if(tb)tb.innerHTML=html;
 }
+
 function renderMateriales(){
   // Label período
   var ss=semanas(matYear,matMonth);
@@ -4554,46 +4549,25 @@ restaurarSesion();
   <div class="topbar">
     <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
     <span class="tb-title">Stock disponible</span>
-    <button onclick="abrirFormStock(-1)" style="background:#1B7A3E;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;margin-left:auto">+ Nuevo material</button>
   </div>
   <div class="content">
     <div style="font-size:12.5px;color:#3a5a3f;background:#EEF7F0;border:1px solid #CDE8D4;border-radius:8px;padding:11px 14px;margin-bottom:16px">
       El <b>disponible</b> descuenta los materiales de cada obra <b>el día que se hace</b> (según la fecha de obra). Las obras de días próximos figuran en <b>"Por usar"</b> y todavía no descuentan.
     </div>
     <div id="stock-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
-    <div id="form-stock" style="display:none;margin-bottom:16px">
-      <div class="card">
-        <div class="card-title" id="form-stock-titulo" style="margin-bottom:14px">Nuevo material</div>
-        <div class="two-col">
-          <div class="form-group"><label class="form-label">Material</label>
-            <select id="st-categoria"><option>Paneles</option><option>Placas</option><option>Placas reja</option><option>Pilares</option><option>Gorritos</option><option>Otro</option></select></div>
-          <div class="form-group"><label class="form-label">Nombre / detalle (opcional)</label>
-            <input type="text" id="st-nombre" placeholder="Ej: Placa símil piedra" /></div>
-        </div>
-        <div class="form-group"><label class="form-label">Stock base (lo que tenés hoy)</label>
-          <input type="number" id="st-cantidad" placeholder="0" min="0" /></div>
-        <div style="font-size:11px;color:#888;margin-top:-6px">Se toma como stock a la fecha de hoy. Desde acá, las obras lo van descontando el día que se hacen.</div>
-        <div style="display:flex;gap:10px;margin-top:14px">
-          <button onclick="cerrarFormStock()" style="flex:1;background:#fff;border:1.5px solid #CCC;border-radius:8px;padding:10px;font-size:13px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">Cancelar</button>
-          <button onclick="guardarStock()" style="flex:1;background:#1B7A3E;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">Guardar</button>
-        </div>
-      </div>
-    </div>
     <div class="card" style="padding:0;overflow:hidden">
       <div style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
             <tr style="background:#F7F7F7;border-bottom:2px solid #E8E8E8">
               <th style="padding:10px 12px;text-align:left;color:#6B6B6B;font-weight:700">Material</th>
-              <th style="padding:10px 12px;text-align:left;color:#6B6B6B;font-weight:700">Categoría</th>
-              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Base</th>
+              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Stock base</th>
               <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Usado</th>
               <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Disponible</th>
               <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Por usar</th>
-              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Acciones</th>
             </tr>
           </thead>
-          <tbody id="tabla-stock"><tr><td colspan="7" style="text-align:center;padding:20px;color:#A0A0A0">Sin materiales cargados</td></tr></tbody>
+          <tbody id="tabla-stock"></tbody>
         </table>
       </div>
     </div>
