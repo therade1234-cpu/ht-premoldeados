@@ -185,6 +185,48 @@ table.movs tr:hover td{background:#FAFAFA}
 .badge-green{background:#EDF7EE;color:#2E7D32}
 .badge-orange{background:var(--or-bg);color:var(--or-d)}
 
+/* ===== STOCK DISPONIBLE ===== */
+.stk-hint{display:flex;align-items:flex-start;gap:10px;font-size:12.5px;line-height:1.5;color:#2f6b45;background:#EEF7F0;border:1px solid #CDE8D4;border-radius:11px;padding:12px 15px;margin-bottom:18px}
+.stk-hint svg{flex-shrink:0;margin-top:1px;color:#3fa862}
+.stk-wrap{display:flex;flex-direction:column;gap:16px}
+.stk-section{background:var(--wh);border:1px solid var(--bd);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(20,20,20,.03)}
+.stk-head{display:flex;align-items:center;gap:11px;padding:13px 18px;background:var(--or-bg);border-bottom:1px solid var(--bd)}
+.stk-head-ico{width:30px;height:30px;border-radius:9px;background:var(--wh);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 1px 3px rgba(153,60,29,.15)}
+.stk-head-ico svg{width:16px;height:16px;stroke:var(--or-d)}
+.stk-head-txt{min-width:0}
+.stk-head-title{font-size:12px;font-weight:800;color:var(--or-d);text-transform:uppercase;letter-spacing:.05em}
+.stk-head-sub{font-size:11px;color:var(--mu);margin-top:1px}
+.stk-head-count{margin-left:auto;font-size:11px;font-weight:700;color:var(--or-d);background:var(--wh);border:1px solid var(--or-l);padding:3px 10px;border-radius:20px;white-space:nowrap}
+.stk-row{display:flex;align-items:center;gap:16px;padding:13px 18px;border-top:1px solid #F1EDE8}
+.stk-row:first-child{border-top:none}
+.stk-name{flex:0 0 178px;min-width:0;font-weight:700;font-size:13.5px;color:var(--tx);display:flex;align-items:center;gap:6px}
+.stk-name-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stk-bar-col{flex:1;min-width:70px;display:flex;flex-direction:column;gap:6px}
+.stk-bar-track{height:7px;border-radius:5px;background:#EFEBE6;overflow:hidden}
+html[data-theme="dark"] .stk-bar-track{background:#16375c}
+.stk-bar-fill{height:100%;border-radius:5px;transition:width .35s ease}
+.stk-nums{display:flex;gap:20px;align-items:center;flex-shrink:0}
+.stk-num{text-align:right;min-width:50px}
+.stk-num b{display:block;font-size:15px;font-weight:800;line-height:1.1}
+.stk-num i{display:block;font-style:normal;font-size:9px;color:var(--hi);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+.stk-input{width:66px;text-align:right;border:1.5px solid var(--bd);border-radius:8px;padding:6px 8px;font-family:inherit;font-size:13.5px;font-weight:700;background:var(--wh);color:var(--tx)}
+.stk-input:focus{outline:none;border-color:var(--or)}
+.stk-pill{font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.stk-pill.ok{background:var(--gr-bg);color:var(--gr)}
+.stk-pill.low{background:var(--or-bg);color:var(--or-d)}
+.stk-pill.out{background:#FDECEA;color:var(--re)}
+html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
+.stk-manual-badge{font-size:9.5px;color:var(--hi);border:1px dashed var(--bd);border-radius:20px;padding:2px 8px;flex-shrink:0}
+.stk-del{border:none;background:none;color:var(--hi);cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;flex-shrink:0;transition:color .15s}
+.stk-del:hover{color:var(--re)}
+.stk-empty{padding:22px 18px;text-align:center;color:var(--hi);font-size:12.5px}
+@media(max-width:640px){
+  .stk-row{flex-wrap:wrap;gap:10px 14px}
+  .stk-name{flex:1 1 100%}
+  .stk-bar-col{flex:1 1 100%;order:3}
+  .stk-nums{flex:1 1 auto}
+}
+
 /* tablas semana/mes */
 .ht-table{width:100%;border-collapse:collapse;font-size:12px;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #E8E8E8;margin-bottom:14px}
 .ht-table th,.ht-table td{padding:8px 9px;border:1px solid #E8E8E8;text-align:right}
@@ -2399,9 +2441,52 @@ function stockOtroSet(clave,val){
   else{state.stock.push({seccion:'otros',clave:clave,nombre:clave,cantidad:v,fecha:stockHoyStr()});}
   ensureIds(state.stock);saveState();renderStock();
 }
+var STOCK_ICONS={
+  placas:'<rect x="3" y="4" width="18" height="4.5" rx="1"/><rect x="3" y="10" width="18" height="4.5" rx="1"/><rect x="3" y="16" width="18" height="4.5" rx="1"/>',
+  columnas:'<rect x="4" y="3" width="4" height="18" rx="1"/><rect x="10" y="3" width="4" height="18" rx="1"/><rect x="16" y="3" width="4" height="18" rx="1"/>',
+  gorritos:'<path d="M4 15l8-9 8 9"/><path d="M6 15h12v3a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z"/>',
+  encadenado:'<rect x="2" y="8" width="8" height="8" rx="3"/><rect x="14" y="8" width="8" height="8" rx="3"/><line x1="10" y1="12" x2="14" y2="12"/>',
+  otros:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><line x1="12" y1="13" x2="12" y2="21"/>'
+};
+function stockRowHtml(r){
+  var it=stockItem(r.seccion,r.clave);
+  var base=it?(parseInt(it.cantidad)||0):0;
+  var claveEsc=String(r.clave).replace(/["'\\]/g,''), nomEsc=String(r.nombre).replace(/["'\\]/g,'');
+  var delBtn=r.manual?('<button class="stk-del" onclick="'+r.delFn+'(\''+claveEsc+'\')" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="13" height="13"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'):'';
+  if(r.esManualPuro){
+    var dcolM=base<=0?'var(--re)':base<10?'var(--or-d)':'var(--gr)';
+    var pillM=base<=0?'<span class="stk-pill out">Sin stock</span>':base<10?'<span class="stk-pill low">Queda poco</span>':'<span class="stk-pill ok">OK</span>';
+    return '<div class="stk-row"><div class="stk-name"><span class="stk-name-txt">'+r.nombre+'</span></div>'+
+      '<div class="stk-bar-col"><span class="stk-manual-badge">carga manual</span></div>'+
+      '<div class="stk-nums"><div class="stk-num"><input type="number" min="0" class="stk-input" value="'+base+'" onchange="stockOtroSet(\''+claveEsc+'\',this.value)" style="color:'+dcolM+'"><i>disponible</i></div></div>'+
+      pillM+delBtn+'</div>';
+  }
+  var hoyD=new Date();hoyD.setHours(0,0,0,0);
+  var refD=(it&&it.fecha)?parseFecha(it.fecha):null; if(refD)refD.setHours(0,0,0,0);
+  var usado=0, porUsar=0;
+  (state.ventas||[]).forEach(function(v){
+    if(!v.fecha)return; var f=parseFecha(v.fecha); if(isNaN(f))return; f.setHours(0,0,0,0);
+    var c=consumoRow(v,r.seccion,r.clave);
+    if(f>hoyD)porUsar+=c; else if(refD&&f>refD)usado+=c;
+  });
+  var disp=base-usado;
+  var pct=base>0?Math.max(0,Math.min(100,Math.round((disp/base)*100))):0;
+  var dcol=disp<=0?'var(--re)':disp<10?'var(--or-d)':'var(--gr)';
+  var pill=(!it)?'':disp<=0?'<span class="stk-pill out">Sin stock</span>':disp<10?'<span class="stk-pill low">Queda poco</span>':'<span class="stk-pill ok">OK</span>';
+  window._stkAgg.sinStock += (it&&disp<=0)?1:0;
+  window._stkAgg.porUsar += porUsar;
+  return '<div class="stk-row"><div class="stk-name"><span class="stk-name-txt">'+r.nombre+'</span></div>'+
+    '<div class="stk-bar-col"><div class="stk-bar-track"><div class="stk-bar-fill" style="width:'+pct+'%;background:'+dcol+'"></div></div></div>'+
+    '<div class="stk-nums">'+
+      '<div class="stk-num"><input type="number" min="0" class="stk-input" value="'+base+'" onchange="stockSetBase(\''+r.seccion+'\',\''+claveEsc+'\',\''+nomEsc+'\',this.value)"><i>base</i></div>'+
+      '<div class="stk-num"><b style="color:'+(usado>0?'var(--re)':'var(--hi)')+'">'+(usado>0?('−'+usado):'0')+'</b><i>usado</i></div>'+
+      '<div class="stk-num"><b style="color:'+dcol+'">'+disp+'</b><i>disponible</i></div>'+
+      '<div class="stk-num"><b style="color:'+(porUsar>0?'#1565C0':'var(--hi)')+'">'+(porUsar>0?porUsar:'—')+'</b><i>por usar</i></div>'+
+    '</div>'+pill+delBtn+'</div>';
+}
 function renderStock(){
   ensureIds(state.stock);
-  var hoyD=new Date();hoyD.setHours(0,0,0,0);
+  window._stkAgg={sinStock:0,porUsar:0};
   // Detectar qué diseños de placa hay en las obras
   var disenos={};
   (state.ventas||[]).forEach(function(v){
@@ -2417,53 +2502,30 @@ function renderStock(){
   var otrosList=OTROS_DEFAULT.filter(function(n){return ocultos.indexOf(n)<0;});
   state.stock.forEach(function(s){if(s.seccion==='otros'&&s.clave&&otrosList.indexOf(s.clave)<0)otrosList.push(s.clave);});
   var secciones=[
-    {tit:'Placas — por diseño', rows: disList.map(function(d){return {seccion:'placas',clave:d,nombre:d,manual:autoDis.indexOf(d)<0};})},
-    {tit:'Columnas / pilares — por medida', rows:[
+    {tit:'Placas', sub:'Por diseño', ico:STOCK_ICONS.placas,
+      rows: disList.map(function(d){return {seccion:'placas',clave:d,nombre:d,manual:autoDis.indexOf(d)<0,delFn:'eliminarDisenoStock'};})},
+    {tit:'Columnas / pilares', sub:'Por medida', ico:STOCK_ICONS.columnas, rows:[
       {seccion:'columnas',clave:'2,80',nombre:'Columna 2,80 m'},
       {seccion:'columnas',clave:'3,40',nombre:'Columna 3,40 m'},
       {seccion:'columnas',clave:'4,00',nombre:'Columna 4,00 m'}]},
-    {tit:'Gorritos', rows:[{seccion:'gorritos',clave:'gorritos',nombre:'Gorritos'}]},
-    {tit:'Encadenado', rows:[{seccion:'otros',clave:'Encadenado',nombre:'Encadenado'}]},
-    {tit:'Otros materiales (carga manual)', rows: otrosList.map(function(n){return {seccion:'otros',clave:n,nombre:n,manual:true};})}
+    {tit:'Gorritos', ico:STOCK_ICONS.gorritos, rows:[{seccion:'gorritos',clave:'gorritos',nombre:'Gorritos'}]},
+    {tit:'Encadenado', sub:'1 cada 2 metros de obra', ico:STOCK_ICONS.encadenado, rows:[{seccion:'otros',clave:'Encadenado',nombre:'Encadenado'}]},
+    {tit:'Otros materiales', sub:'Carga manual', ico:STOCK_ICONS.otros,
+      rows: otrosList.map(function(n){return {seccion:'otros',clave:n,nombre:n,manual:true,esManualPuro:true,delFn:'eliminarOtroStock'};})}
   ];
-  var sinStock=0, porUsarTot=0, html='';
-  secciones.forEach(function(sec){
-    html+='<tr style="background:#F3ECE4"><td colspan="5" style="padding:9px 12px;font-weight:800;color:#993C1D;font-size:11px;text-transform:uppercase;letter-spacing:.05em">'+sec.tit+'</td></tr>';
-    if(!sec.rows.length){ html+='<tr><td colspan="5" style="padding:12px;color:#A0A0A0;font-size:12px">Todavía no hay obras con este material.</td></tr>'; return; }
-    sec.rows.forEach(function(r){
-      var it=stockItem(r.seccion,r.clave);
-      var base=it?(parseInt(it.cantidad)||0):0;
-      var claveEsc=String(r.clave).replace(/["'\\]/g,''), nomEsc=String(r.nombre).replace(/["'\\]/g,'');
-      if(r.seccion==='otros'&&r.clave!=='Encadenado'){
-        // Ítem 100% manual (sin fórmula por obra): el número que cargás ES el disponible
-        var dcolM=base<=0?'#C62828':base<10?'#D85A30':'#2E7D32';
-        if(base<=0)sinStock++;
-        html+='<tr style="border-bottom:1px solid #F0F0F0">'+
-          '<td style="padding:9px 12px 9px 22px;font-weight:600">'+r.nombre+' <button onclick="eliminarOtroStock(\''+claveEsc+'\')" style="border:none;background:none;color:#C62828;cursor:pointer;font-size:15px;line-height:1;padding:0 4px" title="Quitar">×</button></td>'+
-          '<td colspan="2" style="padding:9px 12px;text-align:right;color:#A0A0A0;font-size:11px">carga manual</td>'+
-          '<td style="padding:9px 12px;text-align:right"><input type="number" min="0" value="'+base+'" onchange="stockOtroSet(\''+claveEsc+'\',this.value)" style="width:76px;text-align:right;border:1px solid #D8CFC6;border-radius:6px;padding:5px 7px;font-family:inherit;font-size:13px;background:#fff;font-weight:800;color:'+dcolM+'"></td>'+
-          '<td style="padding:9px 12px;text-align:right;color:#A0A0A0">—</td>'+
-        '</tr>';
-        return;
-      }
-      var refD=(it&&it.fecha)?parseFecha(it.fecha):null; if(refD)refD.setHours(0,0,0,0);
-      var usado=0, porUsar=0;
-      (state.ventas||[]).forEach(function(v){
-        if(!v.fecha)return; var f=parseFecha(v.fecha); if(isNaN(f))return; f.setHours(0,0,0,0);
-        var c=consumoRow(v,r.seccion,r.clave);
-        if(f>hoyD)porUsar+=c; else if(refD&&f>refD)usado+=c;
-      });
-      var disp=base-usado; if(it&&disp<=0)sinStock++; porUsarTot+=porUsar;
-      var dcol=disp<=0?'#C62828':disp<10?'#D85A30':'#2E7D32';
-      html+='<tr style="border-bottom:1px solid #F0F0F0">'+
-        '<td style="padding:9px 12px 9px 22px;font-weight:600">'+r.nombre+(r.manual?' <button onclick="eliminarDisenoStock(\''+claveEsc+'\')" style="border:none;background:none;color:#C62828;cursor:pointer;font-size:15px;line-height:1;padding:0 4px" title="Quitar diseño">×</button>':'')+'</td>'+
-        '<td style="padding:9px 12px;text-align:right"><input type="number" min="0" value="'+base+'" onchange="stockSetBase(\''+r.seccion+'\',\''+claveEsc+'\',\''+nomEsc+'\',this.value)" style="width:76px;text-align:right;border:1px solid #D8CFC6;border-radius:6px;padding:5px 7px;font-family:inherit;font-size:13px;background:#fff"></td>'+
-        '<td style="padding:9px 12px;text-align:right;color:'+(usado>0?'#C62828':'#A0A0A0')+'">'+(usado>0?('−'+usado):'0')+'</td>'+
-        '<td style="padding:9px 12px;text-align:right"><b style="color:'+dcol+';font-size:15px">'+disp+'</b></td>'+
-        '<td style="padding:9px 12px;text-align:right;color:'+(porUsar>0?'#1565C0':'#A0A0A0')+'">'+(porUsar>0?porUsar:'—')+'</td>'+
-      '</tr>';
-    });
-  });
+  var html=secciones.map(function(sec){
+    var body=sec.rows.length
+      ? sec.rows.map(stockRowHtml).join('')
+      : '<div class="stk-empty">Todavía no hay obras con este material.</div>';
+    return '<div class="stk-section">'+
+      '<div class="stk-head">'+
+        '<div class="stk-head-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+sec.ico+'</svg></div>'+
+        '<div class="stk-head-txt"><div class="stk-head-title">'+sec.tit+'</div>'+(sec.sub?'<div class="stk-head-sub">'+sec.sub+'</div>':'')+'</div>'+
+        '<div class="stk-head-count">'+sec.rows.length+'</div>'+
+      '</div>'+body+
+    '</div>';
+  }).join('');
+  var sinStock=window._stkAgg.sinStock, porUsarTot=window._stkAgg.porUsar;
   var mEl=document.getElementById('stock-metrics');
   if(mEl)mEl.innerHTML=
     '<div class="metric-card"><div class="metric-label">Diseños de placa</div><div class="metric-value">'+disList.length+'</div></div>'+
@@ -4616,26 +4678,12 @@ restaurarSesion();
     </div>
   </div>
   <div class="content">
-    <div style="font-size:12.5px;color:#3a5a3f;background:#EEF7F0;border:1px solid #CDE8D4;border-radius:8px;padding:11px 14px;margin-bottom:16px">
-      El <b>disponible</b> descuenta los materiales de cada obra <b>el día que se hace</b> (según la fecha de obra). Las obras de días próximos figuran en <b>"Por usar"</b> y todavía no descuentan.
+    <div class="stk-hint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5"/><circle cx="12" cy="8" r=".5" fill="currentColor"/></svg>
+      <span>El <b>disponible</b> descuenta los materiales de cada obra <b>el día que se hace</b> (según la fecha de obra). Las obras de días próximos figuran en <b>«Por usar»</b> y todavía no descuentan.</span>
     </div>
-    <div id="stock-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
-    <div class="card" style="padding:0;overflow:hidden">
-      <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead>
-            <tr style="background:#F7F7F7;border-bottom:2px solid #E8E8E8">
-              <th style="padding:10px 12px;text-align:left;color:#6B6B6B;font-weight:700">Material</th>
-              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Stock base</th>
-              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Usado</th>
-              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Disponible</th>
-              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Por usar</th>
-            </tr>
-          </thead>
-          <tbody id="tabla-stock"></tbody>
-        </table>
-      </div>
-    </div>
+    <div id="stock-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div>
+    <div id="tabla-stock" class="stk-wrap"></div>
   </div>
 </div>
 
