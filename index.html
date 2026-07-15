@@ -2342,11 +2342,10 @@ function disenoKey(d){d=(d||'Sin diseño').trim();if(d.toLowerCase().indexOf('do
 // Cuánto consume UNA obra de una fila (sección + clave), usando el cálculo de materiales de obra
 function consumoRow(v,seccion,clave){
   var m=calcMaterialesVenta(v);
-  if(seccion==='reja')return m.placasReja||0;
   if(seccion==='gorritos')return m.gorritos||0;
   if(seccion==='placas')return disenoKey(v.diseno)===clave?((m.placasComunes||0)+(m.terminales||0)):0;
   if(seccion==='columnas')return m.pilarTipo===clave?(m.pilaresQty||0):0;
-  return 0;
+  return 0; // 'otros' (encadenado, reja horizontal, reja cruz, etc.) es 100% manual: no hay dato en la obra que distinga el tipo
 }
 function stockItem(seccion,clave){return state.stock.find(function(s){return s.seccion===seccion&&s.clave===clave;});}
 function stockSetBase(seccion,clave,nombre,val){
@@ -2373,27 +2372,57 @@ async function eliminarDisenoStock(clave){
   tombstone(it);var i=state.stock.indexOf(it);if(i>=0)state.stock.splice(i,1);
   saveState();renderStock();
 }
+// "Otros materiales": carga 100% manual (encadenado, rejas por tipo, etc.) — sin descuento automático por obra
+var OTROS_DEFAULT=['Encadenado','Rejas horizontales','Reja cruz'];
+function agregarOtroStock(){
+  var n=(prompt('Nombre del material a agregar (ej: Encadenado, Reja cruz):')||'').trim();
+  if(!n)return;
+  if(state.stock.find(function(s){return s.seccion==='otros'&&s.clave===n;})){alert('Ese material ya está en la lista.');return;}
+  state.stock.push({seccion:'otros',clave:n,nombre:n,cantidad:0,fecha:stockHoyStr()});
+  ensureIds(state.stock);saveState();renderStock();
+}
+async function eliminarOtroStock(clave){
+  var it=state.stock.find(function(s){return s.seccion==='otros'&&s.clave===clave;});
+  var esDefault=OTROS_DEFAULT.indexOf(clave)>=0;
+  if(esDefault&&!it){return;} // nada que borrar, es solo un placeholder
+  var ok=await showConfirm('¿Quitar material?','Se quitará "'+clave+'" de Otros materiales.');
+  if(!ok)return;
+  if(it){tombstone(it);var i=state.stock.indexOf(it);if(i>=0)state.stock.splice(i,1);}
+  if(esDefault){ if(!Array.isArray(state._ocultosOtros))state._ocultosOtros=[]; state._ocultosOtros.push(clave); }
+  saveState();renderStock();
+}
+function stockOtroSet(clave,val){
+  var v=Math.max(0,parseInt(val)||0);
+  var it=state.stock.find(function(s){return s.seccion==='otros'&&s.clave===clave;});
+  if(it){tombstoneSig(it);it.cantidad=v;it.fecha=stockHoyStr();if(state.stock.indexOf(it)===-1)state.stock.push(it);}
+  else{state.stock.push({seccion:'otros',clave:clave,nombre:clave,cantidad:v,fecha:stockHoyStr()});}
+  ensureIds(state.stock);saveState();renderStock();
+}
 function renderStock(){
   ensureIds(state.stock);
   var hoyD=new Date();hoyD.setHours(0,0,0,0);
-  // Detectar qué diseños de placa y si hay placa reja en las obras
-  var disenos={}, hayReja=false;
+  // Detectar qué diseños de placa hay en las obras
+  var disenos={};
   (state.ventas||[]).forEach(function(v){
     var m=calcMaterialesVenta(v);
     if(((m.placasComunes||0)+(m.terminales||0))>0) disenos[disenoKey(v.diseno)]=true;
-    if((m.placasReja||0)>0) hayReja=true;
   });
   var autoDis=Object.keys(disenos);
   var disList=autoDis.slice();
   state.stock.forEach(function(s){if(s.seccion==='placas'&&s.clave&&disList.indexOf(s.clave)<0)disList.push(s.clave);});
   disList.sort();
+  // "Otros materiales": defaults + los que se hayan agregado a mano, menos los que el usuario ocultó
+  var ocultos=state._ocultosOtros||[];
+  var otrosList=OTROS_DEFAULT.filter(function(n){return ocultos.indexOf(n)<0;});
+  state.stock.forEach(function(s){if(s.seccion==='otros'&&s.clave&&otrosList.indexOf(s.clave)<0)otrosList.push(s.clave);});
   var secciones=[
-    {tit:'Placas — por diseño', rows: disList.map(function(d){return {seccion:'placas',clave:d,nombre:d,manual:autoDis.indexOf(d)<0};}).concat(hayReja?[{seccion:'reja',clave:'reja',nombre:'Placas reja'}]:[])},
+    {tit:'Placas — por diseño', rows: disList.map(function(d){return {seccion:'placas',clave:d,nombre:d,manual:autoDis.indexOf(d)<0};})},
     {tit:'Columnas / pilares — por medida', rows:[
       {seccion:'columnas',clave:'2,80',nombre:'Columna 2,80 m'},
       {seccion:'columnas',clave:'3,40',nombre:'Columna 3,40 m'},
       {seccion:'columnas',clave:'4,00',nombre:'Columna 4,00 m'}]},
-    {tit:'Gorritos', rows:[{seccion:'gorritos',clave:'gorritos',nombre:'Gorritos'}]}
+    {tit:'Gorritos', rows:[{seccion:'gorritos',clave:'gorritos',nombre:'Gorritos'}]},
+    {tit:'Otros materiales (carga manual)', manual:true, rows: otrosList.map(function(n){return {seccion:'otros',clave:n,nombre:n,manual:true};})}
   ];
   var sinStock=0, porUsarTot=0, html='';
   secciones.forEach(function(sec){
@@ -2402,6 +2431,19 @@ function renderStock(){
     sec.rows.forEach(function(r){
       var it=stockItem(r.seccion,r.clave);
       var base=it?(parseInt(it.cantidad)||0):0;
+      var claveEsc=String(r.clave).replace(/["'\\]/g,''), nomEsc=String(r.nombre).replace(/["'\\]/g,'');
+      if(sec.seccionOtros||r.seccion==='otros'){
+        // Ítem 100% manual (sin fórmula por obra): el número que cargás ES el disponible
+        var dcolM=base<=0?'#C62828':base<10?'#D85A30':'#2E7D32';
+        if(base<=0)sinStock++;
+        html+='<tr style="border-bottom:1px solid #F0F0F0">'+
+          '<td style="padding:9px 12px 9px 22px;font-weight:600">'+r.nombre+' <button onclick="eliminarOtroStock(\''+claveEsc+'\')" style="border:none;background:none;color:#C62828;cursor:pointer;font-size:15px;line-height:1;padding:0 4px" title="Quitar">×</button></td>'+
+          '<td colspan="2" style="padding:9px 12px;text-align:right;color:#A0A0A0;font-size:11px">carga manual</td>'+
+          '<td style="padding:9px 12px;text-align:right"><input type="number" min="0" value="'+base+'" onchange="stockOtroSet(\''+claveEsc+'\',this.value)" style="width:76px;text-align:right;border:1px solid #D8CFC6;border-radius:6px;padding:5px 7px;font-family:inherit;font-size:13px;background:#fff;font-weight:800;color:'+dcolM+'"></td>'+
+          '<td style="padding:9px 12px;text-align:right;color:#A0A0A0">—</td>'+
+        '</tr>';
+        return;
+      }
       var refD=(it&&it.fecha)?parseFecha(it.fecha):null; if(refD)refD.setHours(0,0,0,0);
       var usado=0, porUsar=0;
       (state.ventas||[]).forEach(function(v){
@@ -2411,7 +2453,6 @@ function renderStock(){
       });
       var disp=base-usado; if(it&&disp<=0)sinStock++; porUsarTot+=porUsar;
       var dcol=disp<=0?'#C62828':disp<10?'#D85A30':'#2E7D32';
-      var claveEsc=String(r.clave).replace(/["'\\]/g,''), nomEsc=String(r.nombre).replace(/["'\\]/g,'');
       html+='<tr style="border-bottom:1px solid #F0F0F0">'+
         '<td style="padding:9px 12px 9px 22px;font-weight:600">'+r.nombre+(r.manual?' <button onclick="eliminarDisenoStock(\''+claveEsc+'\')" style="border:none;background:none;color:#C62828;cursor:pointer;font-size:15px;line-height:1;padding:0 4px" title="Quitar diseño">×</button>':'')+'</td>'+
         '<td style="padding:9px 12px;text-align:right"><input type="number" min="0" value="'+base+'" onchange="stockSetBase(\''+r.seccion+'\',\''+claveEsc+'\',\''+nomEsc+'\',this.value)" style="width:76px;text-align:right;border:1px solid #D8CFC6;border-radius:6px;padding:5px 7px;font-family:inherit;font-size:13px;background:#fff"></td>'+
@@ -4567,7 +4608,10 @@ restaurarSesion();
   <div class="topbar">
     <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
     <span class="tb-title">Stock disponible</span>
-    <button onclick="agregarDisenoStock()" style="background:#1B7A3E;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;margin-left:auto">+ Agregar diseño</button>
+    <div style="margin-left:auto;display:flex;gap:8px">
+      <button onclick="agregarDisenoStock()" style="background:#1B7A3E;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">+ Agregar diseño</button>
+      <button onclick="agregarOtroStock()" style="background:#993C1D;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">+ Agregar material</button>
+    </div>
   </div>
   <div class="content">
     <div style="font-size:12.5px;color:#3a5a3f;background:#EEF7F0;border:1px solid #CDE8D4;border-radius:8px;padding:11px 14px;margin-bottom:16px">
