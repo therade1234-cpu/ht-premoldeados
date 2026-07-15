@@ -2358,6 +2358,21 @@ function stockSetBase(seccion,clave,nombre,val){
   ensureIds(state.stock);
   saveState();renderStock();
 }
+function agregarDisenoStock(){
+  var n=(prompt('Nombre del diseño de placa a agregar (ej: Doble vista madera caoba):')||'').trim();
+  if(!n)return;
+  if(state.stock.find(function(s){return s.seccion==='placas'&&s.clave===n;})){alert('Ese diseño ya está en la lista.');return;}
+  state.stock.push({seccion:'placas',clave:n,nombre:n,cantidad:0,fecha:stockHoyStr()});
+  ensureIds(state.stock);saveState();renderStock();
+}
+async function eliminarDisenoStock(clave){
+  var it=state.stock.find(function(s){return s.seccion==='placas'&&s.clave===clave;});
+  if(!it)return;
+  var ok=await showConfirm('¿Quitar diseño?','Se quitará "'+clave+'" del stock (solo el diseño agregado a mano).');
+  if(!ok)return;
+  tombstone(it);var i=state.stock.indexOf(it);if(i>=0)state.stock.splice(i,1);
+  saveState();renderStock();
+}
 function renderStock(){
   ensureIds(state.stock);
   var hoyD=new Date();hoyD.setHours(0,0,0,0);
@@ -2368,9 +2383,12 @@ function renderStock(){
     if(((m.placasComunes||0)+(m.terminales||0))>0) disenos[disenoKey(v.diseno)]=true;
     if((m.placasReja||0)>0) hayReja=true;
   });
-  var disList=Object.keys(disenos).sort();
+  var autoDis=Object.keys(disenos);
+  var disList=autoDis.slice();
+  state.stock.forEach(function(s){if(s.seccion==='placas'&&s.clave&&disList.indexOf(s.clave)<0)disList.push(s.clave);});
+  disList.sort();
   var secciones=[
-    {tit:'Placas — por diseño', rows: disList.map(function(d){return {seccion:'placas',clave:d,nombre:d};}).concat(hayReja?[{seccion:'reja',clave:'reja',nombre:'Placas reja'}]:[])},
+    {tit:'Placas — por diseño', rows: disList.map(function(d){return {seccion:'placas',clave:d,nombre:d,manual:autoDis.indexOf(d)<0};}).concat(hayReja?[{seccion:'reja',clave:'reja',nombre:'Placas reja'}]:[])},
     {tit:'Columnas / pilares — por medida', rows:[
       {seccion:'columnas',clave:'2,80',nombre:'Columna 2,80 m'},
       {seccion:'columnas',clave:'3,40',nombre:'Columna 3,40 m'},
@@ -2395,7 +2413,7 @@ function renderStock(){
       var dcol=disp<=0?'#C62828':disp<10?'#D85A30':'#2E7D32';
       var claveEsc=String(r.clave).replace(/["'\\]/g,''), nomEsc=String(r.nombre).replace(/["'\\]/g,'');
       html+='<tr style="border-bottom:1px solid #F0F0F0">'+
-        '<td style="padding:9px 12px 9px 22px;font-weight:600">'+r.nombre+'</td>'+
+        '<td style="padding:9px 12px 9px 22px;font-weight:600">'+r.nombre+(r.manual?' <button onclick="eliminarDisenoStock(\''+claveEsc+'\')" style="border:none;background:none;color:#C62828;cursor:pointer;font-size:15px;line-height:1;padding:0 4px" title="Quitar diseño">×</button>':'')+'</td>'+
         '<td style="padding:9px 12px;text-align:right"><input type="number" min="0" value="'+base+'" onchange="stockSetBase(\''+r.seccion+'\',\''+claveEsc+'\',\''+nomEsc+'\',this.value)" style="width:76px;text-align:right;border:1px solid #D8CFC6;border-radius:6px;padding:5px 7px;font-family:inherit;font-size:13px;background:#fff"></td>'+
         '<td style="padding:9px 12px;text-align:right;color:'+(usado>0?'#C62828':'#A0A0A0')+'">'+(usado>0?('−'+usado):'0')+'</td>'+
         '<td style="padding:9px 12px;text-align:right"><b style="color:'+dcol+';font-size:15px">'+disp+'</b></td>'+
@@ -4549,6 +4567,7 @@ restaurarSesion();
   <div class="topbar">
     <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
     <span class="tb-title">Stock disponible</span>
+    <button onclick="agregarDisenoStock()" style="background:#1B7A3E;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;margin-left:auto">+ Agregar diseño</button>
   </div>
   <div class="content">
     <div style="font-size:12.5px;color:#3a5a3f;background:#EEF7F0;border:1px solid #CDE8D4;border-radius:8px;padding:11px 14px;margin-bottom:16px">
