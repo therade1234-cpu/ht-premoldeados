@@ -2345,7 +2345,8 @@ function consumoRow(v,seccion,clave){
   if(seccion==='gorritos')return m.gorritos||0;
   if(seccion==='placas')return disenoKey(v.diseno)===clave?((m.placasComunes||0)+(m.terminales||0)):0;
   if(seccion==='columnas')return m.pilarTipo===clave?(m.pilaresQty||0):0;
-  return 0; // 'otros' (encadenado, reja horizontal, reja cruz, etc.) es 100% manual: no hay dato en la obra que distinga el tipo
+  if(seccion==='otros'&&clave==='Encadenado')return (v.encadenado==='Sí')?Math.ceil((v.metros||0)/2):0; // 1 encadenado cada 2 metros
+  return 0; // resto de 'otros' (reja horizontal, reja cruz, etc.) es 100% manual: no hay dato en la obra que distinga el tipo
 }
 function stockItem(seccion,clave){return state.stock.find(function(s){return s.seccion===seccion&&s.clave===clave;});}
 function stockSetBase(seccion,clave,nombre,val){
@@ -2373,7 +2374,7 @@ async function eliminarDisenoStock(clave){
   saveState();renderStock();
 }
 // "Otros materiales": carga 100% manual (encadenado, rejas por tipo, etc.) — sin descuento automático por obra
-var OTROS_DEFAULT=['Encadenado','Rejas horizontales','Reja cruz'];
+var OTROS_DEFAULT=['Rejas horizontales','Reja cruz']; // Encadenado ahora es automático (1 cada 2 metros), vive en su propia sección
 function agregarOtroStock(){
   var n=(prompt('Nombre del material a agregar (ej: Encadenado, Reja cruz):')||'').trim();
   if(!n)return;
@@ -2422,7 +2423,8 @@ function renderStock(){
       {seccion:'columnas',clave:'3,40',nombre:'Columna 3,40 m'},
       {seccion:'columnas',clave:'4,00',nombre:'Columna 4,00 m'}]},
     {tit:'Gorritos', rows:[{seccion:'gorritos',clave:'gorritos',nombre:'Gorritos'}]},
-    {tit:'Otros materiales (carga manual)', manual:true, rows: otrosList.map(function(n){return {seccion:'otros',clave:n,nombre:n,manual:true};})}
+    {tit:'Encadenado', rows:[{seccion:'otros',clave:'Encadenado',nombre:'Encadenado'}]},
+    {tit:'Otros materiales (carga manual)', rows: otrosList.map(function(n){return {seccion:'otros',clave:n,nombre:n,manual:true};})}
   ];
   var sinStock=0, porUsarTot=0, html='';
   secciones.forEach(function(sec){
@@ -2432,7 +2434,7 @@ function renderStock(){
       var it=stockItem(r.seccion,r.clave);
       var base=it?(parseInt(it.cantidad)||0):0;
       var claveEsc=String(r.clave).replace(/["'\\]/g,''), nomEsc=String(r.nombre).replace(/["'\\]/g,'');
-      if(sec.seccionOtros||r.seccion==='otros'){
+      if(r.seccion==='otros'&&r.clave!=='Encadenado'){
         // Ítem 100% manual (sin fórmula por obra): el número que cargás ES el disponible
         var dcolM=base<=0?'#C62828':base<10?'#D85A30':'#2E7D32';
         if(base<=0)sinStock++;
