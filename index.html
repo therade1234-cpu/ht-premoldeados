@@ -2336,71 +2336,86 @@ function calcResumenMateriales(ventas){
   return grupos;
 }
 
-// ---- STOCK DISPONIBLE ----
+// ---- STOCK DISPONIBLE (descuento automático el día de la obra) ----
 let _editStockIdx=-1;
-function stockCatColor(c){return {Placas:'#D85A30',Pilares:'#1565C0',Gorros:'#1B7A3E',Columnas:'#6A1B9A',Portones:'#BA7517',Otro:'#888'}[c]||'#888';}
+var STOCK_CATS=['Paneles','Placas','Placas reja','Pilares','Gorritos','Otro'];
+function stockCatColor(c){return {Paneles:'#993C1D',Placas:'#D85A30','Placas reja':'#E8744A',Pilares:'#1565C0',Gorritos:'#1B7A3E',Otro:'#888'}[c]||'#888';}
+// Cuánto consume UNA obra de una categoría de material (usa el cálculo de materiales de obra)
+function consumoStock(v,categoria){
+  var m=calcMaterialesVenta(v);
+  if(categoria==='Paneles')return m.paneles||0;
+  if(categoria==='Placas')return (m.placasComunes||0)+(m.terminales||0);
+  if(categoria==='Placas reja')return m.placasReja||0;
+  if(categoria==='Pilares')return m.pilaresQty||0;
+  if(categoria==='Gorritos')return m.gorritos||0;
+  return 0; // "Otro" = manual, no descuenta
+}
+function stockHoyStr(){var h=new Date();return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');}
 function abrirFormStock(idx){
   _editStockIdx=idx;
-  document.getElementById('form-stock-titulo').textContent=idx>=0?'Editar item':'Nuevo item';
+  document.getElementById('form-stock-titulo').textContent=idx>=0?'Editar material':'Nuevo material';
   if(idx>=0&&state.stock[idx]){var it=state.stock[idx];document.getElementById('st-nombre').value=it.nombre||'';document.getElementById('st-categoria').value=it.categoria||'Placas';document.getElementById('st-cantidad').value=(it.cantidad!=null?it.cantidad:0);}
   else{document.getElementById('st-nombre').value='';document.getElementById('st-categoria').value='Placas';document.getElementById('st-cantidad').value='';}
   document.getElementById('form-stock').style.display='block';
 }
 function cerrarFormStock(){document.getElementById('form-stock').style.display='none';_editStockIdx=-1;}
 function guardarStock(){
-  var nombre=document.getElementById('st-nombre').value.trim();
   var categoria=document.getElementById('st-categoria').value;
+  var nombre=document.getElementById('st-nombre').value.trim()||categoria;
   var cantidad=parseInt(document.getElementById('st-cantidad').value)||0;
-  if(!nombre){alert('Poné un nombre al item');return;}
-  if(_editStockIdx>=0&&state.stock[_editStockIdx]){var it=state.stock[_editStockIdx];tombstoneSig(it);it.nombre=nombre;it.categoria=categoria;it.cantidad=cantidad;if(state.stock.indexOf(it)===-1)state.stock.push(it);}
-  else{state.stock.push({nombre:nombre,categoria:categoria,cantidad:cantidad});}
+  var fecha=stockHoyStr();
+  if(_editStockIdx>=0&&state.stock[_editStockIdx]){var it=state.stock[_editStockIdx];tombstoneSig(it);it.nombre=nombre;it.categoria=categoria;it.cantidad=cantidad;it.fecha=fecha;if(state.stock.indexOf(it)===-1)state.stock.push(it);}
+  else{state.stock.push({nombre:nombre,categoria:categoria,cantidad:cantidad,fecha:fecha});}
   ensureIds(state.stock);
   cerrarFormStock();renderStock();saveState();
-}
-function stockAjustar(id,delta){
-  var it=state.stock.find(function(s){return s.id===id;});
-  if(!it)return;
-  tombstoneSig(it);
-  it.cantidad=Math.max(0,(parseInt(it.cantidad)||0)+delta);
-  renderStock();saveState();
 }
 async function eliminarStock(id){
   var it=state.stock.find(function(s){return s.id===id;});
   if(!it)return;
-  var ok=await showConfirm('¿Eliminar item?','Se eliminará "'+(it.nombre||'este item')+'" del stock.');
+  var ok=await showConfirm('¿Eliminar material?','Se quitará "'+(it.nombre||'este material')+'" del stock.');
   if(!ok)return;
   tombstone(it);var idx=state.stock.indexOf(it);if(idx>=0)state.stock.splice(idx,1);
   renderStock();saveState();
 }
 function renderStock(){
   ensureIds(state.stock);
-  var items=state.stock.slice();
-  var totalUnid=items.reduce(function(s,i){return s+(parseInt(i.cantidad)||0);},0);
-  var sinStock=items.filter(function(i){return (parseInt(i.cantidad)||0)<=0;}).length;
-  var mEl=document.getElementById('stock-metrics');
-  if(mEl)mEl.innerHTML=
-    '<div class="metric-card"><div class="metric-label">Items</div><div class="metric-value">'+items.length+'</div></div>'+
-    '<div class="metric-card"><div class="metric-label">Unidades totales</div><div class="metric-value">'+totalUnid.toLocaleString('es-AR')+'</div></div>'+
-    '<div class="metric-card" style="border-top-color:'+(sinStock>0?'#C62828':'#2E7D32')+'"><div class="metric-label">Sin stock</div><div class="metric-value" style="color:'+(sinStock>0?'#C62828':'#2E7D32')+'">'+sinStock+'</div></div>';
-  var tb=document.getElementById('tabla-stock');
-  if(!tb)return;
-  if(!items.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;padding:20px;color:#A0A0A0">Sin items cargados</td></tr>';return;}
-  items.sort(function(a,b){return (a.categoria||'').localeCompare(b.categoria||'')||(a.nombre||'').localeCompare(b.nombre||'');});
-  tb.innerHTML=items.map(function(it,i){
-    var c=parseInt(it.cantidad)||0, col=stockCatColor(it.categoria), gi=state.stock.indexOf(it);
-    return '<tr style="border-bottom:1px solid #F0F0F0;background:'+(i%2===0?'#fff':'#FAFAFA')+'">'+
-      '<td style="padding:9px 12px;font-weight:600">'+(it.nombre||'—')+'</td>'+
-      '<td style="padding:9px 12px"><span style="background:'+col+'22;color:'+col+';padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700">'+(it.categoria||'—')+'</span></td>'+
-      '<td style="padding:9px 12px;text-align:center;white-space:nowrap">'+
-        '<button onclick="stockAjustar(\''+it.id+'\',-1)" style="width:26px;height:26px;border:1px solid #E0E0E0;background:#fff;border-radius:6px;cursor:pointer;font-weight:700;font-size:15px;color:#C62828;vertical-align:middle">−</button>'+
-        '<span style="display:inline-block;min-width:46px;font-weight:800;font-size:15px;color:'+(c<=0?'#C62828':'#1A1A1A')+'">'+c+'</span>'+
-        '<button onclick="stockAjustar(\''+it.id+'\',1)" style="width:26px;height:26px;border:1px solid #E0E0E0;background:#fff;border-radius:6px;cursor:pointer;font-weight:700;font-size:15px;color:#2E7D32;vertical-align:middle">+</button>'+
-      '</td>'+
-      '<td style="padding:9px 12px;text-align:right;white-space:nowrap">'+
+  var hoyD=new Date();hoyD.setHours(0,0,0,0);
+  var items=state.stock.slice().sort(function(a,b){return STOCK_CATS.indexOf(a.categoria)-STOCK_CATS.indexOf(b.categoria)||(a.nombre||'').localeCompare(b.nombre||'');});
+  var sinStock=0, porUsarTot=0;
+  var filas=items.map(function(it){
+    var base=parseInt(it.cantidad)||0, usado=0, porUsar=0;
+    var refD=it.fecha?parseFecha(it.fecha):null; if(refD)refD.setHours(0,0,0,0);
+    if(it.categoria&&it.categoria!=='Otro'){
+      state.ventas.forEach(function(v){
+        if(!v.fecha)return; var f=parseFecha(v.fecha); if(isNaN(f))return; f.setHours(0,0,0,0);
+        var c=consumoStock(v,it.categoria);
+        if(f>hoyD){porUsar+=c;}
+        else if(refD&&f>refD){usado+=c;}
+      });
+    }
+    var disp=base-usado; if(disp<=0)sinStock++; porUsarTot+=porUsar;
+    var col=stockCatColor(it.categoria), gi=state.stock.indexOf(it);
+    var dcol=disp<=0?'#C62828':disp<10?'#D85A30':'#2E7D32';
+    return '<tr style="border-bottom:1px solid #F0F0F0">'+
+      '<td style="padding:10px 12px;font-weight:600">'+(it.nombre||'—')+'</td>'+
+      '<td style="padding:10px 12px"><span style="background:'+col+'22;color:'+col+';padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700">'+(it.categoria||'—')+'</span></td>'+
+      '<td style="padding:10px 12px;text-align:right">'+base+'</td>'+
+      '<td style="padding:10px 12px;text-align:right;color:'+(usado>0?'#C62828':'#A0A0A0')+'">'+(usado>0?('−'+usado):'0')+'</td>'+
+      '<td style="padding:10px 12px;text-align:right"><b style="color:'+dcol+';font-size:15px">'+disp+'</b></td>'+
+      '<td style="padding:10px 12px;text-align:right;color:'+(porUsar>0?'#1565C0':'#A0A0A0')+'">'+(porUsar>0?porUsar:'—')+'</td>'+
+      '<td style="padding:10px 8px;text-align:right;white-space:nowrap">'+
         '<button onclick="abrirFormStock('+gi+')" style="background:none;border:1.5px solid #1565C0;border-radius:5px;color:#1565C0;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;margin-right:4px">✏️</button>'+
         '<button onclick="eliminarStock(\''+it.id+'\')" style="background:none;border:1.5px solid #C62828;border-radius:5px;color:#C62828;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer">🗑</button>'+
       '</td></tr>';
-  }).join('');
+  });
+  var mEl=document.getElementById('stock-metrics');
+  if(mEl)mEl.innerHTML=
+    '<div class="metric-card"><div class="metric-label">Materiales cargados</div><div class="metric-value">'+items.length+'</div></div>'+
+    '<div class="metric-card" style="border-top-color:'+(sinStock>0?'#C62828':'#2E7D32')+'"><div class="metric-label">Sin stock</div><div class="metric-value" style="color:'+(sinStock>0?'#C62828':'#2E7D32')+'">'+sinStock+'</div></div>'+
+    '<div class="metric-card" style="border-top-color:#1565C0"><div class="metric-label">Por usar (obras próximas)</div><div class="metric-value" style="color:#1565C0">'+porUsarTot.toLocaleString('es-AR')+'</div></div>';
+  var tb=document.getElementById('tabla-stock');
+  if(!tb)return;
+  tb.innerHTML=items.length?filas.join(''):'<tr><td colspan="7" style="text-align:center;padding:20px;color:#A0A0A0">Sin materiales cargados. Agregá con "+ Nuevo material".</td></tr>';
 }
 function renderMateriales(){
   // Label período
@@ -4539,24 +4554,28 @@ restaurarSesion();
   <div class="topbar">
     <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
     <span class="tb-title">Stock disponible</span>
-    <button onclick="abrirFormStock(-1)" style="background:#D85A30;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;margin-left:auto">+ Nuevo item</button>
+    <button onclick="abrirFormStock(-1)" style="background:#1B7A3E;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;margin-left:auto">+ Nuevo material</button>
   </div>
   <div class="content">
+    <div style="font-size:12.5px;color:#3a5a3f;background:#EEF7F0;border:1px solid #CDE8D4;border-radius:8px;padding:11px 14px;margin-bottom:16px">
+      El <b>disponible</b> descuenta los materiales de cada obra <b>el día que se hace</b> (según la fecha de obra). Las obras de días próximos figuran en <b>"Por usar"</b> y todavía no descuentan.
+    </div>
     <div id="stock-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
     <div id="form-stock" style="display:none;margin-bottom:16px">
       <div class="card">
-        <div class="card-title" id="form-stock-titulo" style="margin-bottom:14px">Nuevo item</div>
+        <div class="card-title" id="form-stock-titulo" style="margin-bottom:14px">Nuevo material</div>
         <div class="two-col">
-          <div class="form-group"><label class="form-label">Item</label>
-            <input type="text" id="st-nombre" placeholder="Ej: Placa símil piedra 2,00m" /></div>
-          <div class="form-group"><label class="form-label">Categoría</label>
-            <select id="st-categoria"><option>Placas</option><option>Pilares</option><option>Gorros</option><option>Columnas</option><option>Portones</option><option>Otro</option></select></div>
+          <div class="form-group"><label class="form-label">Material</label>
+            <select id="st-categoria"><option>Paneles</option><option>Placas</option><option>Placas reja</option><option>Pilares</option><option>Gorritos</option><option>Otro</option></select></div>
+          <div class="form-group"><label class="form-label">Nombre / detalle (opcional)</label>
+            <input type="text" id="st-nombre" placeholder="Ej: Placa símil piedra" /></div>
         </div>
-        <div class="form-group"><label class="form-label">Cantidad disponible</label>
+        <div class="form-group"><label class="form-label">Stock base (lo que tenés hoy)</label>
           <input type="number" id="st-cantidad" placeholder="0" min="0" /></div>
-        <div style="display:flex;gap:10px;margin-top:8px">
+        <div style="font-size:11px;color:#888;margin-top:-6px">Se toma como stock a la fecha de hoy. Desde acá, las obras lo van descontando el día que se hacen.</div>
+        <div style="display:flex;gap:10px;margin-top:14px">
           <button onclick="cerrarFormStock()" style="flex:1;background:#fff;border:1.5px solid #CCC;border-radius:8px;padding:10px;font-size:13px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">Cancelar</button>
-          <button onclick="guardarStock()" style="flex:1;background:#D85A30;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">Guardar</button>
+          <button onclick="guardarStock()" style="flex:1;background:#1B7A3E;border:none;border-radius:8px;padding:10px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">Guardar</button>
         </div>
       </div>
     </div>
@@ -4565,13 +4584,16 @@ restaurarSesion();
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
             <tr style="background:#F7F7F7;border-bottom:2px solid #E8E8E8">
-              <th style="padding:10px 12px;text-align:left;color:#6B6B6B;font-weight:700">Item</th>
+              <th style="padding:10px 12px;text-align:left;color:#6B6B6B;font-weight:700">Material</th>
               <th style="padding:10px 12px;text-align:left;color:#6B6B6B;font-weight:700">Categoría</th>
-              <th style="padding:10px 12px;text-align:center;color:#6B6B6B;font-weight:700">Disponible</th>
+              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Base</th>
+              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Usado</th>
+              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Disponible</th>
+              <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Por usar</th>
               <th style="padding:10px 12px;text-align:right;color:#6B6B6B;font-weight:700">Acciones</th>
             </tr>
           </thead>
-          <tbody id="tabla-stock"><tr><td colspan="4" style="text-align:center;padding:20px;color:#A0A0A0">Sin items cargados</td></tr></tbody>
+          <tbody id="tabla-stock"><tr><td colspan="7" style="text-align:center;padding:20px;color:#A0A0A0">Sin materiales cargados</td></tr></tbody>
         </table>
       </div>
     </div>
