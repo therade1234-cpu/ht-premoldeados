@@ -194,15 +194,15 @@ table.movs tr:hover td{background:#FAFAFA}
 .stk-wrap{display:flex;flex-direction:column;gap:20px}
 .stk-section{background:var(--wh);border:1px solid var(--bd);border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(20,20,20,.03)}
 .stk-head{display:flex;align-items:center;gap:14px;padding:18px 24px;background:var(--or-bg);border-bottom:1px solid var(--bd)}
-.stk-head-ico{width:42px;height:42px;border-radius:12px;background:var(--wh);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 1px 3px rgba(153,60,29,.15)}
+.stk-head-ico{width:46px;height:46px;border-radius:13px;background:var(--wh);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 1px 3px rgba(153,60,29,.15)}
 .stk-head-ico svg{width:23px;height:23px;stroke:var(--or-d)}
 .stk-head-txt{min-width:0}
-.stk-head-title{font-size:16.5px;font-weight:800;color:var(--or-d);text-transform:uppercase;letter-spacing:.05em}
+.stk-head-title{font-size:17.5px;font-weight:800;color:var(--or-d);text-transform:uppercase;letter-spacing:.05em}
 .stk-head-sub{font-size:13px;color:var(--mu);margin-top:2px}
 .stk-head-count{margin-left:auto;font-size:14px;font-weight:700;color:var(--or-d);background:var(--wh);border:1px solid var(--or-l);padding:5px 14px;border-radius:20px;white-space:nowrap}
 .stk-row{display:flex;align-items:center;gap:22px;padding:19px 24px;border-top:1px solid #F1EDE8}
 .stk-row:first-child{border-top:none}
-.stk-name{flex:0 0 210px;min-width:0;font-weight:700;font-size:16.5px;color:var(--tx);display:flex;align-items:center;gap:6px}
+.stk-name{flex:0 0 200px;min-width:0;font-weight:700;font-size:17.5px;color:var(--tx);display:flex;align-items:center;gap:6px}
 .stk-name-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stk-bar-col{flex:1;min-width:90px;display:flex;flex-direction:column;gap:8px}
 .stk-bar-track{height:11px;border-radius:6px;background:#EFEBE6;overflow:hidden}
@@ -213,13 +213,13 @@ html[data-theme="dark"] .stk-bar-track{background:#16375c}
 .stk-num b{display:block;font-size:21px;font-weight:800;line-height:1.1}
 .stk-num i{display:block;font-style:normal;font-size:11px;color:var(--hi);text-transform:uppercase;letter-spacing:.05em;margin-top:4px}
 .stk-input{width:82px;text-align:right;border:1.5px solid var(--bd);border-radius:9px;padding:9px 10px;font-family:inherit;font-size:17px;font-weight:700;background:var(--wh);color:var(--tx)}
-.stk-step{width:32px;height:32px;flex-shrink:0;border:1.5px solid var(--bd);border-radius:9px;background:var(--wh);color:var(--tx);font-size:18px;font-weight:700;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.stk-step{width:38px;height:38px;flex-shrink:0;border:1.5px solid var(--bd);border-radius:10px;background:var(--wh);color:var(--tx);font-size:21px;font-weight:700;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 .stk-step:hover{border-color:var(--or)}
 .stk-step:active{transform:scale(.94)}
 .stk-step.minus{color:var(--re)}
 .stk-step.plus{color:var(--gr)}
 .stk-input:focus{outline:none;border-color:var(--or)}
-.stk-pill{font-size:12.5px;font-weight:800;padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.stk-pill{font-size:13.5px;font-weight:800;padding:7px 16px;border-radius:20px;white-space:nowrap;flex-shrink:0}
 .stk-pill.ok{background:var(--gr-bg);color:var(--gr)}
 .stk-pill.low{background:var(--or-bg);color:var(--or-d)}
 .stk-pill.out{background:#FDECEA;color:var(--re)}
@@ -2561,12 +2561,12 @@ function stockRowHtml(r){
     var pillM=base<=0?'<span class="stk-pill out">Sin stock</span>':base<10?'<span class="stk-pill low">Queda poco</span>':'<span class="stk-pill ok">OK</span>';
     var setFn=r.setFn||'stockOtroSet';
     return '<div class="stk-row"><div class="stk-name"><span class="stk-name-txt">'+r.nombre+'</span></div>'+
-      '<div class="stk-bar-col"><span class="stk-manual-badge">carga manual</span></div>'+
-      '<div class="stk-nums"><div class="stk-num"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">'+
+      '<div style="display:flex;align-items:center;gap:12px">'+
         '<button class="stk-step minus" onclick="'+setFn+'(\''+claveEsc+'\','+Math.max(0,base-1)+')" title="Restar 1">−</button>'+
-        '<input type="number" min="0" class="stk-input" value="'+base+'" onchange="'+setFn+'(\''+claveEsc+'\',this.value)" style="color:'+dcolM+';width:60px">'+
+        '<div style="text-align:center"><input type="number" min="0" class="stk-input" value="'+base+'" onchange="'+setFn+'(\''+claveEsc+'\',this.value)" style="color:'+dcolM+';width:76px">'+
+        '<div style="font-size:10.5px;color:var(--hi);text-transform:uppercase;letter-spacing:.04em;margin-top:5px">disponible</div></div>'+
         '<button class="stk-step plus" onclick="'+setFn+'(\''+claveEsc+'\','+(base+1)+')" title="Sumar 1">+</button>'+
-      '</div><i>disponible</i></div></div>'+
+      '</div>'+
       pillM+delBtn+'</div>';
   }
   var hoyD=new Date();hoyD.setHours(0,0,0,0);
