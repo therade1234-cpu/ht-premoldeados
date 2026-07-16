@@ -183,6 +183,16 @@
   .hinput{background:var(--surface-2);border:1px solid var(--border);color:var(--text);border-radius:10px;
     padding:9px 12px;font:inherit;font-size:13px;color-scheme:dark}
   .hinput:focus{outline:2px solid var(--accent);outline-offset:1px}
+  .ilabel{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px}
+  .ing-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+  @media(max-width:560px){.ing-grid{grid-template-columns:1fr}}
+  .btn-primary{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:11px;padding:11px 20px;
+    font-size:13.5px;font-weight:700;color:#fff;background:var(--accent);cursor:pointer;font-family:inherit;
+    box-shadow:0 2px 8px rgba(0,0,0,.15);transition:transform .12s,box-shadow .12s}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+  .btn-primary:disabled{opacity:.6;cursor:default;transform:none}
+  .ing-del{border:none;background:none;color:var(--faint);cursor:pointer;padding:4px;transition:color .15s}
+  .ing-del:hover{color:var(--bad)}
 
   @media (max-width:880px){
     .col-4,.col-6,.col-8{grid-column:span 12}
@@ -446,6 +456,40 @@
               <th class="r">Gasto</th><th class="r">Costo/consulta</th><th>Última actividad</th>
             </tr></thead>
             <tbody id="camp-dir-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-ingresos" style="display:none">
+      <div class="head" style="padding:26px 0 10px">
+        <div>
+          <h1>Registro de ingresos</h1>
+          <div class="sub">Cargá las ventas generadas por cada campaña para calcular el ROAS</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ctitle">Registrar ingreso</div>
+        <div class="ing-grid">
+          <div><label class="ilabel">Fecha</label><input type="date" id="ing-fecha" class="hinput" style="width:100%;box-sizing:border-box"></div>
+          <div><label class="ilabel">Campaña</label><input type="text" id="ing-campana" class="hinput" list="ing-camp-list" placeholder="Nombre de la campaña" style="width:100%;box-sizing:border-box"><datalist id="ing-camp-list"></datalist></div>
+          <div><label class="ilabel">Monto ($)</label><input type="text" inputmode="numeric" id="ing-monto" class="hinput" placeholder="0" style="width:100%;box-sizing:border-box"></div>
+          <div><label class="ilabel">Notas (opcional)</label><input type="text" id="ing-notas" class="hinput" placeholder="Notas (opcional)" style="width:100%;box-sizing:border-box"></div>
+        </div>
+        <button id="ing-btn" class="btn-primary" style="margin-top:18px">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Registrar ingreso
+        </button>
+        <div id="ing-msg" style="font-size:12.5px;margin-top:10px;min-height:16px"></div>
+      </div>
+
+      <div class="metric-grid" id="ing-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0"></div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>Fecha</th><th>Campaña</th><th class="r">Monto</th><th>Notas</th><th></th></tr></thead>
+            <tbody id="ing-rows"><tr><td colspan="5" style="text-align:center;padding:26px;color:var(--faint)">Todavía no registraste ingresos</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -763,12 +807,96 @@
   }
   ['camp-desde','camp-hasta'].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('change',paintCampDir);});
 
+  // ---- INGRESOS (registro manual, persistido en /api/data para calcular ROAS) ----
+  // sigOf/idFromSig replican EXACTO el criterio del servidor (api/data.js) para que
+  // el id calculado acá coincida con el que asigna el backend al guardar.
+  function sigOfIng(it){return [it.fecha,it.fechaObra,it.fechaRep,it.fechaVenta,it.cliente,it.tel,it.dir,it.direccion,it.localidad,it.metros,it.altura,it.diseno,it.precio,it.sena,it.totalObra,it.monto,it.cat,it.tipo,it.desc,it.notas,it.detalle,it.vendedor,it.estado,it.canal,it.msj,it.gasto,it.url,it.nombre,it.categoria,it.cantidad].join('~');}
+  function hashStrIng(s){var h=5381,i=s.length;while(i){h=(h*33)^s.charCodeAt(--i);}return (h>>>0).toString(36);}
+  function idFromSigIng(it){var s=sigOfIng(it);return 'h'+hashStrIng(s)+s.length.toString(36);}
+  var ingresos=[];
+  function ingHoyStr(){var h=new Date();return h.getFullYear()+'-'+String(h.getMonth()+1).padStart(2,'0')+'-'+String(h.getDate()).padStart(2,'0');}
+  function poblarDatalistCampanas(){
+    var dl=document.getElementById('ing-camp-list');
+    if(dl)dl.innerHTML=camps.map(function(c){return '<option value="'+c.name+'">';}).join('');
+  }
+  function paintIngresos(){
+    var tb=document.getElementById('ing-rows');
+    if(!tb)return;
+    var totalIng=ingresos.reduce(function(s,i){return s+(i.monto||0);},0);
+    var totalGasto=camps.reduce(function(s,c){return s+(c.gasto||0);},0);
+    var roas=totalGasto>0?(totalIng/totalGasto):0;
+    var mEl=document.getElementById('ing-metrics');
+    if(mEl)mEl.innerHTML=
+      '<div class="metric-card"><div class="metric-label">Ingresos registrados</div><div class="metric-value" style="color:var(--good)">'+money(totalIng)+'</div></div>'+
+      '<div class="metric-card"><div class="metric-label">Invertido en campañas</div><div class="metric-value">'+money(totalGasto)+'</div></div>'+
+      '<div class="metric-card" style="border-top-color:'+(roas>=1?'var(--good)':'var(--bad)')+'"><div class="metric-label">ROAS</div><div class="metric-value" style="color:'+(roas>=1?'var(--good)':'var(--bad)')+'">'+roas.toFixed(2)+'x</div></div>';
+    if(!ingresos.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:26px;color:var(--faint)">Todavía no registraste ingresos</td></tr>';return;}
+    var ordenados=ingresos.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+    tb.innerHTML=ordenados.map(function(i){
+      return '<tr>'+
+        '<td class="mono" style="color:var(--muted)">'+(i.fecha?i.fecha.split('-').reverse().join('/'):'—')+'</td>'+
+        '<td class="cname">'+(i.nombre||'—')+'</td>'+
+        '<td class="r num" style="font-weight:700;color:var(--good)">'+money(i.monto||0)+'</td>'+
+        '<td style="color:var(--muted)">'+(i.notas||'—')+'</td>'+
+        '<td class="r"><button class="ing-del" onclick="eliminarIngreso(\''+(i.id||'')+'\')" title="Eliminar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="15" height="15"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td>'+
+      '</tr>';
+    }).join('');
+  }
+  async function cargarIngresos(){
+    try{
+      var r=await fetch('/api/data',{cache:'no-store'});
+      var j=await r.json();
+      ingresos=Array.isArray(j.ingresosMkt)?j.ingresosMkt:[];
+    }catch(e){}
+    paintIngresos();
+  }
+  window.eliminarIngreso=async function(id){
+    var it=ingresos.find(function(i){return i.id===id;});
+    if(!it)return;
+    ingresos=ingresos.filter(function(i){return i.id!==id;});
+    paintIngresos();
+    try{
+      await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ingresosMkt:[],_deleted:[it.id||idFromSigIng(it),sigOfIng(it)]})});
+    }catch(e){}
+  };
+  async function registrarIngreso(){
+    var fecha=document.getElementById('ing-fecha').value||ingHoyStr();
+    var nombre=document.getElementById('ing-campana').value.trim();
+    var montoRaw=document.getElementById('ing-monto').value;
+    var monto=parseFloat((montoRaw||'').replace(/\./g,'').replace(',','.'))||0;
+    var notas=document.getElementById('ing-notas').value.trim();
+    var msg=document.getElementById('ing-msg');
+    if(!nombre){msg.textContent='Ingresá el nombre de la campaña.';msg.style.color='var(--bad)';return;}
+    if(!monto){msg.textContent='Ingresá un monto mayor a 0.';msg.style.color='var(--bad)';return;}
+    var btn=document.getElementById('ing-btn');
+    btn.disabled=true; msg.textContent='Guardando...'; msg.style.color='var(--muted)';
+    var nuevo={fecha:fecha,nombre:nombre,monto:monto,notas:notas};
+    nuevo.id=idFromSigIng(nuevo);
+    ingresos.push(nuevo);
+    paintIngresos();
+    try{
+      var r=await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ingresosMkt:[nuevo]})});
+      var res=await r.json();
+      if(res&&res.ok){
+        msg.textContent='✓ Ingreso registrado';msg.style.color='var(--good)';
+        document.getElementById('ing-monto').value='';document.getElementById('ing-notas').value='';document.getElementById('ing-campana').value='';
+      } else {
+        msg.textContent='No se pudo guardar. Probá de nuevo.';msg.style.color='var(--bad)';
+      }
+    }catch(e){ msg.textContent='Sin conexión. No se pudo guardar.';msg.style.color='var(--bad)'; }
+    btn.disabled=false;
+  }
+  document.getElementById('ing-btn').addEventListener('click',registrarIngreso);
+  (function(){var f=document.getElementById('ing-fecha');if(f)f.value=ingHoyStr();})();
+
   // ---- navegación entre pestañas ----
-  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico',videos:'view-videos',campanias:'view-campanias'};
-  var NOMBRES={ingresos:'Ingresos',reportes:'Reportes',config:'Configuración'};
+  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico',videos:'view-videos',campanias:'view-campanias',ingresos:'view-ingresos'};
+  var NOMBRES={reportes:'Reportes',config:'Configuración'};
   function showView(v){
-    ['view-dashboard','view-historial','view-geografico','view-videos','view-campanias','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
-    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} if(v==='videos')paintVideosFull(); if(v==='campanias')paintCampDir(); }
+    ['view-dashboard','view-historial','view-geografico','view-videos','view-campanias','view-ingresos','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} if(v==='videos')paintVideosFull(); if(v==='campanias')paintCampDir(); if(v==='ingresos'){poblarDatalistCampanas();cargarIngresos();} }
     else { document.getElementById('view-soon').style.display=''; document.getElementById('soon-title').textContent=NOMBRES[v]||'Próximamente'; }
     [].forEach.call(document.querySelectorAll('#navtabs .tab'),function(b){b.classList.toggle('on',b.dataset.view===v);});
     try{window.scrollTo(0,0);}catch(e){}
