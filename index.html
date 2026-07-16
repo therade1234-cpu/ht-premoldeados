@@ -2420,7 +2420,7 @@ function stockSetBase(seccion,clave,nombre,val){
   ensureIds(state.stock);
   saveState();renderStock();
 }
-function agregarDisenoStock(){ abrirModalStockItem('diseno'); }
+function agregarDisenoStock(){ _stkModalModo='sumar'; abrirModalStockItem('diseno'); }
 async function eliminarDisenoStock(clave){
   var it=state.stock.find(function(s){return s.seccion==='placas'&&s.clave===clave;});
   if(!it)return;
@@ -2431,7 +2431,8 @@ async function eliminarDisenoStock(clave){
 }
 // "Otros materiales": carga 100% manual (encadenado, rejas por tipo, etc.) — sin descuento automático por obra
 var OTROS_DEFAULT=['Rejas horizontales','Reja cruz']; // Encadenado ahora es automático (1 cada 2 metros), vive en su propia sección
-function agregarOtroStock(){ abrirModalStockItem('otro'); }
+function agregarOtroStock(){ _stkModalModo='sumar'; abrirModalStockItem('otro'); }
+function usarOtroStock(){ _stkModalModo='restar'; abrirModalStockItem('otro'); }
 // ---- Modal estilizado para agregar diseño de placa / material manual (reemplaza prompt() del navegador) ----
 var _stkModalTipo=null;
 function stkSeccionDeTipo(tipo){return tipo==='diseno'?'placas':(tipo==='insumo'?'insumos':'otros');}
@@ -2459,49 +2460,71 @@ function stkModalSelectChange(){
   var esNuevo=!sel.value||sel.value==='__nuevo__';
   document.getElementById('stk-modal-nombre-wrap').style.display=esNuevo?'block':'none';
 }
+var _stkModalModo='sumar'; // 'sumar' | 'restar'
 function abrirModalStockItem(tipo){
   _stkModalTipo=tipo;
-  var cfg={
+  var modo=_stkModalModo||'sumar';
+  var cfgSumar={
     diseno:{bg:'linear-gradient(135deg,#1B7A3E,#155E30)',tit:'Sumar placas',sub:'Elegí el diseño y la cantidad a sumar',ph:'Ej: Doble vista madera caoba',btn:'#1B7A3E'},
     insumo:{bg:'linear-gradient(135deg,#6B4A2B,#4E3520)',tit:'Sumar insumo',sub:'Elegí la categoría y la cantidad a sumar',ph:'Ej: Hierro del 8',btn:'#6B4A2B'},
     otro:{bg:'linear-gradient(135deg,#993C1D,#7A2E15)',tit:'Sumar material',sub:'Elegí la categoría y la cantidad a sumar',ph:'Ej: Reja horizontal chica',btn:'#993C1D'}
   };
-  var c=cfg[tipo]||cfg.otro;
+  var cfgRestar={
+    diseno:{bg:'linear-gradient(135deg,#C62828,#8E1F1F)',tit:'Registrar uso',sub:'Elegí qué diseño se usó y la cantidad',ph:'',btn:'#C62828'},
+    insumo:{bg:'linear-gradient(135deg,#C62828,#8E1F1F)',tit:'Registrar uso',sub:'Elegí qué insumo se usó y la cantidad',ph:'',btn:'#C62828'},
+    otro:{bg:'linear-gradient(135deg,#C62828,#8E1F1F)',tit:'Registrar uso',sub:'Elegí qué material se usó y la cantidad',ph:'',btn:'#C62828'}
+  };
+  var c=(modo==='restar'?cfgRestar:cfgSumar)[tipo]||(modo==='restar'?cfgRestar.otro:cfgSumar.otro);
   document.getElementById('stk-modal-head').style.background=c.bg;
   document.getElementById('stk-modal-titulo').textContent=c.tit;
   document.getElementById('stk-modal-sub').textContent=c.sub;
   document.getElementById('stk-modal-input').placeholder=c.ph;
   document.getElementById('stk-modal-btn').style.background=c.btn;
+  document.getElementById('stk-modal-btn').textContent=modo==='restar'?'Descontar':'Agregar';
+  document.getElementById('stk-modal-qty-label').textContent=modo==='restar'?'Cantidad usada':'Cantidad a sumar';
   document.getElementById('stk-modal-input').value='';
   document.getElementById('stk-modal-qty').value='';
   document.getElementById('stk-modal-error').textContent='';
   var seccion=stkSeccionDeTipo(tipo);
   var cats=stkCategoriasDe(seccion);
   var sel=document.getElementById('stk-modal-select');
-  sel.innerHTML=cats.map(function(c2){var esc=c2.replace(/"/g,'');return '<option value="'+esc+'">'+c2+'</option>';}).join('')+'<option value="__nuevo__">+ Categoría nueva…</option>';
+  sel.innerHTML=cats.map(function(c2){var esc=c2.replace(/"/g,'');return '<option value="'+esc+'">'+c2+'</option>';}).join('')+(modo==='restar'?'':'<option value="__nuevo__">+ Categoría nueva…</option>');
   stkModalSelectChange();
   document.getElementById('modal-stock-item').style.display='flex';
   setTimeout(function(){document.getElementById('stk-modal-qty').focus();},60);
 }
-function cerrarModalStockItem(){document.getElementById('modal-stock-item').style.display='none';_stkModalTipo=null;}
+function cerrarModalStockItem(){document.getElementById('modal-stock-item').style.display='none';_stkModalTipo=null;_stkModalModo='sumar';}
 function confirmarStockItem(){
   var errEl=document.getElementById('stk-modal-error');
   var sel=document.getElementById('stk-modal-select');
-  var esNuevo=!sel.value||sel.value==='__nuevo__';
+  var modo=_stkModalModo||'sumar';
+  var esNuevo=modo==='sumar'&&(!sel.value||sel.value==='__nuevo__');
   var n=esNuevo?document.getElementById('stk-modal-input').value.trim():sel.value;
   if(!n){errEl.textContent='Ingresá un nombre.';return;}
   var qty=parseInt(document.getElementById('stk-modal-qty').value)||0;
   if(qty<=0){errEl.textContent='Ingresá una cantidad mayor a 0.';return;}
   var seccion=stkSeccionDeTipo(_stkModalTipo);
   var existente=state.stock.find(function(s){return s.seccion===seccion&&s.clave===n;});
-  if(esNuevo&&existente){errEl.textContent='Ya está en la lista, seleccionala arriba.';return;}
-  if(existente){
-    tombstoneSig(existente);
-    existente.cantidad=(parseInt(existente.cantidad)||0)+qty;
-    existente.fecha=stockHoyStr();
-    if(state.stock.indexOf(existente)===-1)state.stock.push(existente);
+  if(modo==='restar'){
+    var baseActual=existente?(parseInt(existente.cantidad)||0):0;
+    if(existente){
+      tombstoneSig(existente);
+      existente.cantidad=Math.max(0,baseActual-qty);
+      existente.fecha=stockHoyStr();
+      if(state.stock.indexOf(existente)===-1)state.stock.push(existente);
+    } else {
+      state.stock.push({seccion:seccion,clave:n,nombre:n,cantidad:0,fecha:stockHoyStr()});
+    }
   } else {
-    state.stock.push({seccion:seccion,clave:n,nombre:n,cantidad:qty,fecha:stockHoyStr()});
+    if(esNuevo&&existente){errEl.textContent='Ya está en la lista, seleccionala arriba.';return;}
+    if(existente){
+      tombstoneSig(existente);
+      existente.cantidad=(parseInt(existente.cantidad)||0)+qty;
+      existente.fecha=stockHoyStr();
+      if(state.stock.indexOf(existente)===-1)state.stock.push(existente);
+    } else {
+      state.stock.push({seccion:seccion,clave:n,nombre:n,cantidad:qty,fecha:stockHoyStr()});
+    }
   }
   ensureIds(state.stock);
   cerrarModalStockItem();
@@ -2526,7 +2549,8 @@ function stockOtroSet(clave,val){
 }
 // "Insumos de fabricación": cemento, hierro, piedra, arena — carga 100% manual, igual que Otros materiales
 var INSUMOS_DEFAULT=['Cemento','Hierro del 6','Hierro del 3','Piedra','Arena'];
-function agregarInsumoStock(){ abrirModalStockItem('insumo'); }
+function agregarInsumoStock(){ _stkModalModo='sumar'; abrirModalStockItem('insumo'); }
+function usarInsumoStock(){ _stkModalModo='restar'; abrirModalStockItem('insumo'); }
 async function eliminarInsumoStock(clave){
   var it=state.stock.find(function(s){return s.seccion==='insumos'&&s.clave===clave;});
   var esDefault=INSUMOS_DEFAULT.indexOf(clave)>=0;
@@ -4830,6 +4854,10 @@ restaurarSesion();
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Insumo
       </button>
+      <button onclick="usarInsumoStock()" class="stk-add-btn" style="background:#C62828">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Se usó
+      </button>
       <button onclick="agregarOtroStock()" class="stk-add-btn" style="background:#993C1D">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Otro material
@@ -4851,10 +4879,16 @@ restaurarSesion();
   <div class="topbar">
     <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
     <span class="tb-title">Insumos</span>
-    <button onclick="agregarInsumoStock()" class="stk-add-btn" style="background:#6B4A2B;margin-left:auto">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Insumo
-    </button>
+    <div style="margin-left:auto;display:flex;gap:9px">
+      <button onclick="usarInsumoStock()" class="stk-add-btn" style="background:#C62828">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Se usó
+      </button>
+      <button onclick="agregarInsumoStock()" class="stk-add-btn" style="background:#6B4A2B">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Insumo
+      </button>
+    </div>
   </div>
   <div class="content">
     <div class="stk-hint">
@@ -5251,7 +5285,7 @@ restaurarSesion();
         <label class="form-label" style="display:block;margin-bottom:7px">Nombre de la categoría nueva</label>
         <input type="text" id="stk-modal-input" placeholder="Ej: Doble vista madera caoba" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;transition:border-color .15s;margin-bottom:10px" onkeydown="if(event.key==='Enter')confirmarStockItem()" onfocus="this.style.borderColor='#1B7A3E'" onblur="this.style.borderColor='#DDD'" />
       </div>
-      <label class="form-label" style="display:block;margin-bottom:7px">Cantidad a sumar</label>
+      <label id="stk-modal-qty-label" class="form-label" style="display:block;margin-bottom:7px">Cantidad a sumar</label>
       <input type="number" min="1" id="stk-modal-qty" placeholder="Ej: 50" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;transition:border-color .15s" onkeydown="if(event.key==='Enter')confirmarStockItem()" onfocus="this.style.borderColor='#1B7A3E'" onblur="this.style.borderColor='#DDD'" />
       <div id="stk-modal-error" style="color:#C62828;font-size:12px;min-height:18px;margin-top:6px"></div>
       <div style="display:flex;gap:10px;margin-top:6px">
