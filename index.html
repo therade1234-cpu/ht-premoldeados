@@ -2422,12 +2422,17 @@ function agregarOtroStock(){ abrirModalStockItem('otro'); }
 var _stkModalTipo=null;
 function abrirModalStockItem(tipo){
   _stkModalTipo=tipo;
-  var esDiseno=tipo==='diseno';
-  document.getElementById('stk-modal-head').style.background=esDiseno?'linear-gradient(135deg,#1B7A3E,#155E30)':'linear-gradient(135deg,#993C1D,#7A2E15)';
-  document.getElementById('stk-modal-titulo').textContent=esDiseno?'Nuevo diseño de placa':'Nuevo material';
-  document.getElementById('stk-modal-sub').textContent=esDiseno?'Se suma a la lista de Placas — por diseño':'Se suma a Otros materiales (carga manual)';
-  document.getElementById('stk-modal-input').placeholder=esDiseno?'Ej: Doble vista madera caoba':'Ej: Reja horizontal chica';
-  document.getElementById('stk-modal-btn').style.background=esDiseno?'#1B7A3E':'#993C1D';
+  var cfg={
+    diseno:{bg:'linear-gradient(135deg,#1B7A3E,#155E30)',tit:'Nuevo diseño de placa',sub:'Se suma a la lista de Placas — por diseño',ph:'Ej: Doble vista madera caoba',btn:'#1B7A3E'},
+    insumo:{bg:'linear-gradient(135deg,#6B4A2B,#4E3520)',tit:'Nuevo insumo',sub:'Se suma a Insumos de fabricación (carga manual)',ph:'Ej: Hierro del 8',btn:'#6B4A2B'},
+    otro:{bg:'linear-gradient(135deg,#993C1D,#7A2E15)',tit:'Nuevo material',sub:'Se suma a Otros materiales (carga manual)',ph:'Ej: Reja horizontal chica',btn:'#993C1D'}
+  };
+  var c=cfg[tipo]||cfg.otro;
+  document.getElementById('stk-modal-head').style.background=c.bg;
+  document.getElementById('stk-modal-titulo').textContent=c.tit;
+  document.getElementById('stk-modal-sub').textContent=c.sub;
+  document.getElementById('stk-modal-input').placeholder=c.ph;
+  document.getElementById('stk-modal-btn').style.background=c.btn;
   document.getElementById('stk-modal-input').value='';
   document.getElementById('stk-modal-error').textContent='';
   document.getElementById('modal-stock-item').style.display='flex';
@@ -2438,7 +2443,7 @@ function confirmarStockItem(){
   var n=document.getElementById('stk-modal-input').value.trim();
   var errEl=document.getElementById('stk-modal-error');
   if(!n){errEl.textContent='Ingresá un nombre.';return;}
-  var seccion=_stkModalTipo==='diseno'?'placas':'otros';
+  var seccion=_stkModalTipo==='diseno'?'placas':(_stkModalTipo==='insumo'?'insumos':'otros');
   if(state.stock.find(function(s){return s.seccion===seccion&&s.clave===n;})){errEl.textContent='Ya está en la lista.';return;}
   state.stock.push({seccion:seccion,clave:n,nombre:n,cantidad:0,fecha:stockHoyStr()});
   ensureIds(state.stock);
@@ -2462,12 +2467,33 @@ function stockOtroSet(clave,val){
   else{state.stock.push({seccion:'otros',clave:clave,nombre:clave,cantidad:v,fecha:stockHoyStr()});}
   ensureIds(state.stock);saveState();renderStock();
 }
+// "Insumos de fabricación": cemento, hierro, piedra, arena — carga 100% manual, igual que Otros materiales
+var INSUMOS_DEFAULT=['Cemento','Hierro del 6','Hierro del 3','Piedra','Arena'];
+function agregarInsumoStock(){ abrirModalStockItem('insumo'); }
+async function eliminarInsumoStock(clave){
+  var it=state.stock.find(function(s){return s.seccion==='insumos'&&s.clave===clave;});
+  var esDefault=INSUMOS_DEFAULT.indexOf(clave)>=0;
+  if(esDefault&&!it){return;}
+  var ok=await showConfirm('¿Quitar insumo?','Se quitará "'+clave+'" de Insumos de fabricación.');
+  if(!ok)return;
+  if(it){tombstone(it);var i=state.stock.indexOf(it);if(i>=0)state.stock.splice(i,1);}
+  if(esDefault){ if(!Array.isArray(state._ocultosInsumos))state._ocultosInsumos=[]; state._ocultosInsumos.push(clave); }
+  saveState();renderStock();
+}
+function stockInsumoSet(clave,val){
+  var v=Math.max(0,parseInt(val)||0);
+  var it=state.stock.find(function(s){return s.seccion==='insumos'&&s.clave===clave;});
+  if(it){tombstoneSig(it);it.cantidad=v;it.fecha=stockHoyStr();if(state.stock.indexOf(it)===-1)state.stock.push(it);}
+  else{state.stock.push({seccion:'insumos',clave:clave,nombre:clave,cantidad:v,fecha:stockHoyStr()});}
+  ensureIds(state.stock);saveState();renderStock();
+}
 var STOCK_ICONS={
   placas:'<rect x="3" y="4" width="18" height="4.5" rx="1"/><rect x="3" y="10" width="18" height="4.5" rx="1"/><rect x="3" y="16" width="18" height="4.5" rx="1"/>',
   columnas:'<rect x="4" y="3" width="4" height="18" rx="1"/><rect x="10" y="3" width="4" height="18" rx="1"/><rect x="16" y="3" width="4" height="18" rx="1"/>',
   gorritos:'<path d="M4 15l8-9 8 9"/><path d="M6 15h12v3a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z"/>',
   encadenado:'<rect x="2" y="8" width="8" height="8" rx="3"/><rect x="14" y="8" width="8" height="8" rx="3"/><line x1="10" y1="12" x2="14" y2="12"/>',
-  otros:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><line x1="12" y1="13" x2="12" y2="21"/>'
+  otros:'<path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><line x1="12" y1="13" x2="12" y2="21"/>',
+  insumos:'<path d="M7 3h10l2 5-3 13H8L5 8z"/><line x1="5.5" y1="8" x2="18.5" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/>'
 };
 function stockRowHtml(r){
   var it=stockItem(r.seccion,r.clave);
@@ -2477,9 +2503,10 @@ function stockRowHtml(r){
   if(r.esManualPuro){
     var dcolM=base<=0?'var(--re)':base<10?'var(--or-d)':'var(--gr)';
     var pillM=base<=0?'<span class="stk-pill out">Sin stock</span>':base<10?'<span class="stk-pill low">Queda poco</span>':'<span class="stk-pill ok">OK</span>';
+    var setFn=r.setFn||'stockOtroSet';
     return '<div class="stk-row"><div class="stk-name"><span class="stk-name-txt">'+r.nombre+'</span></div>'+
       '<div class="stk-bar-col"><span class="stk-manual-badge">carga manual</span></div>'+
-      '<div class="stk-nums"><div class="stk-num"><input type="number" min="0" class="stk-input" value="'+base+'" onchange="stockOtroSet(\''+claveEsc+'\',this.value)" style="color:'+dcolM+'"><i>disponible</i></div></div>'+
+      '<div class="stk-nums"><div class="stk-num"><input type="number" min="0" class="stk-input" value="'+base+'" onchange="'+setFn+'(\''+claveEsc+'\',this.value)" style="color:'+dcolM+'"><i>disponible</i></div></div>'+
       pillM+delBtn+'</div>';
   }
   var hoyD=new Date();hoyD.setHours(0,0,0,0);
@@ -2527,6 +2554,10 @@ function renderStock(){
   var ocultos=state._ocultosOtros||[];
   var otrosList=OTROS_DEFAULT.filter(function(n){return ocultos.indexOf(n)<0;});
   state.stock.forEach(function(s){if(s.seccion==='otros'&&s.clave&&otrosList.indexOf(s.clave)<0)otrosList.push(s.clave);});
+  // "Insumos de fabricación": cemento, hierro, piedra, arena — carga manual, igual mecánica que Otros materiales
+  var ocultosInsumos=state._ocultosInsumos||[];
+  var insumosList=INSUMOS_DEFAULT.filter(function(n){return ocultosInsumos.indexOf(n)<0;});
+  state.stock.forEach(function(s){if(s.seccion==='insumos'&&s.clave&&insumosList.indexOf(s.clave)<0)insumosList.push(s.clave);});
   var placasRows=[];
   disList.forEach(function(d){
     placasRows.push({seccion:'placas',clave:d,nombre:d,manual:fijos.indexOf(d)<0,delFn:'eliminarDisenoStock'});
@@ -2542,8 +2573,10 @@ function renderStock(){
       {seccion:'columnas',clave:'4,00',nombre:'Columna 4,00 m'}]},
     {tit:'Gorritos', ico:STOCK_ICONS.gorritos, rows:[{seccion:'gorritos',clave:'gorritos',nombre:'Gorritos'}]},
     {tit:'Encadenado', sub:'1 cada 2 metros de obra', ico:STOCK_ICONS.encadenado, rows:[{seccion:'otros',clave:'Encadenado',nombre:'Encadenado'}]},
+    {tit:'Insumos de fabricación', sub:'Cemento, hierro, piedra, arena — carga manual', ico:STOCK_ICONS.insumos,
+      rows: insumosList.map(function(n){return {seccion:'insumos',clave:n,nombre:n,manual:true,esManualPuro:true,delFn:'eliminarInsumoStock',setFn:'stockInsumoSet'};})},
     {tit:'Otros materiales', sub:'Carga manual', ico:STOCK_ICONS.otros,
-      rows: otrosList.map(function(n){return {seccion:'otros',clave:n,nombre:n,manual:true,esManualPuro:true,delFn:'eliminarOtroStock'};})}
+      rows: otrosList.map(function(n){return {seccion:'otros',clave:n,nombre:n,manual:true,esManualPuro:true,delFn:'eliminarOtroStock',setFn:'stockOtroSet'};})}
   ];
   var html=secciones.map(function(sec){
     var body=sec.rows.length
@@ -4708,6 +4741,10 @@ restaurarSesion();
       <button onclick="agregarDisenoStock()" class="stk-add-btn" style="background:#1B7A3E">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Diseño de placa
+      </button>
+      <button onclick="agregarInsumoStock()" class="stk-add-btn" style="background:#6B4A2B">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Insumo
       </button>
       <button onclick="agregarOtroStock()" class="stk-add-btn" style="background:#993C1D">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
