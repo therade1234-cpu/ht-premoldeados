@@ -2506,14 +2506,17 @@ function stockRowHtml(r){
 function renderStock(){
   ensureIds(state.stock);
   window._stkAgg={sinStock:0,porUsar:0};
-  // Detectar qué diseños de placa hay en las obras
+  // Diseños de placa: todos los de la Lista de precios + los detectados en obras + los agregados a mano
   var disenos={};
   (state.ventas||[]).forEach(function(v){
     var m=calcMaterialesVenta(v);
     if(((m.placasComunes||0)+(m.terminales||0))>0) disenos[disenoKey(v.diseno)]=true;
   });
   var autoDis=Object.keys(disenos);
-  var disList=autoDis.slice();
+  var precioDis=Object.keys(PRECIOS); // diseños de la lista de precios: siempre visibles, no se pueden borrar
+  var fijos=autoDis.concat(precioDis);
+  var disList=[];
+  fijos.forEach(function(d){if(disList.indexOf(d)<0)disList.push(d);});
   state.stock.forEach(function(s){if(s.seccion==='placas'&&s.clave&&disList.indexOf(s.clave)<0)disList.push(s.clave);});
   disList.sort();
   // "Otros materiales": defaults + los que se hayan agregado a mano, menos los que el usuario ocultó
@@ -2522,7 +2525,7 @@ function renderStock(){
   state.stock.forEach(function(s){if(s.seccion==='otros'&&s.clave&&otrosList.indexOf(s.clave)<0)otrosList.push(s.clave);});
   var secciones=[
     {tit:'Placas', sub:'Por diseño', ico:STOCK_ICONS.placas,
-      rows: disList.map(function(d){return {seccion:'placas',clave:d,nombre:d,manual:autoDis.indexOf(d)<0,delFn:'eliminarDisenoStock'};})},
+      rows: disList.map(function(d){return {seccion:'placas',clave:d,nombre:d,manual:fijos.indexOf(d)<0,delFn:'eliminarDisenoStock'};})},
     {tit:'Columnas / pilares', sub:'Por medida', ico:STOCK_ICONS.columnas, rows:[
       {seccion:'columnas',clave:'2,80',nombre:'Columna 2,80 m'},
       {seccion:'columnas',clave:'3,40',nombre:'Columna 3,40 m'},
