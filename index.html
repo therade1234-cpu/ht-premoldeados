@@ -2323,7 +2323,7 @@ function calcMaterialesVenta(v){
   // 4. Simil Ladrillo → terminales reemplazan última placa de cada panel
   var terminales=0;
   var placasComunes=placasTotales;
-  var esSimilLadrillo=(diseno.toLowerCase().includes('ladrillo'));
+  var esSimilLadrillo=(diseno.trim().toLowerCase()==='similar ladrillo'); // solo "Similar ladrillo" lleva terminal; "Similar ladrillo rústico" es todo placas iguales
   if(esSimilLadrillo){
     terminales=paneles;
     placasComunes=placasTotales-terminales;
@@ -2395,7 +2395,7 @@ function consumoRow(v,seccion,clave){
   if(seccion==='otros'&&clave==='Encadenado')return (v.encadenado==='Sí')?Math.ceil((v.metros||0)/2):0; // 1 encadenado cada 2 metros
   return 0; // resto de 'otros' (reja horizontal, reja cruz, etc.) es 100% manual: no hay dato en la obra que distinga el tipo
 }
-function disenoLlevaTerminal(nombre){return (nombre||'').toLowerCase().indexOf('ladrillo')>=0;}
+function disenoLlevaTerminal(nombre){return (nombre||'').trim().toLowerCase()==='similar ladrillo';} // solo "Similar ladrillo"; "rústico" es todo placas iguales
 function stockItem(seccion,clave){return state.stock.find(function(s){return s.seccion===seccion&&s.clave===clave;});}
 function stockSetBase(seccion,clave,nombre,val){
   var v=Math.max(0,parseInt(val)||0);
