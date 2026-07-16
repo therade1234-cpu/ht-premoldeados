@@ -576,6 +576,13 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       <div class="home-btn-title">STOCK DISPONIBLE</div>
       <div class="home-btn-desc">Inventario de materiales disponibles</div>
     </button>
+    <button class="home-btn rol-admin rol-produccion" onclick="openPanel('insumos')">
+      <div class="home-btn-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><path d="M7 3h10l2 5-3 13H8L5 8z"/><line x1="5.5" y1="8" x2="18.5" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+      </div>
+      <div class="home-btn-title">INSUMOS</div>
+      <div class="home-btn-desc">Cemento, hierro, piedra y arena</div>
+    </button>
     <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('precios')">
       <div class="home-btn-icon-wrap">
         <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -1609,6 +1616,7 @@ function openPanel(id){
   }
   else if(id==='materiales'){matHoy();renderMateriales();}
   else if(id==='stock')renderStock();
+  else if(id==='insumos')renderInsumosPanel();
   else if(id==='visitas'){renderVisitas();}
   else if(id==='reparaciones'){renderReparaciones();}
   else if(id==='recibos'){
@@ -2448,7 +2456,7 @@ function confirmarStockItem(){
   state.stock.push({seccion:seccion,clave:n,nombre:n,cantidad:0,fecha:stockHoyStr()});
   ensureIds(state.stock);
   cerrarModalStockItem();
-  saveState();renderStock();
+  saveState();renderStock();renderInsumosPanel();
 }
 async function eliminarOtroStock(clave){
   var it=state.stock.find(function(s){return s.seccion==='otros'&&s.clave===clave;});
@@ -2478,14 +2486,14 @@ async function eliminarInsumoStock(clave){
   if(!ok)return;
   if(it){tombstone(it);var i=state.stock.indexOf(it);if(i>=0)state.stock.splice(i,1);}
   if(esDefault){ if(!Array.isArray(state._ocultosInsumos))state._ocultosInsumos=[]; state._ocultosInsumos.push(clave); }
-  saveState();renderStock();
+  saveState();renderStock();renderInsumosPanel();
 }
 function stockInsumoSet(clave,val){
   var v=Math.max(0,parseInt(val)||0);
   var it=state.stock.find(function(s){return s.seccion==='insumos'&&s.clave===clave;});
   if(it){tombstoneSig(it);it.cantidad=v;it.fecha=stockHoyStr();if(state.stock.indexOf(it)===-1)state.stock.push(it);}
   else{state.stock.push({seccion:'insumos',clave:clave,nombre:clave,cantidad:v,fecha:stockHoyStr()});}
-  ensureIds(state.stock);saveState();renderStock();
+  ensureIds(state.stock);saveState();renderStock();renderInsumosPanel();
 }
 var STOCK_ICONS={
   placas:'<rect x="3" y="4" width="18" height="4.5" rx="1"/><rect x="3" y="10" width="18" height="4.5" rx="1"/><rect x="3" y="16" width="18" height="4.5" rx="1"/>',
@@ -2598,6 +2606,29 @@ function renderStock(){
     '<div class="metric-card" style="border-top-color:#1565C0"><div class="metric-label">Por usar (obras próximas)</div><div class="metric-value" style="color:#1565C0">'+porUsarTot.toLocaleString('es-AR')+'</div></div>';
   var tb=document.getElementById('tabla-stock');
   if(tb)tb.innerHTML=html;
+}
+// Panel independiente "Insumos" (accesible desde el inicio): solo cemento/hierro/piedra/arena, 100% carga manual
+function renderInsumosPanel(){
+  ensureIds(state.stock);
+  var ocultosInsumos=state._ocultosInsumos||[];
+  var insumosList=INSUMOS_DEFAULT.filter(function(n){return ocultosInsumos.indexOf(n)<0;});
+  state.stock.forEach(function(s){if(s.seccion==='insumos'&&s.clave&&insumosList.indexOf(s.clave)<0)insumosList.push(s.clave);});
+  var rows=insumosList.map(function(n){return {seccion:'insumos',clave:n,nombre:n,manual:true,esManualPuro:true,delFn:'eliminarInsumoStock',setFn:'stockInsumoSet'};});
+  var sinStock=0;
+  rows.forEach(function(r){var it=stockItem(r.seccion,r.clave);var base=it?(parseInt(it.cantidad)||0):0;if(base<=0)sinStock++;});
+  var mEl=document.getElementById('insumos-metrics');
+  if(mEl)mEl.innerHTML=
+    '<div class="metric-card"><div class="metric-label">Insumos cargados</div><div class="metric-value">'+rows.length+'</div></div>'+
+    '<div class="metric-card" style="border-top-color:'+(sinStock>0?'#C62828':'#2E7D32')+'"><div class="metric-label">Sin stock</div><div class="metric-value" style="color:'+(sinStock>0?'#C62828':'#2E7D32')+'">'+sinStock+'</div></div>';
+  var body=rows.length?rows.map(stockRowHtml).join(''):'<div class="stk-empty">Todavía no cargaste insumos.</div>';
+  var cont=document.getElementById('insumos-render');
+  if(cont)cont.innerHTML='<div class="stk-section">'+
+    '<div class="stk-head">'+
+      '<div class="stk-head-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+STOCK_ICONS.insumos+'</svg></div>'+
+      '<div class="stk-head-txt"><div class="stk-head-title">Insumos de fabricación</div><div class="stk-head-sub">Cemento, hierro, piedra, arena — carga manual</div></div>'+
+      '<div class="stk-head-count">'+rows.length+'</div>'+
+    '</div>'+body+
+  '</div>';
 }
 
 function renderMateriales(){
@@ -4759,6 +4790,26 @@ restaurarSesion();
     </div>
     <div id="stock-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px"></div>
     <div id="tabla-stock" class="stk-wrap"></div>
+  </div>
+</div>
+
+<!-- INSUMOS DE FABRICACIÓN -->
+<div class="inner" id="inner-insumos">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
+    <span class="tb-title">Insumos</span>
+    <button onclick="agregarInsumoStock()" class="stk-add-btn" style="background:#6B4A2B;margin-left:auto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Insumo
+    </button>
+  </div>
+  <div class="content">
+    <div class="stk-hint">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="17" height="17"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5"/><circle cx="12" cy="8" r=".5" fill="currentColor"/></svg>
+      <span>Cemento, hierro, piedra y arena — materia prima de fabricación. Cargá acá la cantidad que tenés y la vas ajustando a mano a medida que se usa.</span>
+    </div>
+    <div id="insumos-metrics" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px"></div>
+    <div id="insumos-render" class="stk-wrap"></div>
   </div>
 </div>
 
