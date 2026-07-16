@@ -426,6 +426,31 @@
       <div class="card"><div id="videos-list"></div></div>
     </div>
 
+    <div id="view-campanias" style="display:none">
+      <div class="head" style="padding:26px 0 10px">
+        <div>
+          <h1>Directorio de campañas <span class="demo-tag">Demo · datos de ejemplo</span></h1>
+          <div class="sub">Todas las campañas registradas con sus métricas históricas</div>
+        </div>
+      </div>
+      <div class="card" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <input type="date" id="camp-desde" class="hinput" aria-label="Desde">
+        <span class="mono">a</span>
+        <input type="date" id="camp-hasta" class="hinput" aria-label="Hasta">
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;margin-top:16px">
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr>
+              <th>Campaña</th><th>Estado</th><th class="r">Anuncios</th><th class="r">Consultas</th>
+              <th class="r">Gasto</th><th class="r">Costo/consulta</th><th>Última actividad</th>
+            </tr></thead>
+            <tbody id="camp-dir-rows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div id="view-soon" style="display:none">
       <div class="head" style="padding:26px 0 10px"><div><h1 id="soon-title">Próximamente</h1><div class="sub">Esta sección la armamos en el próximo paso.</div></div></div>
       <div class="card" style="text-align:center;padding:52px 20px;color:var(--faint);font-size:14px">🚧 En construcción — decime si querés que siga con esta pestaña.</div>
@@ -468,11 +493,15 @@
     {r:8,name:'x2 obra 14/5',consultas:87,gasto:113187,cpc:1301}
   ];
   var camps=[
-    {name:'Ivan (CBO) 26',estado:'act',consultas:402,gasto:411774,cpc:1024},
-    {name:'Carla (ABO) 26',estado:'act',consultas:392,gasto:376899,cpc:961},
-    {name:'Pri (ABO) 26',estado:'act',consultas:383,gasto:409919,cpc:1070},
-    {name:'Caro (ABO) 26',estado:'act',consultas:338,gasto:375893,cpc:1112},
-    {name:'Leads_Calificados',estado:'pau',consultas:105,gasto:280875,cpc:2675}
+    {name:'Ivan (CBO) 26',estado:'act',anuncios:6,consultas:402,gasto:411774,cpc:1024,ultima:'2026-07-15'},
+    {name:'Carla (ABO) 26',estado:'act',anuncios:11,consultas:392,gasto:376899,cpc:961,ultima:'2026-07-15'},
+    {name:'Pri (ABO) 26',estado:'act',anuncios:12,consultas:383,gasto:409919,cpc:1070,ultima:'2026-07-15'},
+    {name:'Caro (ABO) 26',estado:'act',anuncios:6,consultas:338,gasto:375893,cpc:1112,ultima:'2026-07-15'},
+    {name:'Mati (ABO) 26',estado:'pau',anuncios:5,consultas:210,gasto:223020,cpc:1062,ultima:'2026-06-16'},
+    {name:'Leads_Calificados',estado:'act',anuncios:5,consultas:105,gasto:280875,cpc:2675,ultima:'2026-07-15'},
+    {name:'Leads_Calificados Matias',estado:'pau',anuncios:3,consultas:73,gasto:177317,cpc:2429,ultima:'2026-06-22'},
+    {name:'Vicky (CBO)',estado:'pau',anuncios:4,consultas:52,gasto:66040,cpc:1270,ultima:'2026-05-30'},
+    {name:'Valen (CBO) 26',estado:'pau',anuncios:2,consultas:19,gasto:24320,cpc:1280,ultima:'2026-05-12'}
   ];
   var locs=[
     {name:'Buenos Aires',consultas:1526,gasto:1742180,cpc:1142},
@@ -711,12 +740,35 @@
   }
   document.getElementById('videos-seg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;[].forEach.call(this.children,function(x){x.classList.remove('on');});b.classList.add('on');videosOrden=b.dataset.vord;paintVideosFull();});
 
+  // ---- CAMPAÑAS (directorio completo) ----
+  function paintCampDir(){
+    var tb=document.getElementById('camp-dir-rows');
+    if(!tb)return;
+    var desde=document.getElementById('camp-desde').value, hasta=document.getElementById('camp-hasta').value;
+    var rows=camps.filter(function(c){var u=c.ultima||''; if(desde&&u<desde)return false; if(hasta&&u>hasta)return false; return true;});
+    rows=rows.slice().sort(function(a,b){return (b.ultima||'').localeCompare(a.ultima||'');});
+    if(!rows.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:22px;color:var(--faint)">Sin campañas en el rango elegido</td></tr>';return;}
+    tb.innerHTML=rows.map(function(c){
+      var cpc=c.cpc!=null?c.cpc:(c.consultas?c.gasto/c.consultas:0);
+      return '<tr>'+
+        '<td class="cname">'+c.name+'</td>'+
+        '<td><span class="pill '+c.estado+'"><span class="dot"></span>'+(c.estado==='act'?'Activa':'Pausada')+'</span></td>'+
+        '<td class="r num">'+numf(c.anuncios||0)+'</td>'+
+        '<td class="r num" style="font-weight:700">'+numf(c.consultas)+'</td>'+
+        '<td class="r num">'+money(c.gasto)+'</td>'+
+        '<td class="r num">'+money(cpc)+'</td>'+
+        '<td class="mono" style="color:var(--muted)">'+(c.ultima?c.ultima.split('-').reverse().join('/'):'—')+'</td>'+
+      '</tr>';
+    }).join('');
+  }
+  ['camp-desde','camp-hasta'].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('change',paintCampDir);});
+
   // ---- navegación entre pestañas ----
-  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico',videos:'view-videos'};
-  var NOMBRES={campanias:'Campañas',ingresos:'Ingresos',reportes:'Reportes',config:'Configuración'};
+  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico',videos:'view-videos',campanias:'view-campanias'};
+  var NOMBRES={ingresos:'Ingresos',reportes:'Reportes',config:'Configuración'};
   function showView(v){
-    ['view-dashboard','view-historial','view-geografico','view-videos','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
-    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} if(v==='videos')paintVideosFull(); }
+    ['view-dashboard','view-historial','view-geografico','view-videos','view-campanias','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} if(v==='videos')paintVideosFull(); if(v==='campanias')paintCampDir(); }
     else { document.getElementById('view-soon').style.display=''; document.getElementById('soon-title').textContent=NOMBRES[v]||'Próximamente'; }
     [].forEach.call(document.querySelectorAll('#navtabs .tab'),function(b){b.classList.toggle('on',b.dataset.view===v);});
     try{window.scrollTo(0,0);}catch(e){}
@@ -754,7 +806,7 @@
       if(j.videos&&j.videos.length) videos=j.videos.map(function(v,i){return {r:i+1,name:v.nombre,consultas:v.consultas,gasto:v.gasto,cpc:v.consultas?v.gasto/v.consultas:0};});
       if(j.localidades&&j.localidades.length) locs=j.localidades.map(function(l){return {name:l.nombre,consultas:l.consultas,gasto:l.gasto,cpc:l.consultas?l.gasto/l.consultas:null};});
       setModo('En vivo · Meta Ads','live');
-      render(p); paintVideos(); paintCamps(); paintLocs(); paintVideosFull();
+      render(p); paintVideos(); paintCamps(); paintLocs(); paintVideosFull(); paintCampDir();
     }catch(e){ setModo('Demo · datos de ejemplo','demo'); }
   }
 
