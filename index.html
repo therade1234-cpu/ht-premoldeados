@@ -2389,11 +2389,13 @@ function disenoKey(d){d=(d||'Sin diseño').trim();if(d.toLowerCase().indexOf('do
 function consumoRow(v,seccion,clave){
   var m=calcMaterialesVenta(v);
   if(seccion==='gorritos')return m.gorritos||0;
-  if(seccion==='placas')return disenoKey(v.diseno)===clave?((m.placasComunes||0)+(m.terminales||0)):0;
+  if(seccion==='placas')return disenoKey(v.diseno)===clave?(m.placasComunes||0):0; // placas comunes (sin las terminal)
+  if(seccion==='terminales')return disenoKey(v.diseno)===clave?(m.terminales||0):0; // placas terminal (ej: simil ladrillo)
   if(seccion==='columnas')return m.pilarTipo===clave?(m.pilaresQty||0):0;
   if(seccion==='otros'&&clave==='Encadenado')return (v.encadenado==='Sí')?Math.ceil((v.metros||0)/2):0; // 1 encadenado cada 2 metros
   return 0; // resto de 'otros' (reja horizontal, reja cruz, etc.) es 100% manual: no hay dato en la obra que distinga el tipo
 }
+function disenoLlevaTerminal(nombre){return (nombre||'').toLowerCase().indexOf('ladrillo')>=0;}
 function stockItem(seccion,clave){return state.stock.find(function(s){return s.seccion===seccion&&s.clave===clave;});}
 function stockSetBase(seccion,clave,nombre,val){
   var v=Math.max(0,parseInt(val)||0);
@@ -2494,7 +2496,9 @@ function stockRowHtml(r){
   var pill=(!it)?'':disp<=0?'<span class="stk-pill out">Sin stock</span>':disp<10?'<span class="stk-pill low">Queda poco</span>':'<span class="stk-pill ok">OK</span>';
   window._stkAgg.sinStock += (it&&disp<=0)?1:0;
   window._stkAgg.porUsar += porUsar;
-  return '<div class="stk-row"><div class="stk-name"><span class="stk-name-txt">'+r.nombre+'</span></div>'+
+  var rowStyle=r.esTerminal?' style="padding-left:38px"':'';
+  var nombreHtml=r.esTerminal?'<svg viewBox="0 0 24 24" fill="none" stroke="var(--hi)" stroke-width="2" stroke-linecap="round" width="13" height="13" style="flex-shrink:0"><path d="M9 18l6-6-6-6"/></svg><span class="stk-name-txt">'+r.nombre+'</span>':'<span class="stk-name-txt">'+r.nombre+'</span>';
+  return '<div class="stk-row"'+rowStyle+'><div class="stk-name">'+nombreHtml+'</div>'+
     '<div class="stk-bar-col"><div class="stk-bar-track"><div class="stk-bar-fill" style="width:'+pct+'%;background:'+dcol+'"></div></div></div>'+
     '<div class="stk-nums">'+
       '<div class="stk-num"><input type="number" min="0" class="stk-input" value="'+base+'" onchange="stockSetBase(\''+r.seccion+'\',\''+claveEsc+'\',\''+nomEsc+'\',this.value)"><i>base</i></div>'+
@@ -2523,9 +2527,15 @@ function renderStock(){
   var ocultos=state._ocultosOtros||[];
   var otrosList=OTROS_DEFAULT.filter(function(n){return ocultos.indexOf(n)<0;});
   state.stock.forEach(function(s){if(s.seccion==='otros'&&s.clave&&otrosList.indexOf(s.clave)<0)otrosList.push(s.clave);});
+  var placasRows=[];
+  disList.forEach(function(d){
+    placasRows.push({seccion:'placas',clave:d,nombre:d,manual:fijos.indexOf(d)<0,delFn:'eliminarDisenoStock'});
+    if(disenoLlevaTerminal(d)){
+      placasRows.push({seccion:'terminales',clave:d,nombre:'Terminal — '+d,esTerminal:true});
+    }
+  });
   var secciones=[
-    {tit:'Placas', sub:'Por diseño', ico:STOCK_ICONS.placas,
-      rows: disList.map(function(d){return {seccion:'placas',clave:d,nombre:d,manual:fijos.indexOf(d)<0,delFn:'eliminarDisenoStock'};})},
+    {tit:'Placas', sub:'Por diseño (incluye terminal en simil ladrillo)', ico:STOCK_ICONS.placas, rows: placasRows},
     {tit:'Columnas / pilares', sub:'Por medida', ico:STOCK_ICONS.columnas, rows:[
       {seccion:'columnas',clave:'2,80',nombre:'Columna 2,80 m'},
       {seccion:'columnas',clave:'3,40',nombre:'Columna 3,40 m'},
