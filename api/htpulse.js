@@ -1,4 +1,4 @@
-// api/htpulse.js — Proxy seguro hacia la API externa (getMetaAdsSummary).
+// api/htpulse.js (v2) — Proxy seguro hacia la API externa (getMetaAdsSummary).
 // La clave NUNCA se expone al navegador: vive solo en variables de entorno de Vercel.
 //   HTPULSE_API_KEY  (o, si ya la tenías con ese nombre, EXTERNAL_API_KEY)
 // Si la variable no está configurada, responde { configured:false } y el tablero
