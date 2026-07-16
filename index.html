@@ -186,6 +186,9 @@ table.movs tr:hover td{background:#FAFAFA}
 .badge-orange{background:var(--or-bg);color:var(--or-d)}
 
 /* ===== STOCK DISPONIBLE ===== */
+.stk-add-btn{display:inline-flex;align-items:center;gap:7px;border:none;border-radius:22px;padding:9px 18px 9px 14px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(0,0,0,.12);transition:transform .12s,box-shadow .12s}
+.stk-add-btn svg{width:15px;height:15px;flex-shrink:0}
+.stk-add-btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(0,0,0,.16)}
 .stk-hint{display:flex;align-items:flex-start;gap:12px;font-size:14.5px;line-height:1.55;color:#2f6b45;background:#EEF7F0;border:1px solid #CDE8D4;border-radius:13px;padding:16px 19px;margin-bottom:22px}
 .stk-hint svg{flex-shrink:0;margin-top:2px;color:#3fa862;width:21px;height:21px}
 .stk-wrap{display:flex;flex-direction:column;gap:20px}
@@ -2401,13 +2404,7 @@ function stockSetBase(seccion,clave,nombre,val){
   ensureIds(state.stock);
   saveState();renderStock();
 }
-function agregarDisenoStock(){
-  var n=(prompt('Nombre del diseño de placa a agregar (ej: Doble vista madera caoba):')||'').trim();
-  if(!n)return;
-  if(state.stock.find(function(s){return s.seccion==='placas'&&s.clave===n;})){alert('Ese diseño ya está en la lista.');return;}
-  state.stock.push({seccion:'placas',clave:n,nombre:n,cantidad:0,fecha:stockHoyStr()});
-  ensureIds(state.stock);saveState();renderStock();
-}
+function agregarDisenoStock(){ abrirModalStockItem('diseno'); }
 async function eliminarDisenoStock(clave){
   var it=state.stock.find(function(s){return s.seccion==='placas'&&s.clave===clave;});
   if(!it)return;
@@ -2418,12 +2415,33 @@ async function eliminarDisenoStock(clave){
 }
 // "Otros materiales": carga 100% manual (encadenado, rejas por tipo, etc.) — sin descuento automático por obra
 var OTROS_DEFAULT=['Rejas horizontales','Reja cruz']; // Encadenado ahora es automático (1 cada 2 metros), vive en su propia sección
-function agregarOtroStock(){
-  var n=(prompt('Nombre del material a agregar (ej: Encadenado, Reja cruz):')||'').trim();
-  if(!n)return;
-  if(state.stock.find(function(s){return s.seccion==='otros'&&s.clave===n;})){alert('Ese material ya está en la lista.');return;}
-  state.stock.push({seccion:'otros',clave:n,nombre:n,cantidad:0,fecha:stockHoyStr()});
-  ensureIds(state.stock);saveState();renderStock();
+function agregarOtroStock(){ abrirModalStockItem('otro'); }
+// ---- Modal estilizado para agregar diseño de placa / material manual (reemplaza prompt() del navegador) ----
+var _stkModalTipo=null;
+function abrirModalStockItem(tipo){
+  _stkModalTipo=tipo;
+  var esDiseno=tipo==='diseno';
+  document.getElementById('stk-modal-head').style.background=esDiseno?'linear-gradient(135deg,#1B7A3E,#155E30)':'linear-gradient(135deg,#993C1D,#7A2E15)';
+  document.getElementById('stk-modal-titulo').textContent=esDiseno?'Nuevo diseño de placa':'Nuevo material';
+  document.getElementById('stk-modal-sub').textContent=esDiseno?'Se suma a la lista de Placas — por diseño':'Se suma a Otros materiales (carga manual)';
+  document.getElementById('stk-modal-input').placeholder=esDiseno?'Ej: Doble vista madera caoba':'Ej: Reja horizontal chica';
+  document.getElementById('stk-modal-btn').style.background=esDiseno?'#1B7A3E':'#993C1D';
+  document.getElementById('stk-modal-input').value='';
+  document.getElementById('stk-modal-error').textContent='';
+  document.getElementById('modal-stock-item').style.display='flex';
+  setTimeout(function(){document.getElementById('stk-modal-input').focus();},60);
+}
+function cerrarModalStockItem(){document.getElementById('modal-stock-item').style.display='none';_stkModalTipo=null;}
+function confirmarStockItem(){
+  var n=document.getElementById('stk-modal-input').value.trim();
+  var errEl=document.getElementById('stk-modal-error');
+  if(!n){errEl.textContent='Ingresá un nombre.';return;}
+  var seccion=_stkModalTipo==='diseno'?'placas':'otros';
+  if(state.stock.find(function(s){return s.seccion===seccion&&s.clave===n;})){errEl.textContent='Ya está en la lista.';return;}
+  state.stock.push({seccion:seccion,clave:n,nombre:n,cantidad:0,fecha:stockHoyStr()});
+  ensureIds(state.stock);
+  cerrarModalStockItem();
+  saveState();renderStock();
 }
 async function eliminarOtroStock(clave){
   var it=state.stock.find(function(s){return s.seccion==='otros'&&s.clave===clave;});
@@ -4673,9 +4691,15 @@ restaurarSesion();
   <div class="topbar">
     <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
     <span class="tb-title">Stock disponible</span>
-    <div style="margin-left:auto;display:flex;gap:8px">
-      <button onclick="agregarDisenoStock()" style="background:#1B7A3E;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">+ Agregar diseño</button>
-      <button onclick="agregarOtroStock()" style="background:#993C1D;border:none;border-radius:8px;padding:8px 16px;font-size:13px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">+ Agregar material</button>
+    <div style="margin-left:auto;display:flex;gap:9px">
+      <button onclick="agregarDisenoStock()" class="stk-add-btn" style="background:#1B7A3E">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Diseño de placa
+      </button>
+      <button onclick="agregarOtroStock()" class="stk-add-btn" style="background:#993C1D">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Otro material
+      </button>
     </div>
   </div>
   <div class="content">
@@ -5056,6 +5080,27 @@ restaurarSesion();
   </div>
 </div>
 
+<!-- MODAL: agregar ítem de stock (diseño de placa u otro material) -->
+<div id="modal-stock-item" style="display:none;position:fixed;inset:0;background:rgba(20,15,10,.55);z-index:400;align-items:center;justify-content:center;padding:16px">
+  <div style="background:#fff;border-radius:16px;padding:0;width:100%;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.28);overflow:hidden">
+    <div id="stk-modal-head" style="padding:22px 26px 18px;background:linear-gradient(135deg,#1B7A3E,#155E30)">
+      <div id="stk-modal-ico" style="width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;margin-bottom:12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="21" height="21"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+      <div id="stk-modal-titulo" style="font-size:17px;font-weight:800;color:#fff;letter-spacing:-.01em">Nuevo diseño de placa</div>
+      <div id="stk-modal-sub" style="font-size:12.5px;color:rgba(255,255,255,.82);margin-top:3px">Se suma a la lista de Placas — por diseño</div>
+    </div>
+    <div style="padding:22px 26px 26px">
+      <label class="form-label" style="display:block;margin-bottom:7px">Nombre</label>
+      <input type="text" id="stk-modal-input" placeholder="Ej: Doble vista madera caoba" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;transition:border-color .15s" onkeydown="if(event.key==='Enter')confirmarStockItem()" onfocus="this.style.borderColor='#1B7A3E'" onblur="this.style.borderColor='#DDD'" />
+      <div id="stk-modal-error" style="color:#C62828;font-size:12px;min-height:18px;margin-top:6px"></div>
+      <div style="display:flex;gap:10px;margin-top:6px">
+        <button onclick="cerrarModalStockItem()" style="flex:1;background:#fff;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;font-size:13.5px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">Cancelar</button>
+        <button id="stk-modal-btn" onclick="confirmarStockItem()" style="flex:1;background:#1B7A3E;border:none;border-radius:10px;padding:12px;font-size:13.5px;font-weight:700;color:#fff;cursor:pointer;font-family:inherit">Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
