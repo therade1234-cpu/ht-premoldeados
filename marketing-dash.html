@@ -127,6 +127,20 @@
   .vmeta{font-size:12px;color:var(--muted);margin-top:2px}
   .vmeta b{color:var(--accent)}
 
+  /* videos — lista completa */
+  .vrow-full{display:flex;align-items:center;gap:16px;padding:14px 4px;border-top:1px solid var(--line)}
+  .vrow-full:first-of-type{border-top:0}
+  .vrank-full{font-size:17px;font-weight:800;color:var(--accent);width:22px;text-align:center;flex-shrink:0}
+  .vthumb-full{width:58px;height:58px;border-radius:12px;flex-shrink:0;background:
+    linear-gradient(135deg,var(--surface-2),var(--border));display:grid;place-items:center;color:var(--faint);overflow:hidden}
+  .vthumb-full svg{width:22px;height:22px}
+  .vname-full{font-size:15px;font-weight:700}
+  .vmeta-full{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .vmeta-full b{color:var(--text);font-weight:700}
+  .vcpc-full{text-align:right;flex-shrink:0}
+  .vcpc-full b{display:block;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+  .vcpc-full span{display:block;font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+
   /* tables */
   table{width:100%;border-collapse:collapse;font-size:13.5px}
   thead th{text-align:left;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
@@ -398,6 +412,20 @@
       </div>
     </div>
 
+    <div id="view-videos" style="display:none">
+      <div class="head" style="padding:26px 0 10px">
+        <div>
+          <h1>Análisis de videos <span class="demo-tag">Demo · datos de ejemplo</span></h1>
+          <div class="sub">Ranking de tus videos publicitarios por consultas generadas</div>
+        </div>
+        <div class="seg" id="videos-seg">
+          <button data-vord="consultas" class="on">Más consultas</button>
+          <button data-vord="costo">Menor costo</button>
+        </div>
+      </div>
+      <div class="card"><div id="videos-list"></div></div>
+    </div>
+
     <div id="view-soon" style="display:none">
       <div class="head" style="padding:26px 0 10px"><div><h1 id="soon-title">Próximamente</h1><div class="sub">Esta sección la armamos en el próximo paso.</div></div></div>
       <div class="card" style="text-align:center;padding:52px 20px;color:var(--faint);font-size:14px">🚧 En construcción — decime si querés que siga con esta pestaña.</div>
@@ -430,9 +458,14 @@
   };
 
   var videos=[
-    {r:1,name:'26/8',consultas:323,cpc:927},
-    {r:2,name:'23/6',consultas:257,cpc:1006},
-    {r:3,name:'antes y después',consultas:253,cpc:1490}
+    {r:1,name:'26/8',consultas:323,gasto:299421,cpc:927},
+    {r:2,name:'23/6',consultas:257,gasto:258542,cpc:1006},
+    {r:3,name:'antes y después',consultas:253,gasto:376970,cpc:1490},
+    {r:4,name:'x1 18/5',consultas:198,gasto:212580,cpc:1074},
+    {r:5,name:'x2 antes y despues',consultas:164,gasto:172208,cpc:1050},
+    {r:6,name:'18/5',consultas:141,gasto:189873,cpc:1346},
+    {r:7,name:'30/4',consultas:112,gasto:99904,cpc:892},
+    {r:8,name:'x2 obra 14/5',consultas:87,gasto:113187,cpc:1301}
   ];
   var camps=[
     {name:'Ivan (CBO) 26',estado:'act',consultas:402,gasto:411774,cpc:1024},
@@ -660,12 +693,30 @@
   }
   document.getElementById('geo-seg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;[].forEach.call(this.children,function(x){x.classList.remove('on');});b.classList.add('on');geoMode=b.dataset.g;paintGeo();});
 
+  // ---- VIDEOS (ranking completo) ----
+  var videosOrden='consultas';
+  function paintVideosFull(){
+    var el=document.getElementById('videos-list');
+    if(!el)return;
+    var lista=videos.map(function(v){var cpc=v.cpc!=null?v.cpc:(v.consultas?v.gasto/v.consultas:0);return Object.assign({},v,{cpc:cpc});});
+    lista.sort(function(a,b){return videosOrden==='costo'?a.cpc-b.cpc:b.consultas-a.consultas;});
+    if(!lista.length){el.innerHTML='<div class="empty">Sin videos con consultas en el período</div>';return;}
+    el.innerHTML=lista.map(function(v,i){
+      return '<div class="vrow-full"><div class="vrank-full">'+(i+1)+'</div>'+
+        '<div class="vthumb-full"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>'+
+        '<div style="flex:1;min-width:0"><div class="vname-full">'+v.name+'</div>'+
+        '<div class="vmeta-full"><b>'+numf(v.consultas)+'</b> consultas · '+money(v.gasto||0)+' invertidos</div></div>'+
+        '<div class="vcpc-full"><b>'+money(v.cpc)+'</b><span>por consulta</span></div></div>';
+    }).join('');
+  }
+  document.getElementById('videos-seg').addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;[].forEach.call(this.children,function(x){x.classList.remove('on');});b.classList.add('on');videosOrden=b.dataset.vord;paintVideosFull();});
+
   // ---- navegación entre pestañas ----
-  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico'};
-  var NOMBRES={videos:'Videos',campanias:'Campañas',ingresos:'Ingresos',reportes:'Reportes',config:'Configuración'};
+  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico',videos:'view-videos'};
+  var NOMBRES={campanias:'Campañas',ingresos:'Ingresos',reportes:'Reportes',config:'Configuración'};
   function showView(v){
-    ['view-dashboard','view-historial','view-geografico','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
-    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} }
+    ['view-dashboard','view-historial','view-geografico','view-videos','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} if(v==='videos')paintVideosFull(); }
     else { document.getElementById('view-soon').style.display=''; document.getElementById('soon-title').textContent=NOMBRES[v]||'Próximamente'; }
     [].forEach.call(document.querySelectorAll('#navtabs .tab'),function(b){b.classList.toggle('on',b.dataset.view===v);});
     try{window.scrollTo(0,0);}catch(e){}
@@ -703,7 +754,7 @@
       if(j.videos&&j.videos.length) videos=j.videos.map(function(v,i){return {r:i+1,name:v.nombre,consultas:v.consultas,gasto:v.gasto,cpc:v.consultas?v.gasto/v.consultas:0};});
       if(j.localidades&&j.localidades.length) locs=j.localidades.map(function(l){return {name:l.nombre,consultas:l.consultas,gasto:l.gasto,cpc:l.consultas?l.gasto/l.consultas:null};});
       setModo('En vivo · Meta Ads','live');
-      render(p); paintVideos(); paintCamps(); paintLocs();
+      render(p); paintVideos(); paintCamps(); paintLocs(); paintVideosFull();
     }catch(e){ setModo('Demo · datos de ejemplo','demo'); }
   }
 
