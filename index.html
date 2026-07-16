@@ -2433,12 +2433,37 @@ var OTROS_DEFAULT=['Rejas horizontales','Reja cruz']; // Encadenado ahora es aut
 function agregarOtroStock(){ abrirModalStockItem('otro'); }
 // ---- Modal estilizado para agregar diseño de placa / material manual (reemplaza prompt() del navegador) ----
 var _stkModalTipo=null;
+function stkSeccionDeTipo(tipo){return tipo==='diseno'?'placas':(tipo==='insumo'?'insumos':'otros');}
+function stkCategoriasDe(seccion){
+  if(seccion==='placas'){
+    var disenos={};
+    (state.ventas||[]).forEach(function(v){var m=calcMaterialesVenta(v);if(((m.placasComunes||0)+(m.terminales||0))>0)disenos[disenoKey(v.diseno)]=true;});
+    var list=[]; Object.keys(disenos).concat(Object.keys(PRECIOS)).forEach(function(d){if(list.indexOf(d)<0)list.push(d);});
+    state.stock.forEach(function(s){if(s.seccion==='placas'&&s.clave&&list.indexOf(s.clave)<0)list.push(s.clave);});
+    return list.sort();
+  }
+  if(seccion==='insumos'){
+    var ocultosI=state._ocultosInsumos||[];
+    var listI=INSUMOS_DEFAULT.filter(function(n){return ocultosI.indexOf(n)<0;});
+    state.stock.forEach(function(s){if(s.seccion==='insumos'&&s.clave&&listI.indexOf(s.clave)<0)listI.push(s.clave);});
+    return listI;
+  }
+  var ocultosO=state._ocultosOtros||[];
+  var listO=OTROS_DEFAULT.filter(function(n){return ocultosO.indexOf(n)<0;});
+  state.stock.forEach(function(s){if(s.seccion==='otros'&&s.clave&&listO.indexOf(s.clave)<0)listO.push(s.clave);});
+  return listO;
+}
+function stkModalSelectChange(){
+  var sel=document.getElementById('stk-modal-select');
+  var esNuevo=!sel.value||sel.value==='__nuevo__';
+  document.getElementById('stk-modal-nombre-wrap').style.display=esNuevo?'block':'none';
+}
 function abrirModalStockItem(tipo){
   _stkModalTipo=tipo;
   var cfg={
-    diseno:{bg:'linear-gradient(135deg,#1B7A3E,#155E30)',tit:'Nuevo diseño de placa',sub:'Se suma a la lista de Placas — por diseño',ph:'Ej: Doble vista madera caoba',btn:'#1B7A3E'},
-    insumo:{bg:'linear-gradient(135deg,#6B4A2B,#4E3520)',tit:'Nuevo insumo',sub:'Se suma a Insumos de fabricación (carga manual)',ph:'Ej: Hierro del 8',btn:'#6B4A2B'},
-    otro:{bg:'linear-gradient(135deg,#993C1D,#7A2E15)',tit:'Nuevo material',sub:'Se suma a Otros materiales (carga manual)',ph:'Ej: Reja horizontal chica',btn:'#993C1D'}
+    diseno:{bg:'linear-gradient(135deg,#1B7A3E,#155E30)',tit:'Sumar placas',sub:'Elegí el diseño y la cantidad a sumar',ph:'Ej: Doble vista madera caoba',btn:'#1B7A3E'},
+    insumo:{bg:'linear-gradient(135deg,#6B4A2B,#4E3520)',tit:'Sumar insumo',sub:'Elegí la categoría y la cantidad a sumar',ph:'Ej: Hierro del 8',btn:'#6B4A2B'},
+    otro:{bg:'linear-gradient(135deg,#993C1D,#7A2E15)',tit:'Sumar material',sub:'Elegí la categoría y la cantidad a sumar',ph:'Ej: Reja horizontal chica',btn:'#993C1D'}
   };
   var c=cfg[tipo]||cfg.otro;
   document.getElementById('stk-modal-head').style.background=c.bg;
@@ -2447,18 +2472,36 @@ function abrirModalStockItem(tipo){
   document.getElementById('stk-modal-input').placeholder=c.ph;
   document.getElementById('stk-modal-btn').style.background=c.btn;
   document.getElementById('stk-modal-input').value='';
+  document.getElementById('stk-modal-qty').value='';
   document.getElementById('stk-modal-error').textContent='';
+  var seccion=stkSeccionDeTipo(tipo);
+  var cats=stkCategoriasDe(seccion);
+  var sel=document.getElementById('stk-modal-select');
+  sel.innerHTML=cats.map(function(c2){var esc=c2.replace(/"/g,'');return '<option value="'+esc+'">'+c2+'</option>';}).join('')+'<option value="__nuevo__">+ Categoría nueva…</option>';
+  stkModalSelectChange();
   document.getElementById('modal-stock-item').style.display='flex';
-  setTimeout(function(){document.getElementById('stk-modal-input').focus();},60);
+  setTimeout(function(){document.getElementById('stk-modal-qty').focus();},60);
 }
 function cerrarModalStockItem(){document.getElementById('modal-stock-item').style.display='none';_stkModalTipo=null;}
 function confirmarStockItem(){
-  var n=document.getElementById('stk-modal-input').value.trim();
   var errEl=document.getElementById('stk-modal-error');
+  var sel=document.getElementById('stk-modal-select');
+  var esNuevo=!sel.value||sel.value==='__nuevo__';
+  var n=esNuevo?document.getElementById('stk-modal-input').value.trim():sel.value;
   if(!n){errEl.textContent='Ingresá un nombre.';return;}
-  var seccion=_stkModalTipo==='diseno'?'placas':(_stkModalTipo==='insumo'?'insumos':'otros');
-  if(state.stock.find(function(s){return s.seccion===seccion&&s.clave===n;})){errEl.textContent='Ya está en la lista.';return;}
-  state.stock.push({seccion:seccion,clave:n,nombre:n,cantidad:0,fecha:stockHoyStr()});
+  var qty=parseInt(document.getElementById('stk-modal-qty').value)||0;
+  if(qty<=0){errEl.textContent='Ingresá una cantidad mayor a 0.';return;}
+  var seccion=stkSeccionDeTipo(_stkModalTipo);
+  var existente=state.stock.find(function(s){return s.seccion===seccion&&s.clave===n;});
+  if(esNuevo&&existente){errEl.textContent='Ya está en la lista, seleccionala arriba.';return;}
+  if(existente){
+    tombstoneSig(existente);
+    existente.cantidad=(parseInt(existente.cantidad)||0)+qty;
+    existente.fecha=stockHoyStr();
+    if(state.stock.indexOf(existente)===-1)state.stock.push(existente);
+  } else {
+    state.stock.push({seccion:seccion,clave:n,nombre:n,cantidad:qty,fecha:stockHoyStr()});
+  }
   ensureIds(state.stock);
   cerrarModalStockItem();
   saveState();renderStock();renderInsumosPanel();
@@ -5201,8 +5244,14 @@ restaurarSesion();
       <div id="stk-modal-sub" style="font-size:12.5px;color:rgba(255,255,255,.82);margin-top:3px">Se suma a la lista de Placas — por diseño</div>
     </div>
     <div style="padding:22px 26px 26px">
-      <label class="form-label" style="display:block;margin-bottom:7px">Nombre</label>
-      <input type="text" id="stk-modal-input" placeholder="Ej: Doble vista madera caoba" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;transition:border-color .15s" onkeydown="if(event.key==='Enter')confirmarStockItem()" onfocus="this.style.borderColor='#1B7A3E'" onblur="this.style.borderColor='#DDD'" />
+      <label class="form-label" style="display:block;margin-bottom:7px">Categoría</label>
+      <select id="stk-modal-select" onchange="stkModalSelectChange()" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;background:#fff;color:#1A1A1A;margin-bottom:10px"></select>
+      <div id="stk-modal-nombre-wrap">
+        <label class="form-label" style="display:block;margin-bottom:7px">Nombre de la categoría nueva</label>
+        <input type="text" id="stk-modal-input" placeholder="Ej: Doble vista madera caoba" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;transition:border-color .15s;margin-bottom:10px" onkeydown="if(event.key==='Enter')confirmarStockItem()" onfocus="this.style.borderColor='#1B7A3E'" onblur="this.style.borderColor='#DDD'" />
+      </div>
+      <label class="form-label" style="display:block;margin-bottom:7px">Cantidad a sumar</label>
+      <input type="number" min="1" id="stk-modal-qty" placeholder="Ej: 50" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;transition:border-color .15s" onkeydown="if(event.key==='Enter')confirmarStockItem()" onfocus="this.style.borderColor='#1B7A3E'" onblur="this.style.borderColor='#DDD'" />
       <div id="stk-modal-error" style="color:#C62828;font-size:12px;min-height:18px;margin-top:6px"></div>
       <div style="display:flex;gap:10px;margin-top:6px">
         <button onclick="cerrarModalStockItem()" style="flex:1;background:#fff;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;font-size:13.5px;font-weight:600;color:#666;cursor:pointer;font-family:inherit">Cancelar</button>
