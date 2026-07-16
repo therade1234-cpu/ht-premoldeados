@@ -213,6 +213,11 @@ html[data-theme="dark"] .stk-bar-track{background:#16375c}
 .stk-num b{display:block;font-size:21px;font-weight:800;line-height:1.1}
 .stk-num i{display:block;font-style:normal;font-size:11px;color:var(--hi);text-transform:uppercase;letter-spacing:.05em;margin-top:4px}
 .stk-input{width:82px;text-align:right;border:1.5px solid var(--bd);border-radius:9px;padding:9px 10px;font-family:inherit;font-size:17px;font-weight:700;background:var(--wh);color:var(--tx)}
+.stk-step{width:32px;height:32px;flex-shrink:0;border:1.5px solid var(--bd);border-radius:9px;background:var(--wh);color:var(--tx);font-size:18px;font-weight:700;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+.stk-step:hover{border-color:var(--or)}
+.stk-step:active{transform:scale(.94)}
+.stk-step.minus{color:var(--re)}
+.stk-step.plus{color:var(--gr)}
 .stk-input:focus{outline:none;border-color:var(--or)}
 .stk-pill{font-size:12.5px;font-weight:800;padding:6px 14px;border-radius:20px;white-space:nowrap;flex-shrink:0}
 .stk-pill.ok{background:var(--gr-bg);color:var(--gr)}
@@ -2514,7 +2519,11 @@ function stockRowHtml(r){
     var setFn=r.setFn||'stockOtroSet';
     return '<div class="stk-row"><div class="stk-name"><span class="stk-name-txt">'+r.nombre+'</span></div>'+
       '<div class="stk-bar-col"><span class="stk-manual-badge">carga manual</span></div>'+
-      '<div class="stk-nums"><div class="stk-num"><input type="number" min="0" class="stk-input" value="'+base+'" onchange="'+setFn+'(\''+claveEsc+'\',this.value)" style="color:'+dcolM+'"><i>disponible</i></div></div>'+
+      '<div class="stk-nums"><div class="stk-num"><div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">'+
+        '<button class="stk-step minus" onclick="'+setFn+'(\''+claveEsc+'\','+Math.max(0,base-1)+')" title="Restar 1">−</button>'+
+        '<input type="number" min="0" class="stk-input" value="'+base+'" onchange="'+setFn+'(\''+claveEsc+'\',this.value)" style="color:'+dcolM+';width:60px">'+
+        '<button class="stk-step plus" onclick="'+setFn+'(\''+claveEsc+'\','+(base+1)+')" title="Sumar 1">+</button>'+
+      '</div><i>disponible</i></div></div>'+
       pillM+delBtn+'</div>';
   }
   var hoyD=new Date();hoyD.setHours(0,0,0,0);
