@@ -1,7 +1,7 @@
 const GIST_ID = '40cf94a8e912e794fb9d156e43f1e56b';
 const GIST_TOKEN = process.env.GITHUB_TOKEN || 'gh' + 'o_5xQDWrC9YiRKS9FRc91jFmrSTRjFIc4LntMq';
 
-const EMPTY = { movimientos: [], ventas: [], vendedores: [], visitas: [], reparaciones: [], campanias: [], mktMedia: [], stock: [], ingresosMkt: [], nomPlanilla: [], _deleted: [] };
+const EMPTY = { movimientos: [], ventas: [], vendedores: [], visitas: [], reparaciones: [], campanias: [], mktMedia: [], stock: [], ingresosMkt: [], nomPlanilla: [], mktConfig: {}, _deleted: [] };
 
 // Lectura tolerante (para GET): si algo falla devuelve estructura vacía.
 async function readData() {
@@ -132,6 +132,7 @@ module.exports = async function handler(req, res) {
         mktMedia: mergeArr(existing.mktMedia, body.mktMedia, delSet),
         stock: mergeArr(existing.stock, body.stock, delSet),
         ingresosMkt: mergeArr(existing.ingresosMkt, body.ingresosMkt, delSet),
+        mktConfig: (body.mktConfig && typeof body.mktConfig === 'object') ? Object.assign({}, existing.mktConfig || {}, body.mktConfig) : (existing.mktConfig || {}),
         // Config: si el cliente manda vacío, se conserva lo que ya había (no se borra por accidente).
         vendedores: (Array.isArray(body.vendedores) && body.vendedores.length) ? body.vendedores : (existing.vendedores || []),
         nomPlanilla: (Array.isArray(body.nomPlanilla) && body.nomPlanilla.length) ? mergeNomina(existing.nomPlanilla, body.nomPlanilla) : (existing.nomPlanilla || []),

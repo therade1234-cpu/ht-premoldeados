@@ -495,6 +495,40 @@
       </div>
     </div>
 
+    <div id="view-config" style="display:none">
+      <div class="head" style="padding:26px 0 10px">
+        <div><h1>Configuración</h1><div class="sub">Estado de la conexión con Meta Ads y preferencias de sincronización</div></div>
+      </div>
+      <div class="grid" style="padding-bottom:0">
+        <div class="card col-6">
+          <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a11 11 0 0 1 14 0"/><path d="M8.5 16a6 6 0 0 1 7 0"/><line x1="12" y1="19.5" x2="12" y2="19.51"/></svg></span>Conexión con Meta Ads</div>
+          <div id="cfg-meta-status" style="font-size:15px;font-weight:800;margin-bottom:4px">Verificando…</div>
+          <div id="cfg-meta-sub" class="ksub" style="margin-bottom:16px">—</div>
+          <button id="cfg-sync-btn" class="btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Sincronizar ahora
+          </button>
+        </div>
+        <div class="card col-6">
+          <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg></span>Preferencias de sincronización</div>
+          <label class="ilabel">Umbral mínimo de ROAS para alertar</label>
+          <input type="text" inputmode="decimal" id="cfg-roas" class="hinput" placeholder="Ej: 2" style="width:100%;box-sizing:border-box;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:9px;font-size:13.5px;margin-bottom:18px;cursor:pointer"><input type="checkbox" id="cfg-email" style="width:16px;height:16px;accent-color:var(--accent)"> Recibir alertas automáticas por email</label>
+          <div style="font-size:11.5px;color:var(--faint);margin:-10px 0 14px">El envío de alertas por email todavía no está conectado a ningún servicio de correo — por ahora esta casilla solo guarda tu preferencia.</div>
+          <button id="cfg-save-pref-btn" class="btn-primary">Guardar preferencias</button>
+          <div id="cfg-pref-msg" style="font-size:12px;margin-top:10px;min-height:16px"></div>
+        </div>
+        <div class="card col-6">
+          <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Google Analytics</div>
+          <label class="ilabel">ID de propiedad de GA4</label>
+          <input type="text" id="cfg-ga4" class="hinput" placeholder="Ej: 331381914" style="width:100%;box-sizing:border-box;margin-bottom:10px">
+          <div style="font-size:11.5px;color:var(--faint);margin-bottom:14px">Guarda el ID para más adelante. Todavía no hay una conexión activa a Google Analytics — el bloque «Tráfico web» del Dashboard sigue mostrando datos de ejemplo.</div>
+          <button id="cfg-save-ga-btn" class="btn-primary">Guardar</button>
+          <div id="cfg-ga-msg" style="font-size:12px;margin-top:10px;min-height:16px"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="view-soon" style="display:none">
       <div class="head" style="padding:26px 0 10px"><div><h1 id="soon-title">Próximamente</h1><div class="sub">Esta sección la armamos en el próximo paso.</div></div></div>
       <div class="card" style="text-align:center;padding:52px 20px;color:var(--faint);font-size:14px">🚧 En construcción — decime si querés que siga con esta pestaña.</div>
@@ -891,12 +925,64 @@
   document.getElementById('ing-btn').addEventListener('click',registrarIngreso);
   (function(){var f=document.getElementById('ing-fecha');if(f)f.value=ingHoyStr();})();
 
+  // ---- CONFIGURACIÓN ----
+  var mktConfigCache={};
+  async function cargarConfig(){
+    var st=document.getElementById('cfg-meta-status'), sub=document.getElementById('cfg-meta-sub');
+    st.textContent='Verificando…'; st.style.color='var(--muted)';
+    try{
+      var r=await fetch('/api/meta',{cache:'no-store'});
+      var j=await r.json();
+      if(j&&j.configured){
+        st.textContent='● Conectado'; st.style.color='var(--good)';
+        sub.textContent=j.error?('Conectado, pero Meta devolvió un error: '+j.error):'Meta Ads está devolviendo datos en vivo.';
+      } else {
+        st.textContent='○ No conectado'; st.style.color='var(--bad)';
+        sub.textContent='Faltan las variables META_TOKEN y META_AD_ACCOUNT en Vercel. Mientras tanto el tablero muestra datos de ejemplo.';
+      }
+    }catch(e){
+      st.textContent='○ No se pudo verificar'; st.style.color='var(--bad)';
+      sub.textContent='No se pudo consultar /api/meta ahora mismo.';
+    }
+    try{
+      var r2=await fetch('/api/data',{cache:'no-store'});
+      var j2=await r2.json();
+      mktConfigCache=(j2&&j2.mktConfig)||{};
+      document.getElementById('cfg-roas').value=mktConfigCache.roasMin!=null?mktConfigCache.roasMin:'';
+      document.getElementById('cfg-email').checked=!!mktConfigCache.alertasEmail;
+      document.getElementById('cfg-ga4').value=mktConfigCache.ga4Id||'';
+    }catch(e){}
+  }
+  document.getElementById('cfg-sync-btn').addEventListener('click',function(){
+    cargarConfig();
+    sync(document.querySelector('#seg button.on')?document.querySelector('#seg button.on').dataset.p:'mes');
+  });
+  async function guardarMktConfig(patch,msgId){
+    var msg=document.getElementById(msgId);
+    msg.textContent='Guardando...'; msg.style.color='var(--muted)';
+    try{
+      var r=await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mktConfig:patch})});
+      var res=await r.json();
+      if(res&&res.ok){ msg.textContent='✓ Guardado'; msg.style.color='var(--good)'; Object.assign(mktConfigCache,patch); }
+      else { msg.textContent='No se pudo guardar.'; msg.style.color='var(--bad)'; }
+    }catch(e){ msg.textContent='Sin conexión. No se pudo guardar.'; msg.style.color='var(--bad)'; }
+  }
+  document.getElementById('cfg-save-pref-btn').addEventListener('click',function(){
+    var roas=parseFloat((document.getElementById('cfg-roas').value||'').replace(',','.'))||0;
+    var email=document.getElementById('cfg-email').checked;
+    guardarMktConfig({roasMin:roas,alertasEmail:email},'cfg-pref-msg');
+  });
+  document.getElementById('cfg-save-ga-btn').addEventListener('click',function(){
+    var id=document.getElementById('cfg-ga4').value.trim();
+    guardarMktConfig({ga4Id:id},'cfg-ga-msg');
+  });
+
   // ---- navegación entre pestañas ----
-  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico',videos:'view-videos',campanias:'view-campanias',ingresos:'view-ingresos'};
-  var NOMBRES={reportes:'Reportes',config:'Configuración'};
+  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico',videos:'view-videos',campanias:'view-campanias',ingresos:'view-ingresos',config:'view-config'};
+  var NOMBRES={reportes:'Reportes'};
   function showView(v){
-    ['view-dashboard','view-historial','view-geografico','view-videos','view-campanias','view-ingresos','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
-    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} if(v==='videos')paintVideosFull(); if(v==='campanias')paintCampDir(); if(v==='ingresos'){poblarDatalistCampanas();cargarIngresos();} }
+    ['view-dashboard','view-historial','view-geografico','view-videos','view-campanias','view-ingresos','view-config','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} if(v==='videos')paintVideosFull(); if(v==='campanias')paintCampDir(); if(v==='ingresos'){poblarDatalistCampanas();cargarIngresos();} if(v==='config')cargarConfig(); }
     else { document.getElementById('view-soon').style.display=''; document.getElementById('soon-title').textContent=NOMBRES[v]||'Próximamente'; }
     [].forEach.call(document.querySelectorAll('#navtabs .tab'),function(b){b.classList.toggle('on',b.dataset.view===v);});
     try{window.scrollTo(0,0);}catch(e){}
