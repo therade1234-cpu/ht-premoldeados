@@ -2563,7 +2563,7 @@ function stockRowHtml(r){
     return '<div class="stk-row"><div class="stk-name"><span class="stk-name-txt">'+r.nombre+'</span></div>'+
       '<div style="display:flex;align-items:center;gap:12px">'+
         '<button class="stk-step minus" onclick="'+setFn+'(\''+claveEsc+'\','+Math.max(0,base-1)+')" title="Restar 1">−</button>'+
-        '<div style="text-align:center"><input type="number" min="0" class="stk-input" value="'+base+'" onchange="'+setFn+'(\''+claveEsc+'\',this.value)" style="color:'+dcolM+';width:76px">'+
+        '<div style="text-align:center"><input type="number" min="0" class="stk-input" value="'+base+'" onchange="'+setFn+'(\''+claveEsc+'\',this.value)" style="color:'+dcolM+';width:76px;text-align:center;padding-right:0">'+
         '<div style="font-size:10.5px;color:var(--hi);text-transform:uppercase;letter-spacing:.04em;margin-top:5px">disponible</div></div>'+
         '<button class="stk-step plus" onclick="'+setFn+'(\''+claveEsc+'\','+(base+1)+')" title="Sumar 1">+</button>'+
       '</div>'+
