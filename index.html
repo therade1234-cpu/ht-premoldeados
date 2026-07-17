@@ -2458,7 +2458,7 @@ function usarOtroStock(){ _stkModalModo='restar'; abrirModalStockItem('otro'); }
 // ---- Modal estilizado para agregar diseño de placa / material manual (reemplaza prompt() del navegador) ----
 var _stkModalTipo=null;
 function stkSeccionDeTipo(tipo){
-  if(tipo==='producto'){ var pel=document.getElementById('stk-modal-producto'); return pel?pel.value:'placas'; }
+  if(tipo==='producto'){ var pel=document.getElementById('stk-modal-producto'); var v=pel?pel.value:'placas'; return v==='encadenado'?'otros':v; }
   return tipo==='diseno'?'placas':(tipo==='insumo'?'insumos':'otros');
 }
 function stkCategoriasDe(seccion){
@@ -2493,8 +2493,10 @@ function stkOpcionLabel(seccion,val){
   return val;
 }
 function stkPoblarCategorias(){
+  var prodVal=null;
+  if(_stkModalTipo==='producto'){ var pel=document.getElementById('stk-modal-producto'); prodVal=pel?pel.value:'placas'; }
   var seccion=stkSeccionDeTipo(_stkModalTipo);
-  var cats=stkCategoriasDe(seccion);
+  var cats=(prodVal==='encadenado')?['Encadenado']:stkCategoriasDe(seccion);
   var sel=document.getElementById('stk-modal-select');
   var modo=_stkModalModo||'sumar';
   sel.innerHTML=cats.map(function(c2){var esc=c2.replace(/"/g,'');return '<option value="'+esc+'">'+stkOpcionLabel(seccion,c2)+'</option>';}).join('')+(modo==='restar'?'':'<option value="__nuevo__">+ Categoría nueva…</option>');
@@ -5455,6 +5457,7 @@ restaurarSesion();
           <option value="placas">Placa (por diseño)</option>
           <option value="columnas">Columna (por medida)</option>
           <option value="gorritos">Gorritos</option>
+          <option value="encadenado">Encadenado</option>
         </select>
       </div>
       <label class="form-label" style="display:block;margin-bottom:7px">Categoría</label>
