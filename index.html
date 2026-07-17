@@ -2457,7 +2457,10 @@ function agregarOtroStock(){ _stkModalModo='sumar'; abrirModalStockItem('otro');
 function usarOtroStock(){ _stkModalModo='restar'; abrirModalStockItem('otro'); }
 // ---- Modal estilizado para agregar diseño de placa / material manual (reemplaza prompt() del navegador) ----
 var _stkModalTipo=null;
-function stkSeccionDeTipo(tipo){return tipo==='diseno'?'placas':(tipo==='insumo'?'insumos':'otros');}
+function stkSeccionDeTipo(tipo){
+  if(tipo==='producto'){ var pel=document.getElementById('stk-modal-producto'); return pel?pel.value:'placas'; }
+  return tipo==='diseno'?'placas':(tipo==='insumo'?'insumos':'otros');
+}
 function stkCategoriasDe(seccion){
   if(seccion==='placas'){
     var disenos={};
@@ -2466,6 +2469,8 @@ function stkCategoriasDe(seccion){
     state.stock.forEach(function(s){if(s.seccion==='placas'&&s.clave&&list.indexOf(s.clave)<0)list.push(s.clave);});
     return list.sort();
   }
+  if(seccion==='columnas')return ['2,80','3,40','4,00'];
+  if(seccion==='gorritos')return ['gorritos'];
   if(seccion==='insumos'){
     var ocultosI=state._ocultosInsumos||[];
     var listI=INSUMOS_DEFAULT.filter(function(n){return ocultosI.indexOf(n)<0;});
@@ -2479,9 +2484,23 @@ function stkCategoriasDe(seccion){
 }
 function stkModalSelectChange(){
   var sel=document.getElementById('stk-modal-select');
-  var esNuevo=!sel.value||sel.value==='__nuevo__';
+  var esNuevo=_stkModalTipo!=='producto'&&(!sel.value||sel.value==='__nuevo__');
   document.getElementById('stk-modal-nombre-wrap').style.display=esNuevo?'block':'none';
 }
+function stkOpcionLabel(seccion,val){
+  if(seccion==='columnas')return 'Columna '+val+' m';
+  if(seccion==='gorritos')return 'Gorritos';
+  return val;
+}
+function stkPoblarCategorias(){
+  var seccion=stkSeccionDeTipo(_stkModalTipo);
+  var cats=stkCategoriasDe(seccion);
+  var sel=document.getElementById('stk-modal-select');
+  var modo=_stkModalModo||'sumar';
+  sel.innerHTML=cats.map(function(c2){var esc=c2.replace(/"/g,'');return '<option value="'+esc+'">'+stkOpcionLabel(seccion,c2)+'</option>';}).join('')+(modo==='restar'?'':'<option value="__nuevo__">+ Categoría nueva…</option>');
+  stkModalSelectChange();
+}
+function stkModalProductoChange(){ stkPoblarCategorias(); }
 var _stkModalModo='sumar'; // 'sumar' | 'restar'
 function abrirModalStockItem(tipo){
   _stkModalTipo=tipo;
@@ -2494,7 +2513,8 @@ function abrirModalStockItem(tipo){
   var cfgRestar={
     diseno:{bg:'linear-gradient(135deg,#C62828,#8E1F1F)',tit:'Registrar uso',sub:'Elegí qué diseño se usó y la cantidad',ph:'',btn:'#C62828'},
     insumo:{bg:'linear-gradient(135deg,#C62828,#8E1F1F)',tit:'Registrar uso',sub:'Elegí qué insumo se usó y la cantidad',ph:'',btn:'#C62828'},
-    otro:{bg:'linear-gradient(135deg,#C62828,#8E1F1F)',tit:'Registrar uso',sub:'Elegí qué material se usó y la cantidad',ph:'',btn:'#C62828'}
+    otro:{bg:'linear-gradient(135deg,#C62828,#8E1F1F)',tit:'Registrar uso',sub:'Elegí qué material se usó y la cantidad',ph:'',btn:'#C62828'},
+    producto:{bg:'linear-gradient(135deg,#C62828,#8E1F1F)',tit:'Se usó / se llevó',sub:'Elegí el tipo de producto, el diseño o medida, y la cantidad',ph:'',btn:'#C62828'}
   };
   var c=(modo==='restar'?cfgRestar:cfgSumar)[tipo]||(modo==='restar'?cfgRestar.otro:cfgSumar.otro);
   document.getElementById('stk-modal-head').style.background=c.bg;
@@ -2507,15 +2527,20 @@ function abrirModalStockItem(tipo){
   document.getElementById('stk-modal-input').value='';
   document.getElementById('stk-modal-qty').value='';
   document.getElementById('stk-modal-error').textContent='';
-  var seccion=stkSeccionDeTipo(tipo);
-  var cats=stkCategoriasDe(seccion);
-  var sel=document.getElementById('stk-modal-select');
-  sel.innerHTML=cats.map(function(c2){var esc=c2.replace(/"/g,'');return '<option value="'+esc+'">'+c2+'</option>';}).join('')+(modo==='restar'?'':'<option value="__nuevo__">+ Categoría nueva…</option>');
-  stkModalSelectChange();
+  var prodWrap=document.getElementById('stk-modal-producto-wrap');
+  if(tipo==='producto'){
+    prodWrap.style.display='block';
+    var pel=document.getElementById('stk-modal-producto');
+    pel.value='placas';
+  } else {
+    prodWrap.style.display='none';
+  }
+  stkPoblarCategorias();
   document.getElementById('modal-stock-item').style.display='flex';
   setTimeout(function(){document.getElementById('stk-modal-qty').focus();},60);
 }
 function cerrarModalStockItem(){document.getElementById('modal-stock-item').style.display='none';_stkModalTipo=null;_stkModalModo='sumar';}
+function usarProductoStock(){ _stkModalModo='restar'; abrirModalStockItem('producto'); }
 function confirmarStockItem(){
   var errEl=document.getElementById('stk-modal-error');
   var sel=document.getElementById('stk-modal-select');
@@ -4958,6 +4983,10 @@ restaurarSesion();
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Diseño de placa
       </button>
+      <button onclick="usarProductoStock()" class="stk-add-btn" style="background:#8E1F1F">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Se usó / se llevó
+      </button>
       <button onclick="agregarInsumoStock()" class="stk-add-btn" style="background:#6B4A2B">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Insumo
@@ -5420,6 +5449,14 @@ restaurarSesion();
       <div id="stk-modal-sub" style="font-size:12.5px;color:rgba(255,255,255,.82);margin-top:3px">Se suma a la lista de Placas — por diseño</div>
     </div>
     <div style="padding:22px 26px 26px">
+      <div id="stk-modal-producto-wrap" style="display:none">
+        <label class="form-label" style="display:block;margin-bottom:7px">Tipo de producto</label>
+        <select id="stk-modal-producto" onchange="stkModalProductoChange()" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;background:#fff;color:#1A1A1A;margin-bottom:10px">
+          <option value="placas">Placa (por diseño)</option>
+          <option value="columnas">Columna (por medida)</option>
+          <option value="gorritos">Gorritos</option>
+        </select>
+      </div>
       <label class="form-label" style="display:block;margin-bottom:7px">Categoría</label>
       <select id="stk-modal-select" onchange="stkModalSelectChange()" style="width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:14.5px;font-family:inherit;outline:none;background:#fff;color:#1A1A1A;margin-bottom:10px"></select>
       <div id="stk-modal-nombre-wrap">
