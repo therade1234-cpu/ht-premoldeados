@@ -2439,8 +2439,7 @@ function stockSetBase(seccion,clave,nombre,val){
   else{state.stock.push({seccion:seccion,clave:clave,nombre:nombre,cantidad:v,fecha:fecha});}
   ensureIds(state.stock);
   var delta=v-old;
-  if(delta>0)logProduccion(seccion,clave,nombre,delta,'fabricado');
-  else if(delta<0)logProduccion(seccion,clave,nombre,-delta,'usado');
+  if(delta>0)logProduccion(seccion,clave,nombre,delta,'fabricado'); // placas, columnas, gorritos, encadenado: solo cuenta lo fabricado (subas)
   saveState();renderStock();
 }
 function agregarDisenoStock(){ _stkModalModo='sumar'; abrirModalStockItem('diseno'); }
@@ -2539,7 +2538,7 @@ function confirmarStockItem(){
     } else {
       state.stock.push({seccion:seccion,clave:n,nombre:n,cantidad:0,fecha:stockHoyStr()});
     }
-    logProduccion(seccion,n,n,qtyReal>0?qtyReal:qty,'usado');
+    if(seccion==='insumos')logProduccion(seccion,n,n,qtyReal>0?qtyReal:qty,'usado'); // solo cemento/hierro/piedra/arena cuentan como "material usado"
   } else {
     if(esNuevo&&existente){errEl.textContent='Ya está en la lista, seleccionala arriba.';return;}
     if(existente){
@@ -2550,7 +2549,7 @@ function confirmarStockItem(){
     } else {
       state.stock.push({seccion:seccion,clave:n,nombre:n,cantidad:qty,fecha:stockHoyStr()});
     }
-    logProduccion(seccion,n,n,qty,'fabricado');
+    if(seccion!=='insumos')logProduccion(seccion,n,n,qty,'fabricado'); // placas y rejas/otros cuentan como "fabricado"; insumos (reposición) no
   }
   ensureIds(state.stock);
   cerrarModalStockItem();
@@ -2574,8 +2573,7 @@ function stockOtroSet(clave,val){
   else{state.stock.push({seccion:'otros',clave:clave,nombre:clave,cantidad:v,fecha:stockHoyStr()});}
   ensureIds(state.stock);
   var delta=v-old;
-  if(delta>0)logProduccion('otros',clave,clave,delta,'fabricado');
-  else if(delta<0)logProduccion('otros',clave,clave,-delta,'usado');
+  if(delta>0)logProduccion('otros',clave,clave,delta,'fabricado'); // rejas, etc: solo cuenta lo fabricado (subas)
   saveState();renderStock();
 }
 // "Insumos de fabricación": cemento, hierro, piedra, arena — carga 100% manual, igual que Otros materiales
@@ -2600,8 +2598,7 @@ function stockInsumoSet(clave,val){
   else{state.stock.push({seccion:'insumos',clave:clave,nombre:clave,cantidad:v,fecha:stockHoyStr()});}
   ensureIds(state.stock);
   var delta=v-old;
-  if(delta>0)logProduccion('insumos',clave,clave,delta,'fabricado');
-  else if(delta<0)logProduccion('insumos',clave,clave,-delta,'usado');
+  if(delta<0)logProduccion('insumos',clave,clave,-delta,'usado'); // cemento/hierro/piedra/arena: solo cuenta lo usado (bajas)
   saveState();renderStock();renderInsumosPanel();
 }
 var STOCK_ICONS={
