@@ -2821,7 +2821,7 @@ function renderProduccion(){
     var g={};
     lista.filter(function(p){return p.tipo===tipo;}).forEach(function(p){
       var k=p.seccion+'|'+p.clave;
-      if(!g[k])g[k]={nombre:p.nombre||p.clave,cantidad:0};
+      if(!g[k])g[k]={nombre:p.nombre||p.clave,seccion:p.seccion,clave:p.clave,cantidad:0};
       g[k].cantidad+=(parseInt(p.cantidad)||0);
     });
     return Object.values(g).sort(function(a,b){return b.cantidad-a.cantidad;});
@@ -2833,14 +2833,28 @@ function renderProduccion(){
   if(mEl)mEl.innerHTML=
     '<div class="metric-card" style="border-top-color:#1B7A3E"><div class="metric-label">Total fabricado</div><div class="metric-value" style="color:#1B7A3E">'+totFab.toLocaleString('es-AR')+'</div><div class="metric-month">'+prodLabel()+'</div></div>'+
     '<div class="metric-card" style="border-top-color:#C62828"><div class="metric-label">Total material usado</div><div class="metric-value" style="color:#C62828">'+totUsa.toLocaleString('es-AR')+'</div><div class="metric-month">'+prodLabel()+'</div></div>';
-  function tabla(rows,color){
+  function tabla(rows,color,tipo){
     if(!rows.length)return '<div style="color:#A0A0A0;font-size:12px;text-align:center;padding:20px">Sin movimientos en este período.</div>';
-    return '<table class="movs" style="width:100%"><thead><tr><th>Material</th><th style="text-align:right">Cantidad</th></tr></thead><tbody>'+
-      rows.map(function(r){return '<tr><td style="font-weight:600">'+r.nombre+'</td><td style="text-align:right;font-weight:800;color:'+color+'">'+r.cantidad.toLocaleString('es-AR')+'</td></tr>';}).join('')+
+    return '<table class="movs" style="width:100%"><thead><tr><th>Material</th><th style="text-align:right">Cantidad</th><th style="width:30px"></th></tr></thead><tbody>'+
+      rows.map(function(r){
+        var secEsc=String(r.seccion).replace(/["'\\]/g,''), claEsc=String(r.clave).replace(/["'\\]/g,''), nomEsc=String(r.nombre).replace(/["'\\]/g,'');
+        return '<tr><td style="font-weight:600">'+r.nombre+'</td><td style="text-align:right;font-weight:800;color:'+color+'">'+r.cantidad.toLocaleString('es-AR')+'</td>'+
+          '<td style="text-align:center"><button onclick="eliminarProduccionFila(\''+secEsc+'\',\''+claEsc+'\',\''+tipo+'\',\''+nomEsc+'\')" title="Borrar del historial" style="background:none;border:none;cursor:pointer;color:#B0B0B0;padding:4px;line-height:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></td></tr>';
+      }).join('')+
       '</tbody></table>';
   }
-  var fEl=document.getElementById('prod-fabricado'); if(fEl)fEl.innerHTML=tabla(fab,'#1B7A3E');
-  var uEl=document.getElementById('prod-usado'); if(uEl)uEl.innerHTML=tabla(usa,'#C62828');
+  var fEl=document.getElementById('prod-fabricado'); if(fEl)fEl.innerHTML=tabla(fab,'#1B7A3E','fabricado');
+  var uEl=document.getElementById('prod-usado'); if(uEl)uEl.innerHTML=tabla(usa,'#C62828','usado');
+}
+// Borra del historial TODOS los movimientos de ese material+tipo (no solo los del período que se está viendo),
+// para poder limpiar cargas hechas por error.
+async function eliminarProduccionFila(seccion,clave,tipo,nombre){
+  var ok=await showConfirm('¿Borrar del historial?','Se va a borrar todo el registro de "'+nombre+'" en '+(tipo==='fabricado'?'Fabricado':'Material usado')+' (todas las fechas).');
+  if(!ok)return;
+  var items=(state.produccion||[]).filter(function(p){return p.seccion===seccion&&p.clave===clave&&p.tipo===tipo;});
+  items.forEach(function(it){tombstone(it);});
+  state.produccion=(state.produccion||[]).filter(function(p){return !(p.seccion===seccion&&p.clave===clave&&p.tipo===tipo);});
+  saveState();renderProduccion();
 }
 
 function renderMateriales(){
