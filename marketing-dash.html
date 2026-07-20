@@ -96,7 +96,7 @@
   .banner b{color:var(--accent)}
 
   /* GRID */
-  .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr);padding-bottom:40px}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(12,minmax(0,1fr));padding-bottom:40px}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow)}
   .col-4{grid-column:span 4} .col-6{grid-column:span 6} .col-8{grid-column:span 8} .col-12{grid-column:span 12}
 
@@ -195,7 +195,7 @@
   .ing-del:hover{color:var(--bad)}
 
   @media (max-width:880px){
-    .col-4,.col-6,.col-8{grid-column:span 12}
+    .col-4,.col-5,.col-6,.col-7,.col-8{grid-column:span 12}
     .plat-grid{grid-template-columns:repeat(2,1fr)}
     .head h1{font-size:22px}
     .kval{font-size:30px}
