@@ -1,7 +1,9 @@
 // api/meta.js — Trae datos REALES de Meta Ads (Facebook/Instagram).
 // Requiere dos variables de entorno en Vercel (NO se ponen en el código):
 //   META_TOKEN        -> token de acceso con permiso ads_read
-//   META_AD_ACCOUNT   -> id de la cuenta publicitaria (act_123... o solo 123...)
+//   META_AD_ACCOUNT   -> id(s) de cuenta(s) publicitaria(s). Acepta varias
+//                        separadas por coma; los datos se suman. Ej:
+//                        "act_2017632759172545,act_2019576355609020" o "2017...,2019..."
 // Opcional:
 //   META_CONSULTA_ACTION -> tipo de acción que cuenta como "consulta"
 //                           (por defecto: conversaciones de mensajería iniciadas)
@@ -13,7 +15,11 @@ const CONSULTA_MATCH = process.env.META_CONSULTA_ACTION || 'messaging_conversati
 const V = 'v21.0';
 const API = 'https://graph.facebook.com/' + V;
 
-function acct() { return ACCOUNT_RAW.indexOf('act_') === 0 ? ACCOUNT_RAW : ('act_' + ACCOUNT_RAW); }
+// Lista de cuentas (soporta varias separadas por coma), normalizadas a act_...
+function accts() {
+  return ACCOUNT_RAW.split(',').map(s => s.trim()).filter(Boolean)
+    .map(a => a.indexOf('act_') === 0 ? a : ('act_' + a));
+}
 
 // Cuenta como "consulta" cualquier acción cuyo tipo contenga CONSULTA_MATCH
 function consultas(actions) {
@@ -37,7 +43,9 @@ function rangos(tipo) {
     return { since: ymd(ini), until: ymd(hoy), pSince: ymd(pIni), pUntil: ymd(pFin) };
   }
   if (tipo === 'hist') {
-    return { since: '2020-01-01', until: ymd(hoy), pSince: null, pUntil: null };
+    // Meta solo permite mirar hasta 37 meses atrás; usamos 36 para no pasarnos.
+    const ini = new Date(Date.UTC(y, m - 36, 1));
+    return { since: ymd(ini), until: ymd(hoy), pSince: null, pUntil: null };
   }
   const ini = new Date(Date.UTC(y, m, 1));       // mes actual
   const pIni = new Date(Date.UTC(y, m - 1, 1));   // mes anterior
@@ -54,9 +62,14 @@ async function gj(url) {
   if (j.error) throw new Error(j.error.message || 'Error de Meta');
   return j;
 }
+// Consulta el mismo insight en todas las cuentas (en paralelo) y devuelve
+// las filas de todas concatenadas.
 async function insights(extra) {
-  const url = API + '/' + acct() + '/insights?' + q(Object.assign({ access_token: TOKEN }, extra));
-  return (await gj(url)).data || [];
+  const parts = await Promise.all(accts().map(a => {
+    const url = API + '/' + a + '/insights?' + q(Object.assign({ access_token: TOKEN }, extra));
+    return gj(url).then(j => j.data || []);
+  }));
+  return [].concat.apply([], parts);
 }
 
 module.exports = async function handler(req, res) {
@@ -65,50 +78,71 @@ module.exports = async function handler(req, res) {
 
   if (!TOKEN || !ACCOUNT_RAW) return res.status(200).json({ configured: false });
 
+  // Suma filas por una clave (fecha, región, nombre de anuncio) juntando consultas y gasto.
+  function agrupar(rows, keyOf, nombreOf) {
+    const map = {};
+    for (const row of rows) {
+      const k = keyOf(row);
+      if (!map[k]) map[k] = { nombre: nombreOf(row, k), consultas: 0, gasto: 0 };
+      map[k].consultas += consultas(row.actions);
+      map[k].gasto += Number(row.spend) || 0;
+    }
+    return Object.values(map);
+  }
+
   try {
     let tipo = 'mes';
     try { tipo = new URL(req.url, 'http://x').searchParams.get('range') || 'mes'; } catch (e) {}
     const r = rangos(tipo);
     const tr = JSON.stringify({ since: r.since, until: r.until });
 
-    // Totales del período
-    const tot = (await insights({ level: 'account', fields: 'spend,actions', time_range: tr }))[0] || {};
-    const gasto = Number(tot.spend) || 0;
-    const cons = consultas(tot.actions);
+    // Totales del período (suma de todas las cuentas)
+    const totRows = await insights({ level: 'account', fields: 'spend,actions', time_range: tr });
+    const gasto = totRows.reduce((s, x) => s + (Number(x.spend) || 0), 0);
+    const cons = totRows.reduce((s, x) => s + consultas(x.actions), 0);
 
     // Período anterior (para el % vs anterior)
     let gastoPrev = null, consPrev = null;
     if (r.pSince) {
-      const prev = (await insights({ level: 'account', fields: 'spend,actions', time_range: JSON.stringify({ since: r.pSince, until: r.pUntil }) }))[0] || {};
-      gastoPrev = Number(prev.spend) || 0; consPrev = consultas(prev.actions);
+      const prev = await insights({ level: 'account', fields: 'spend,actions', time_range: JSON.stringify({ since: r.pSince, until: r.pUntil }) });
+      gastoPrev = prev.reduce((s, x) => s + (Number(x.spend) || 0), 0);
+      consPrev = prev.reduce((s, x) => s + consultas(x.actions), 0);
     }
 
-    // Serie diaria (para el gráfico)
-    const serie = (await insights({ level: 'account', fields: 'spend,actions', time_range: tr, time_increment: 1 }))
-      .map(d => ({ fecha: d.date_start, consultas: consultas(d.actions), gasto: Number(d.spend) || 0 }));
+    // Serie diaria (para el gráfico) — se agrupa por fecha sumando las cuentas
+    const serie = agrupar(
+      await insights({ level: 'account', fields: 'spend,actions', time_range: tr, time_increment: 1 }),
+      d => d.date_start, (d, k) => k
+    ).map(d => ({ fecha: d.nombre, consultas: d.consultas, gasto: d.gasto }))
+      .sort((a, b) => a.fecha < b.fecha ? -1 : 1);
 
-    // Por campaña
+    // Por campaña (cada cuenta tiene campañas distintas, se concatenan)
     const campanias = (await insights({ level: 'campaign', fields: 'campaign_name,spend,actions', time_range: tr, limit: 200 }))
       .map(c => ({ nombre: c.campaign_name, consultas: consultas(c.actions), gasto: Number(c.spend) || 0 }))
       .sort((a, b) => b.consultas - a.consultas);
 
-    // Estado de cada campaña (activa/pausada)
+    // Estado de cada campaña (activa/pausada) — se junta el de todas las cuentas
     try {
-      const est = await gj(API + '/' + acct() + '/campaigns?fields=name,effective_status&limit=500&access_token=' + encodeURIComponent(TOKEN));
+      const listas = await Promise.all(accts().map(a =>
+        gj(API + '/' + a + '/campaigns?fields=name,effective_status&limit=500&access_token=' + encodeURIComponent(TOKEN))
+          .then(j => j.data || []).catch(() => [])
+      ));
       const map = {};
-      (est.data || []).forEach(c => { map[c.name] = c.effective_status === 'ACTIVE' ? 'act' : 'pau'; });
+      [].concat.apply([], listas).forEach(c => { map[c.name] = c.effective_status === 'ACTIVE' ? 'act' : 'pau'; });
       campanias.forEach(c => { c.estado = map[c.nombre] || 'pau'; });
     } catch (e) { campanias.forEach(c => { c.estado = 'act'; }); }
 
-    // Por anuncio = videos/creativos
-    const videos = (await insights({ level: 'ad', fields: 'ad_name,spend,actions', time_range: tr, limit: 500 }))
-      .map(a => ({ nombre: a.ad_name, consultas: consultas(a.actions), gasto: Number(a.spend) || 0 }))
-      .filter(v => v.consultas > 0).sort((a, b) => b.consultas - a.consultas).slice(0, 10);
+    // Por anuncio = videos/creativos (se agrupan por nombre sumando cuentas)
+    const videos = agrupar(
+      await insights({ level: 'ad', fields: 'ad_name,spend,actions', time_range: tr, limit: 500 }),
+      a => a.ad_name || 'Sin nombre', (a, k) => k
+    ).filter(v => v.consultas > 0).sort((a, b) => b.consultas - a.consultas).slice(0, 10);
 
-    // Por región (localidad)
-    const localidades = (await insights({ level: 'account', fields: 'spend,actions', breakdowns: 'region', time_range: tr, limit: 100 }))
-      .map(rg => ({ nombre: rg.region || 'Sin dato', consultas: consultas(rg.actions), gasto: Number(rg.spend) || 0 }))
-      .sort((a, b) => b.consultas - a.consultas);
+    // Por región (localidad) — se agrupa por región sumando cuentas
+    const localidades = agrupar(
+      await insights({ level: 'account', fields: 'spend,actions', breakdowns: 'region', time_range: tr, limit: 100 }),
+      rg => rg.region || 'Sin dato', (rg, k) => k
+    ).sort((a, b) => b.consultas - a.consultas);
 
     return res.status(200).json({
       configured: true, range: tipo, since: r.since, until: r.until,
