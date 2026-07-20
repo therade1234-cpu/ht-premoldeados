@@ -68,8 +68,10 @@ function mergeArr(existing, incoming, delSet) {
   // incoming (lo que manda el cliente = lo que TIENE presente): inmune a tombstones.
   // Un ítem presente nunca se borra por accidente; solo se evita duplicar.
   (Array.isArray(incoming) ? incoming : []).forEach(function (it) { if (it && typeof it === 'object' && !dup(it)) keep(it); });
-  // existing (guardado en el servidor): se descarta si está borrado (tombstone) o ya presente.
-  (Array.isArray(existing) ? existing : []).forEach(function (it) { if (!it || typeof it !== 'object') return; const sig = sigOf(it); if ((it.id && delSet[it.id]) || delSet[sig]) return; if (dup(it)) return; keep(it); });
+  // existing (guardado en el servidor): se descarta si está borrado (tombstone, solo por ID) o ya presente.
+  // OJO: el tombstone NUNCA se compara por "sig" (contenido) — si dos ítems distintos comparten los
+  // mismos datos, no queremos que borrar uno tape al otro para siempre.
+  (Array.isArray(existing) ? existing : []).forEach(function (it) { if (!it || typeof it !== 'object') return; if (it.id && delSet[it.id]) return; if (dup(it)) return; keep(it); });
   return ensureIds(out); // el servidor deja ids deterministas canónicos
 }
 function unionDeleted(a, b) {
