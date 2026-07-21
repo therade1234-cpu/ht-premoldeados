@@ -1225,12 +1225,23 @@
     }catch(e){ setModo('Demo · datos de ejemplo','demo'); }
   }
 
-  // period toggle
+  // ---- período: UNA sola fuente de verdad compartida por Dashboard y Reportes ----
+  // (antes cada uno tenía su propio período y ambos escribían sobre las mismas
+  // variables camps/videos/locs/hist, así que el que sincronizaba último "pisaba"
+  // los datos del otro — por eso podían verse números de semana en una tabla mientras
+  // arriba decía "Histórico". Ahora los dos toggles cambian el mismo período.)
   var periodoActivo='mes';
+  function marcarSegActivo(container,p){
+    var el=document.getElementById(container); if(!el)return;
+    [].forEach.call(el.children,function(x){x.classList.toggle('on',x.dataset.p===p);});
+  }
+  function cambiarPeriodo(p){
+    periodoActivo=p;
+    marcarSegActivo('seg',p); marcarSegActivo('rep-seg',p);
+    render(p); sync(p); renderReportes();
+  }
   document.getElementById('seg').addEventListener('click',function(e){
-    var b=e.target.closest('button'); if(!b)return;
-    [].forEach.call(this.children,function(x){x.classList.remove('on');});
-    b.classList.add('on'); periodoActivo=b.dataset.p; render(periodoActivo); sync(periodoActivo);
+    var b=e.target.closest('button'); if(!b)return; cambiarPeriodo(b.dataset.p);
   });
   // auto-refresco: vuelve a traer los datos reales de Meta cada 5 minutos, sin que haga falta recargar la página
   setInterval(function(){ sync(periodoActivo); }, 5*60*1000);
@@ -1238,10 +1249,9 @@
   spark(document.getElementById('web-spark'),[280,340,300,410,380,460,520,480]);
 
   // ---- REPORTES (resumen imprimible del período) ----
-  var repPeriodo='mes';
   function renderReportes(){
-    var d=data[repPeriodo]||data.mes;
-    var lbl={semana:'Semana',mes:'Mes',hist:'Histórico'}[repPeriodo]||'Mes';
+    var d=data[periodoActivo]||data.mes;
+    var lbl={semana:'Semana',mes:'Mes',hist:'Histórico'}[periodoActivo]||'Mes';
     var pEl=document.getElementById('rep-periodo'); if(pEl)pEl.textContent='Período: '+lbl+' · generado el '+new Date().toLocaleDateString('es-AR');
     var e1=document.getElementById('rep-v1'); if(e1)e1.textContent=numf(d.consultas.v);
     var e2=document.getElementById('rep-v2'); if(e2)e2.textContent=money(d.cpc.v);
@@ -1264,13 +1274,10 @@
   }
   var repSeg=document.getElementById('rep-seg');
   if(repSeg)repSeg.addEventListener('click',function(e){
-    var b=e.target.closest('button'); if(!b)return;
-    [].forEach.call(this.children,function(x){x.classList.remove('on');});
-    b.classList.add('on'); repPeriodo=b.dataset.p; render(repPeriodo); sync(repPeriodo); renderReportes();
+    var b=e.target.closest('button'); if(!b)return; cambiarPeriodo(b.dataset.p);
   });
 
-  render('mes');
-  sync('mes');
+  cambiarPeriodo('mes');
 })();
 </script>
 </body></html>
