@@ -529,7 +529,17 @@
         <div class="ctitle">Registrar ingreso</div>
         <div class="ing-grid">
           <div><label class="ilabel">Fecha</label><input type="date" id="ing-fecha" class="hinput" style="width:100%;box-sizing:border-box"></div>
-          <div><label class="ilabel">Campaña</label><input type="text" id="ing-campana" class="hinput" list="ing-camp-list" placeholder="Nombre de la campaña" style="width:100%;box-sizing:border-box"><datalist id="ing-camp-list"></datalist></div>
+          <div><label class="ilabel">Plataforma</label><select id="ing-canal" class="hinput" style="width:100%;box-sizing:border-box">
+            <option value="Meta Ads">Meta Ads</option>
+            <option value="Instagram">Instagram</option>
+            <option value="Messenger">Messenger</option>
+            <option value="Google Ads">Google Ads</option>
+            <option value="Mercado Libre">Mercado Libre</option>
+            <option value="Página web">Página web</option>
+            <option value="WhatsApp">WhatsApp</option>
+            <option value="Otro">Otro</option>
+          </select></div>
+          <div><label class="ilabel">Campaña / anuncio (opcional)</label><input type="text" id="ing-campana" class="hinput" list="ing-camp-list" placeholder="Nombre de la campaña o anuncio" style="width:100%;box-sizing:border-box"><datalist id="ing-camp-list"></datalist></div>
           <div><label class="ilabel">Monto ($)</label><input type="text" inputmode="numeric" id="ing-monto" class="hinput" placeholder="0" style="width:100%;box-sizing:border-box"></div>
           <div><label class="ilabel">Notas (opcional)</label><input type="text" id="ing-notas" class="hinput" placeholder="Notas (opcional)" style="width:100%;box-sizing:border-box"></div>
         </div>
@@ -542,11 +552,16 @@
 
       <div class="metric-grid" id="ing-metrics" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0"></div>
 
+      <div class="card" style="margin-bottom:16px">
+        <div class="ctitle">Ingresos por plataforma</div>
+        <div id="ing-por-canal"></div>
+      </div>
+
       <div class="card" style="padding:0;overflow:hidden">
         <div style="overflow-x:auto">
           <table>
-            <thead><tr><th>Fecha</th><th>Campaña</th><th class="r">Monto</th><th>Notas</th><th></th></tr></thead>
-            <tbody id="ing-rows"><tr><td colspan="5" style="text-align:center;padding:26px;color:var(--faint)">Todavía no registraste ingresos</td></tr></tbody>
+            <thead><tr><th>Fecha</th><th>Plataforma</th><th>Campaña / anuncio</th><th class="r">Monto</th><th>Notas</th><th></th></tr></thead>
+            <tbody id="ing-rows"><tr><td colspan="6" style="text-align:center;padding:26px;color:var(--faint)">Todavía no registraste ingresos</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -927,6 +942,11 @@
     var dl=document.getElementById('ing-camp-list');
     if(dl)dl.innerHTML=camps.map(function(c){return '<option value="'+c.name+'">';}).join('');
   }
+  var CANAL_COLOR={'Meta Ads':'#0866FF','Instagram':'#E1306C','Messenger':'#A033FF','Google Ads':'#F5820A','Mercado Libre':'#FFE600','Página web':'#1E8A4E','WhatsApp':'#25D366','Otro':'#8A7869'};
+  function canalPill(c){
+    var col=CANAL_COLOR[c]||'#8A7869';
+    return '<span class="pill" style="color:'+col+';background:'+col+'22"><span class="dot" style="background:'+col+'"></span>'+(c||'Otro')+'</span>';
+  }
   function paintIngresos(){
     var tb=document.getElementById('ing-rows');
     if(!tb)return;
@@ -938,11 +958,26 @@
       '<div class="metric-card"><div class="metric-label">Ingresos registrados</div><div class="metric-value" style="color:var(--good)">'+money(totalIng)+'</div></div>'+
       '<div class="metric-card"><div class="metric-label">Invertido en campañas</div><div class="metric-value">'+money(totalGasto)+'</div></div>'+
       '<div class="metric-card" style="border-top-color:'+(roas>=1?'var(--good)':'var(--bad)')+'"><div class="metric-label">ROAS</div><div class="metric-value" style="color:'+(roas>=1?'var(--good)':'var(--bad)')+'">'+roas.toFixed(2)+'x</div></div>';
-    if(!ingresos.length){tb.innerHTML='<tr><td colspan="5" style="text-align:center;padding:26px;color:var(--faint)">Todavía no registraste ingresos</td></tr>';return;}
+    var porCanalEl=document.getElementById('ing-por-canal');
+    if(porCanalEl){
+      var porCanal={};
+      ingresos.forEach(function(i){var c=i.canal||'Otro';porCanal[c]=(porCanal[c]||0)+(i.monto||0);});
+      var lista=Object.keys(porCanal).map(function(c){return {canal:c,monto:porCanal[c]};}).sort(function(a,b){return b.monto-a.monto;});
+      var maxM=Math.max.apply(null,lista.map(function(x){return x.monto;}))||1;
+      porCanalEl.innerHTML=lista.length?lista.map(function(x){
+        return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:11px">'+
+          '<div style="width:130px;flex-shrink:0">'+canalPill(x.canal)+'</div>'+
+          '<div style="flex:1;background:var(--surface-2);border-radius:5px;height:22px;overflow:hidden"><div style="width:'+(x.monto/maxM*100)+'%;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:5px"></div></div>'+
+          '<div style="width:110px;flex-shrink:0;font-size:13px;font-weight:700;text-align:right" class="num">'+money(x.monto)+'</div>'+
+        '</div>';
+      }).join(''):'<div class="empty">Todavía no hay ingresos registrados</div>';
+    }
+    if(!ingresos.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:26px;color:var(--faint)">Todavía no registraste ingresos</td></tr>';return;}
     var ordenados=ingresos.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
     tb.innerHTML=ordenados.map(function(i){
       return '<tr>'+
         '<td class="mono" style="color:var(--muted)">'+(i.fecha?i.fecha.split('-').reverse().join('/'):'—')+'</td>'+
+        '<td>'+canalPill(i.canal)+'</td>'+
         '<td class="cname">'+(i.nombre||'—')+'</td>'+
         '<td class="r num" style="font-weight:700;color:var(--good)">'+money(i.monto||0)+'</td>'+
         '<td style="color:var(--muted)">'+(i.notas||'—')+'</td>'+
@@ -970,16 +1005,16 @@
   };
   async function registrarIngreso(){
     var fecha=document.getElementById('ing-fecha').value||ingHoyStr();
+    var canal=document.getElementById('ing-canal').value||'Otro';
     var nombre=document.getElementById('ing-campana').value.trim();
     var montoRaw=document.getElementById('ing-monto').value;
     var monto=parseFloat((montoRaw||'').replace(/\./g,'').replace(',','.'))||0;
     var notas=document.getElementById('ing-notas').value.trim();
     var msg=document.getElementById('ing-msg');
-    if(!nombre){msg.textContent='Ingresá el nombre de la campaña.';msg.style.color='var(--bad)';return;}
     if(!monto){msg.textContent='Ingresá un monto mayor a 0.';msg.style.color='var(--bad)';return;}
     var btn=document.getElementById('ing-btn');
     btn.disabled=true; msg.textContent='Guardando...'; msg.style.color='var(--muted)';
-    var nuevo={fecha:fecha,nombre:nombre,monto:monto,notas:notas};
+    var nuevo={fecha:fecha,canal:canal,nombre:nombre,monto:monto,notas:notas};
     nuevo.id=idFromSigIng(nuevo);
     ingresos.push(nuevo);
     paintIngresos();
