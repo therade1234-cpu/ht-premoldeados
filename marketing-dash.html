@@ -200,6 +200,13 @@
     .head h1{font-size:22px}
     .kval{font-size:30px}
   }
+
+  @media print{
+    .nav,.controls{display:none!important}
+    body,.app{background:#fff;color:#000}
+    .card{box-shadow:none;border-color:#ccc;break-inside:avoid}
+    #view-reportes{display:block!important}
+  }
 </style>
 
 <div class="app">
@@ -396,7 +403,7 @@
     <div id="view-geografico" style="display:none">
       <div class="head" style="padding:26px 0 10px">
         <div>
-          <h1>Reporte geográfico <span class="demo-tag">Demo · datos de ejemplo</span></h1>
+          <h1>Reporte geográfico <span class="demo-tag" id="modo3">Demo · datos de ejemplo</span></h1>
           <div class="sub">De dónde llegan la mayoría de las consultas</div>
         </div>
         <div class="seg" id="geo-seg">
@@ -425,7 +432,7 @@
     <div id="view-videos" style="display:none">
       <div class="head" style="padding:26px 0 10px">
         <div>
-          <h1>Análisis de videos <span class="demo-tag">Demo · datos de ejemplo</span></h1>
+          <h1>Análisis de videos <span class="demo-tag" id="modo4">Demo · datos de ejemplo</span></h1>
           <div class="sub">Ranking de tus videos publicitarios por consultas generadas</div>
         </div>
         <div class="seg" id="videos-seg">
@@ -439,7 +446,7 @@
     <div id="view-campanias" style="display:none">
       <div class="head" style="padding:26px 0 10px">
         <div>
-          <h1>Directorio de campañas <span class="demo-tag">Demo · datos de ejemplo</span></h1>
+          <h1>Directorio de campañas <span class="demo-tag" id="modo5">Demo · datos de ejemplo</span></h1>
           <div class="sub">Todas las campañas registradas con sus métricas históricas</div>
         </div>
       </div>
@@ -457,6 +464,56 @@
             </tr></thead>
             <tbody id="camp-dir-rows"></tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-reportes" style="display:none">
+      <div class="head" style="padding:26px 0 10px">
+        <div>
+          <h1>Reportes <span class="demo-tag" id="modo6">Demo · datos de ejemplo</span></h1>
+          <div class="sub">Resumen del período, listo para imprimir o guardar como PDF</div>
+        </div>
+        <div class="controls">
+          <div class="seg" id="rep-seg">
+            <button data-p="semana">Semana</button>
+            <button data-p="mes" class="on">Mes</button>
+            <button data-p="hist">Histórico</button>
+          </div>
+          <button class="btn-primary" onclick="window.print()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Imprimir / Descargar PDF
+          </button>
+        </div>
+      </div>
+
+      <div id="rep-doc">
+        <div class="ksub" style="margin-bottom:14px" id="rep-periodo">—</div>
+        <div class="grid" style="grid-template-columns:repeat(3,1fr);padding-bottom:0;margin-bottom:16px">
+          <div class="card"><div class="klabel">Consultas recibidas</div><div class="kval num" id="rep-v1"></div></div>
+          <div class="card"><div class="klabel">Costo por consulta</div><div class="kval num" id="rep-v2"></div></div>
+          <div class="card"><div class="klabel">Gasto total</div><div class="kval num" id="rep-v3"></div></div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="ctitle">Campañas</div>
+          <div style="overflow-x:auto"><table>
+            <thead><tr><th>Campaña</th><th>Estado</th><th class="r">Consultas</th><th class="r">Gasto</th><th class="r">Costo/consulta</th></tr></thead>
+            <tbody id="rep-camps"></tbody>
+          </table></div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="ctitle">Top videos</div>
+          <div style="overflow-x:auto"><table>
+            <thead><tr><th>Video</th><th class="r">Consultas</th><th class="r">Gasto</th><th class="r">Costo/consulta</th></tr></thead>
+            <tbody id="rep-videos"></tbody>
+          </table></div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Por zona</div>
+          <div style="overflow-x:auto"><table>
+            <thead><tr><th>Zona</th><th class="r">Consultas</th><th class="r">Gasto</th><th class="r">Costo/consulta</th></tr></thead>
+            <tbody id="rep-locs"></tbody>
+          </table></div>
         </div>
       </div>
     </div>
@@ -653,7 +710,7 @@
   function paintVideos(){
     var el=document.getElementById('videos');
     if(!videos.length){el.innerHTML='<div class="empty">Sin videos con consultas en el período</div>';return;}
-    el.innerHTML=videos.map(function(v,i){
+    el.innerHTML=videos.slice(0,5).map(function(v,i){
       var cpc=v.cpc!=null?v.cpc:(v.consultas?v.gasto/v.consultas:0);
       return '<div class="vrow"><div class="vrank num">'+(v.r||i+1)+'</div>'+
         '<div class="vthumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>'+
@@ -753,6 +810,23 @@
       {name:'Unknown',lat:null,lng:null,consultas:0,gasto:14}
     ]
   };
+  // Coordenadas aproximadas de las zonas que suele devolver Meta para campañas en Argentina.
+  // Si el nombre real no está en esta lista, se muestra igual en la tabla/barras, solo no aparece
+  // el punto en el mapa (no hay forma de geolocalizar un nombre desconocido sin otra API externa).
+  var GEO_COORDS={
+    'Buenos Aires':[-36.2,-59.8], 'Ciudad Autónoma de Buenos Aires':[-34.61,-58.38], 'CABA':[-34.61,-58.38],
+    'Córdoba':[-31.4,-64.2], 'Santa Fe':[-31.6,-60.7], 'Mendoza':[-32.9,-68.8], 'Tucumán':[-26.8,-65.2],
+    'Entre Ríos':[-31.8,-60.5], 'Salta':[-24.8,-65.4], 'Chaco':[-27.5,-59.0], 'Corrientes':[-27.5,-58.8],
+    'Misiones':[-27.0,-55.0], 'San Juan':[-31.5,-68.5], 'San Luis':[-33.3,-66.3], 'Neuquén':[-38.9,-68.1],
+    'Río Negro':[-40.8,-63.0], 'Chubut':[-43.3,-65.1], 'Santa Cruz':[-50.0,-70.0], 'Tierra del Fuego':[-54.8,-68.3],
+    'La Pampa':[-36.6,-64.3], 'La Rioja':[-29.4,-66.9], 'Catamarca':[-28.5,-65.8], 'Formosa':[-26.2,-58.2],
+    'Santiago del Estero':[-27.8,-64.3], 'Jujuy':[-24.2,-65.3]
+  };
+  function geoCoordsDe(nombre){
+    if(GEO_COORDS[nombre])return GEO_COORDS[nombre];
+    var k=Object.keys(GEO_COORDS).filter(function(x){return nombre.indexOf(x)>=0||x.indexOf(nombre)>=0;})[0];
+    return k?GEO_COORDS[k]:null;
+  }
   var geoMode='ciudad', geoMap=null, geoLayer=null;
   function loadLeaflet(cb){
     if(window.L){cb();return;}
@@ -978,11 +1052,11 @@
   });
 
   // ---- navegación entre pestañas ----
-  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico',videos:'view-videos',campanias:'view-campanias',ingresos:'view-ingresos',config:'view-config'};
-  var NOMBRES={reportes:'Reportes'};
+  var VISTAS={dashboard:'view-dashboard',historial:'view-historial',geografico:'view-geografico',videos:'view-videos',campanias:'view-campanias',reportes:'view-reportes',ingresos:'view-ingresos',config:'view-config'};
+  var NOMBRES={};
   function showView(v){
-    ['view-dashboard','view-historial','view-geografico','view-videos','view-campanias','view-ingresos','view-config','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
-    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} if(v==='videos')paintVideosFull(); if(v==='campanias')paintCampDir(); if(v==='ingresos'){poblarDatalistCampanas();cargarIngresos();} if(v==='config')cargarConfig(); }
+    ['view-dashboard','view-historial','view-geografico','view-videos','view-campanias','view-reportes','view-ingresos','view-config','view-soon'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+    if(VISTAS[v]){ document.getElementById(VISTAS[v]).style.display=''; if(v==='historial')paintHist(); if(v==='geografico'){paintGeo();initGeo();} if(v==='videos')paintVideosFull(); if(v==='campanias')paintCampDir(); if(v==='reportes')renderReportes(); if(v==='ingresos'){poblarDatalistCampanas();cargarIngresos();} if(v==='config')cargarConfig(); }
     else { document.getElementById('view-soon').style.display=''; document.getElementById('soon-title').textContent=NOMBRES[v]||'Próximamente'; }
     [].forEach.call(document.querySelectorAll('#navtabs .tab'),function(b){b.classList.toggle('on',b.dataset.view===v);});
     try{window.scrollTo(0,0);}catch(e){}
@@ -1002,7 +1076,7 @@
     return out;
   }
   function setModo(txt,cls){
-    ['modo','modo2'].forEach(function(id){
+    ['modo','modo2','modo3','modo4','modo5','modo6'].forEach(function(id){
       var b=document.getElementById(id);
       if(b){b.textContent=txt;b.style.background=cls==='live'?'var(--good-ghost)':'var(--accent-ghost)';b.style.color=cls==='live'?'var(--good)':'var(--accent)';}
     });
@@ -1023,7 +1097,13 @@
       };
       if(j.campanias&&j.campanias.length) camps=j.campanias.map(function(c){return {name:c.nombre,estado:c.estado||'act',consultas:c.consultas,gasto:c.gasto,cpc:c.consultas?c.gasto/c.consultas:0};});
       if(j.videos&&j.videos.length) videos=j.videos.map(function(v,i){return {r:i+1,name:v.nombre,consultas:v.consultas,gasto:v.gasto,cpc:v.consultas?v.gasto/v.consultas:0};});
-      if(j.localidades&&j.localidades.length) locs=j.localidades.map(function(l){return {name:l.nombre,consultas:l.consultas,gasto:l.gasto,cpc:l.consultas?l.gasto/l.consultas:null};});
+      if(j.localidades&&j.localidades.length){
+        locs=j.localidades.map(function(l){return {name:l.nombre,consultas:l.consultas,gasto:l.gasto,cpc:l.consultas?l.gasto/l.consultas:null};});
+        // Meta solo da un nivel de detalle geográfico (region) — se usa el mismo dato para
+        // "por ciudad" y "por provincia" ya que no hay una segunda granularidad disponible.
+        var geoReal=j.localidades.map(function(l){var c=geoCoordsDe(l.nombre);return {name:l.nombre,lat:c?c[0]:null,lng:c?c[1]:null,consultas:l.consultas,gasto:l.gasto};});
+        geoData.ciudad=geoReal; geoData.provincia=geoReal;
+      }
       if(j.historial&&j.historial.length){
         hist=j.historial.map(function(h){return {fecha:h.fecha,camp:h.campana,anuncio:h.anuncio,ciudad:h.ciudad,consultas:h.consultas,gasto:h.gasto};});
         // completar "anuncios" y "última actividad" de cada campaña con datos reales del historial
@@ -1039,7 +1119,7 @@
         });
       }
       setModo('En vivo · Meta Ads','live');
-      render(p); paintVideos(); paintCamps(); paintLocs(); paintVideosFull(); paintCampDir(); paintHist();
+      render(p); paintVideos(); paintCamps(); paintLocs(); paintVideosFull(); paintCampDir(); paintHist(); paintGeo(); renderReportes();
     }catch(e){ setModo('Demo · datos de ejemplo','demo'); }
   }
 
@@ -1051,6 +1131,37 @@
   });
 
   spark(document.getElementById('web-spark'),[280,340,300,410,380,460,520,480]);
+
+  // ---- REPORTES (resumen imprimible del período) ----
+  var repPeriodo='mes';
+  function renderReportes(){
+    var d=data[repPeriodo]||data.mes;
+    var lbl={semana:'Semana',mes:'Mes',hist:'Histórico'}[repPeriodo]||'Mes';
+    var pEl=document.getElementById('rep-periodo'); if(pEl)pEl.textContent='Período: '+lbl+' · generado el '+new Date().toLocaleDateString('es-AR');
+    var e1=document.getElementById('rep-v1'); if(e1)e1.textContent=numf(d.consultas.v);
+    var e2=document.getElementById('rep-v2'); if(e2)e2.textContent=money(d.cpc.v);
+    var e3=document.getElementById('rep-v3'); if(e3)e3.textContent=money(d.gasto.v);
+    var tc=document.getElementById('rep-camps');
+    if(tc)tc.innerHTML=camps.length?camps.slice().sort(function(a,b){return b.consultas-a.consultas;}).map(function(c){
+      var cpc=c.cpc!=null?c.cpc:(c.consultas?c.gasto/c.consultas:0);
+      return '<tr><td class="cname">'+c.name+'</td><td><span class="pill '+c.estado+'"><span class="dot"></span>'+(c.estado==='act'?'Activa':'Pausada')+'</span></td><td class="r num">'+numf(c.consultas)+'</td><td class="r num">'+money(c.gasto)+'</td><td class="r num">'+money(cpc)+'</td></tr>';
+    }).join(''):'<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--faint)">Sin datos</td></tr>';
+    var tv=document.getElementById('rep-videos');
+    if(tv)tv.innerHTML=videos.length?videos.slice(0,10).map(function(v){
+      var cpc=v.cpc!=null?v.cpc:(v.consultas?v.gasto/v.consultas:0);
+      return '<tr><td class="cname">'+v.name+'</td><td class="r num">'+numf(v.consultas)+'</td><td class="r num">'+money(v.gasto||0)+'</td><td class="r num">'+money(cpc)+'</td></tr>';
+    }).join(''):'<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--faint)">Sin datos</td></tr>';
+    var tl=document.getElementById('rep-locs');
+    if(tl)tl.innerHTML=locs.length?locs.map(function(l){
+      return '<tr><td class="cname">'+l.name+'</td><td class="r num">'+numf(l.consultas)+'</td><td class="r num">'+money(l.gasto)+'</td><td class="r num">'+(l.cpc?money(l.cpc):'—')+'</td></tr>';
+    }).join(''):'<tr><td colspan="4" style="text-align:center;padding:16px;color:var(--faint)">Sin datos</td></tr>';
+  }
+  var repSeg=document.getElementById('rep-seg');
+  if(repSeg)repSeg.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b)return;
+    [].forEach.call(this.children,function(x){x.classList.remove('on');});
+    b.classList.add('on'); repPeriodo=b.dataset.p; render(repPeriodo); sync(repPeriodo); renderReportes();
+  });
 
   render('mes');
   sync('mes');

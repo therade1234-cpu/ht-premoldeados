@@ -136,7 +136,7 @@ module.exports = async function handler(req, res) {
     const videos = agrupar(
       await insights({ level: 'ad', fields: 'ad_name,spend,actions', time_range: tr, limit: 500 }),
       a => a.ad_name || 'Sin nombre', (a, k) => k
-    ).filter(v => v.consultas > 0).sort((a, b) => b.consultas - a.consultas).slice(0, 10);
+    ).filter(v => v.consultas > 0).sort((a, b) => b.consultas - a.consultas).slice(0, 40);
 
     // Por región (localidad) — se agrupa por región sumando cuentas
     const localidades = agrupar(
