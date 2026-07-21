@@ -1159,12 +1159,29 @@
     for(var i=0;i<n;i+=size){var ch=serie.slice(i,i+size);out.push([ch[0].fecha.slice(5).split('-').reverse().join('/'),ch.reduce(function(s,x){return s+x.consultas;},0)]);}
     return out;
   }
-  function setModo(txt,cls){
+  var _lastSyncTs=null, _modoBase='Demo · datos de ejemplo', _modoCls='demo';
+  function fmtHace(ms){
+    var s=Math.floor(ms/1000);
+    if(s<60)return 'recién';
+    var m=Math.floor(s/60);
+    if(m<60)return 'hace '+m+' min';
+    var h=Math.floor(m/60);
+    return 'hace '+h+'h';
+  }
+  function refrescarModoTexto(){
+    var txt=_modoBase;
+    if(_modoCls==='live'&&_lastSyncTs)txt+=' · actualizado '+fmtHace(Date.now()-_lastSyncTs);
     ['modo','modo2','modo3','modo4','modo5','modo6'].forEach(function(id){
       var b=document.getElementById(id);
-      if(b){b.textContent=txt;b.style.background=cls==='live'?'var(--good-ghost)':'var(--accent-ghost)';b.style.color=cls==='live'?'var(--good)':'var(--accent)';}
+      if(b){b.textContent=txt;b.style.background=_modoCls==='live'?'var(--good-ghost)':'var(--accent-ghost)';b.style.color=_modoCls==='live'?'var(--good)':'var(--accent)';}
     });
   }
+  function setModo(txt,cls){
+    _modoBase=txt; _modoCls=cls;
+    if(cls==='live')_lastSyncTs=Date.now();
+    refrescarModoTexto();
+  }
+  setInterval(refrescarModoTexto,15000); // solo refresca el texto "hace X min", no vuelve a pedir datos
   async function sync(p){
     try{
       var res=await fetch('/api/meta?range='+p,{cache:'no-store'});
@@ -1209,11 +1226,14 @@
   }
 
   // period toggle
+  var periodoActivo='mes';
   document.getElementById('seg').addEventListener('click',function(e){
     var b=e.target.closest('button'); if(!b)return;
     [].forEach.call(this.children,function(x){x.classList.remove('on');});
-    b.classList.add('on'); render(b.dataset.p); sync(b.dataset.p);
+    b.classList.add('on'); periodoActivo=b.dataset.p; render(periodoActivo); sync(periodoActivo);
   });
+  // auto-refresco: vuelve a traer los datos reales de Meta cada 5 minutos, sin que haga falta recargar la página
+  setInterval(function(){ sync(periodoActivo); }, 5*60*1000);
 
   spark(document.getElementById('web-spark'),[280,340,300,410,380,460,520,480]);
 
