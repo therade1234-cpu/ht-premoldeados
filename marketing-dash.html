@@ -922,7 +922,26 @@
     var tb=document.getElementById('camp-dir-rows');
     if(!tb)return;
     var desde=document.getElementById('camp-desde').value, hasta=document.getElementById('camp-hasta').value;
-    var rows=camps.filter(function(c){var u=c.ultima||''; if(desde&&u<desde)return false; if(hasta&&u>hasta)return false; return true;});
+    var rows;
+    if(desde||hasta){
+      // Con fecha elegida: recalcular consultas/leads/gasto sumando el historial día por día
+      // dentro de ese rango exacto (no los totales del período general que trae el Dashboard).
+      var porCamp={};
+      hist.forEach(function(h){
+        if(desde&&h.fecha<desde)return; if(hasta&&h.fecha>hasta)return;
+        var e=porCamp[h.camp]||(porCamp[h.camp]={consultas:0,leads:0,gasto:0,anuncios:{},ultima:''});
+        e.consultas+=h.consultas||0; e.leads+=h.leads||0; e.gasto+=h.gasto||0;
+        if(h.anuncio)e.anuncios[h.anuncio]=1;
+        if(h.fecha>e.ultima)e.ultima=h.fecha;
+      });
+      rows=Object.keys(porCamp).map(function(k){
+        var e=porCamp[k], base=camps.find(function(c){return c.name===k;});
+        return {name:k, estado:(base&&base.estado)||'act', anuncios:Object.keys(e.anuncios).length,
+          consultas:e.consultas, leads:e.leads, gasto:e.gasto, cpc:e.consultas?e.gasto/e.consultas:0, ultima:e.ultima};
+      });
+    } else {
+      rows=camps.slice();
+    }
     rows=rows.slice().sort(function(a,b){return (b.ultima||'').localeCompare(a.ultima||'');});
     if(!rows.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:22px;color:var(--faint)">Sin campañas en el rango elegido</td></tr>';return;}
     tb.innerHTML=rows.map(function(c){
@@ -939,7 +958,14 @@
       '</tr>';
     }).join('');
   }
-  ['camp-desde','camp-hasta'].forEach(function(id){var e=document.getElementById(id);if(e)e.addEventListener('change',paintCampDir);});
+  var _campHistCargado=false;
+  ['camp-desde','camp-hasta'].forEach(function(id){
+    var e=document.getElementById(id);
+    if(e)e.addEventListener('change',async function(){
+      if(!_campHistCargado){ _campHistCargado=true; await sync('hist'); } // trae el rango más amplio posible para que cualquier fecha elegida tenga datos
+      paintCampDir();
+    });
+  });
 
   // ---- INGRESOS (registro manual, persistido en /api/data para calcular ROAS) ----
   // sigOf/idFromSig replican EXACTO el criterio del servidor (api/data.js) para que
@@ -1164,7 +1190,7 @@
         geoData.ciudad=geoReal; geoData.provincia=geoReal;
       }
       if(j.historial&&j.historial.length){
-        hist=j.historial.map(function(h){return {fecha:h.fecha,camp:h.campana,anuncio:h.anuncio,ciudad:h.ciudad,consultas:h.consultas,gasto:h.gasto};});
+        hist=j.historial.map(function(h){return {fecha:h.fecha,camp:h.campana,anuncio:h.anuncio,ciudad:h.ciudad,consultas:h.consultas,leads:h.leads||0,gasto:h.gasto};});
         // completar "anuncios" y "última actividad" de cada campaña con datos reales del historial
         var porCamp={};
         hist.forEach(function(h){
