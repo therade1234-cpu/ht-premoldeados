@@ -39,7 +39,9 @@ function rangos(tipo) {
   const hoy = new Date(Date.now() - 3 * 60 * 60 * 1000);
   const y = hoy.getUTCFullYear(), m = hoy.getUTCMonth();
   if (tipo === 'semana') {
-    const dow = (hoy.getUTCDay() + 6) % 7; // 0 = lunes
+    // Meta Ads Manager define "Esta semana" como domingo a hoy (no lunes a hoy).
+    // getUTCDay() ya devuelve 0=domingo, coincide directo con esa convención.
+    const dow = hoy.getUTCDay(); // 0 = domingo
     const ini = new Date(Date.UTC(y, m, hoy.getUTCDate() - dow));
     const pIni = new Date(Date.UTC(y, m, hoy.getUTCDate() - dow - 7));
     const pFin = new Date(Date.UTC(y, m, hoy.getUTCDate() - dow - 1));
