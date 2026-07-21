@@ -272,6 +272,11 @@
         <div class="ksub">Inversión en publicidad</div>
         <div class="kspark" id="s3"></div>
       </div>
+      <div class="card col-4">
+        <div class="krow"><div class="klabel"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg></span>Clientes potenciales</div><span class="delta" id="d4"></span></div>
+        <div class="kval num" id="v4"></div>
+        <div class="ksub">Leads de formularios (aparte de las consultas por mensaje)</div>
+      </div>
 
       <!-- weekly chart -->
       <div class="card col-8">
@@ -290,7 +295,7 @@
         <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6l9-3 9 3v4l-9 3-9-3z"/><path d="M3 12l9 3 9-3M3 16l9 3 9-3"/></svg></span>Resultados por campaña</div>
         <div style="overflow-x:auto">
           <table>
-            <thead><tr><th>Campaña</th><th>Estado</th><th class="r">Consultas</th><th class="r">Gasto</th><th class="r">Costo x consulta</th></tr></thead>
+            <thead><tr><th>Campaña</th><th>Estado</th><th class="r">Consultas</th><th class="r">Leads</th><th class="r">Gasto</th><th class="r">Costo x consulta</th></tr></thead>
             <tbody id="camps"></tbody>
           </table>
         </div>
@@ -459,7 +464,7 @@
         <div style="overflow-x:auto">
           <table>
             <thead><tr>
-              <th>Campaña</th><th>Estado</th><th class="r">Anuncios</th><th class="r">Consultas</th>
+              <th>Campaña</th><th>Estado</th><th class="r">Anuncios</th><th class="r">Consultas</th><th class="r">Leads</th>
               <th class="r">Gasto</th><th class="r">Costo/consulta</th><th>Última actividad</th>
             </tr></thead>
             <tbody id="camp-dir-rows"></tbody>
@@ -489,15 +494,16 @@
 
       <div id="rep-doc">
         <div class="ksub" style="margin-bottom:14px" id="rep-periodo">—</div>
-        <div class="grid" style="grid-template-columns:repeat(3,1fr);padding-bottom:0;margin-bottom:16px">
+        <div class="grid" style="grid-template-columns:repeat(4,1fr);padding-bottom:0;margin-bottom:16px">
           <div class="card"><div class="klabel">Consultas recibidas</div><div class="kval num" id="rep-v1"></div></div>
           <div class="card"><div class="klabel">Costo por consulta</div><div class="kval num" id="rep-v2"></div></div>
           <div class="card"><div class="klabel">Gasto total</div><div class="kval num" id="rep-v3"></div></div>
+          <div class="card"><div class="klabel">Clientes potenciales</div><div class="kval num" id="rep-v4"></div></div>
         </div>
         <div class="card" style="margin-bottom:16px">
           <div class="ctitle">Campañas</div>
           <div style="overflow-x:auto"><table>
-            <thead><tr><th>Campaña</th><th>Estado</th><th class="r">Consultas</th><th class="r">Gasto</th><th class="r">Costo/consulta</th></tr></thead>
+            <thead><tr><th>Campaña</th><th>Estado</th><th class="r">Consultas</th><th class="r">Leads</th><th class="r">Gasto</th><th class="r">Costo/consulta</th></tr></thead>
             <tbody id="rep-camps"></tbody>
           </table></div>
         </div>
@@ -617,17 +623,17 @@
   // Datos de EJEMPLO por período
   var data={
     semana:{
-      consultas:{v:210,delta:-14,good:false}, cpc:{v:1090,delta:-5,good:true}, gasto:{v:228900,delta:-9,good:null},
+      consultas:{v:210,delta:-14,good:false}, cpc:{v:1090,delta:-5,good:true}, gasto:{v:228900,delta:-9,good:null}, leads:{v:12,delta:0,good:null},
       weekly:[['Lun',18],['Mar',24],['Mié',33],['Jue',41],['Vie',38],['Sáb',36],['Dom',20]],
       wlabel:'Consultas por día'
     },
     mes:{
-      consultas:{v:1620,delta:-36,good:false}, cpc:{v:1145,delta:3,good:false}, gasto:{v:1855360,delta:34,good:null},
+      consultas:{v:1620,delta:-36,good:false}, cpc:{v:1145,delta:3,good:false}, gasto:{v:1855360,delta:34,good:null}, leads:{v:48,delta:0,good:null},
       weekly:[['25 may',120],['01 jun',680],['08 jun',420],['15 jun',480],['22 jun',640],['29 jun',790],['06 jul',910],['13 jul',150]],
       wlabel:'Consultas por semana'
     },
     hist:{
-      consultas:{v:8420,delta:12,good:true}, cpc:{v:1180,delta:-2,good:true}, gasto:{v:9935000,delta:18,good:null},
+      consultas:{v:8420,delta:12,good:true}, cpc:{v:1180,delta:-2,good:true}, gasto:{v:9935000,delta:18,good:null}, leads:{v:210,delta:0,good:null},
       weekly:[['Mar',980],['Abr',1120],['May',1340],['Jun',2010],['Jul',1620],['Ago',1350]],
       wlabel:'Consultas por mes'
     }
@@ -644,15 +650,15 @@
     {r:8,name:'x2 obra 14/5',consultas:87,gasto:113187,cpc:1301}
   ];
   var camps=[
-    {name:'Ivan (CBO) 26',estado:'act',anuncios:6,consultas:402,gasto:411774,cpc:1024,ultima:'2026-07-15'},
-    {name:'Carla (ABO) 26',estado:'act',anuncios:11,consultas:392,gasto:376899,cpc:961,ultima:'2026-07-15'},
-    {name:'Pri (ABO) 26',estado:'act',anuncios:12,consultas:383,gasto:409919,cpc:1070,ultima:'2026-07-15'},
-    {name:'Caro (ABO) 26',estado:'act',anuncios:6,consultas:338,gasto:375893,cpc:1112,ultima:'2026-07-15'},
-    {name:'Mati (ABO) 26',estado:'pau',anuncios:5,consultas:210,gasto:223020,cpc:1062,ultima:'2026-06-16'},
-    {name:'Leads_Calificados',estado:'act',anuncios:5,consultas:105,gasto:280875,cpc:2675,ultima:'2026-07-15'},
-    {name:'Leads_Calificados Matias',estado:'pau',anuncios:3,consultas:73,gasto:177317,cpc:2429,ultima:'2026-06-22'},
-    {name:'Vicky (CBO)',estado:'pau',anuncios:4,consultas:52,gasto:66040,cpc:1270,ultima:'2026-05-30'},
-    {name:'Valen (CBO) 26',estado:'pau',anuncios:2,consultas:19,gasto:24320,cpc:1280,ultima:'2026-05-12'}
+    {name:'Ivan (CBO) 26',estado:'act',anuncios:6,consultas:402,leads:0,gasto:411774,cpc:1024,ultima:'2026-07-15'},
+    {name:'Carla (ABO) 26',estado:'act',anuncios:11,consultas:392,leads:0,gasto:376899,cpc:961,ultima:'2026-07-15'},
+    {name:'Pri (ABO) 26',estado:'act',anuncios:12,consultas:383,leads:0,gasto:409919,cpc:1070,ultima:'2026-07-15'},
+    {name:'Caro (ABO) 26',estado:'act',anuncios:6,consultas:338,leads:0,gasto:375893,cpc:1112,ultima:'2026-07-15'},
+    {name:'Mati (ABO) 26',estado:'pau',anuncios:5,consultas:210,leads:0,gasto:223020,cpc:1062,ultima:'2026-06-16'},
+    {name:'Leads_Calificados',estado:'act',anuncios:5,consultas:105,leads:34,gasto:280875,cpc:2675,ultima:'2026-07-15'},
+    {name:'Leads_Calificados Matias',estado:'pau',anuncios:3,consultas:73,leads:21,gasto:177317,cpc:2429,ultima:'2026-06-22'},
+    {name:'Vicky (CBO)',estado:'pau',anuncios:4,consultas:52,leads:0,gasto:66040,cpc:1270,ultima:'2026-05-30'},
+    {name:'Valen (CBO) 26',estado:'pau',anuncios:2,consultas:19,leads:0,gasto:24320,cpc:1280,ultima:'2026-05-12'}
   ];
   var locs=[
     {name:'Buenos Aires',consultas:1526,gasto:1742180,cpc:1142},
@@ -707,9 +713,11 @@
     document.getElementById('v1').textContent=numf(d.consultas.v);
     document.getElementById('v2').textContent=money(d.cpc.v);
     document.getElementById('v3').textContent=money(d.gasto.v);
+    document.getElementById('v4').textContent=numf((d.leads&&d.leads.v)||0);
     delta(document.getElementById('d1'),d.consultas.delta,d.consultas.good);
     delta(document.getElementById('d2'),d.cpc.delta,d.cpc.good);
     var d3=document.getElementById('d3'); d3.className='delta '+(d.gasto.delta>=0?'up':'down'); d3.innerHTML=(d.gasto.delta>=0?'▲':'▼')+' '+Math.abs(d.gasto.delta)+'% vs anterior';
+    if(d.leads)delta(document.getElementById('d4'),d.leads.delta,d.leads.good); else document.getElementById('d4').innerHTML='';
     var wv=d.weekly.map(function(r){return r[1];});
     spark(document.getElementById('s1'),wv);
     spark(document.getElementById('s2'),wv.slice().reverse());
@@ -740,6 +748,7 @@
       return '<tr><td><div class="cname">'+c.name+'</div><div class="bar"><i style="width:'+(c.consultas/maxC*100)+'%"></i></div></td>'+
         '<td><span class="pill '+c.estado+'"><span class="dot"></span>'+(c.estado==='act'?'Activa':'Pausada')+'</span></td>'+
         '<td class="r num" style="font-weight:700">'+numf(c.consultas)+'</td>'+
+        '<td class="r num" style="color:var(--muted)">'+(c.leads?numf(c.leads):'—')+'</td>'+
         '<td class="r num">'+money(c.gasto)+'</td>'+
         '<td class="r num" style="color:'+(cpc>1500?'var(--bad)':'var(--text)')+'">'+money(cpc)+'</td></tr>';
     }).join('');
@@ -915,7 +924,7 @@
     var desde=document.getElementById('camp-desde').value, hasta=document.getElementById('camp-hasta').value;
     var rows=camps.filter(function(c){var u=c.ultima||''; if(desde&&u<desde)return false; if(hasta&&u>hasta)return false; return true;});
     rows=rows.slice().sort(function(a,b){return (b.ultima||'').localeCompare(a.ultima||'');});
-    if(!rows.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;padding:22px;color:var(--faint)">Sin campañas en el rango elegido</td></tr>';return;}
+    if(!rows.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:22px;color:var(--faint)">Sin campañas en el rango elegido</td></tr>';return;}
     tb.innerHTML=rows.map(function(c){
       var cpc=c.cpc!=null?c.cpc:(c.consultas?c.gasto/c.consultas:0);
       return '<tr>'+
@@ -923,6 +932,7 @@
         '<td><span class="pill '+c.estado+'"><span class="dot"></span>'+(c.estado==='act'?'Activa':'Pausada')+'</span></td>'+
         '<td class="r num">'+numf(c.anuncios||0)+'</td>'+
         '<td class="r num" style="font-weight:700">'+numf(c.consultas)+'</td>'+
+        '<td class="r num" style="color:var(--muted)">'+(c.leads?numf(c.leads):'—')+'</td>'+
         '<td class="r num">'+money(c.gasto)+'</td>'+
         '<td class="r num">'+money(cpc)+'</td>'+
         '<td class="mono" style="color:var(--muted)">'+(c.ultima?c.ultima.split('-').reverse().join('/'):'—')+'</td>'+
@@ -1141,9 +1151,10 @@
         consultas:{v:t.consultas,delta:pct(t.consultas,t.consultasPrev),good:pct(t.consultas,t.consultasPrev)>=0},
         cpc:{v:cpc,delta:pct(cpc,cpcPrev),good:pct(cpc,cpcPrev)<=0},
         gasto:{v:t.gasto,delta:pct(t.gasto,t.gastoPrev),good:null},
+        leads:{v:t.leads||0,delta:pct(t.leads||0,t.leadsPrev),good:null},
         weekly:bucket(j.serie,p), wlabel:'Consultas'
       };
-      if(j.campanias&&j.campanias.length) camps=j.campanias.map(function(c){return {name:c.nombre,estado:c.estado||'act',consultas:c.consultas,gasto:c.gasto,cpc:c.consultas?c.gasto/c.consultas:0};});
+      if(j.campanias&&j.campanias.length) camps=j.campanias.map(function(c){return {name:c.nombre,estado:c.estado||'act',consultas:c.consultas,leads:c.leads||0,gasto:c.gasto,cpc:c.consultas?c.gasto/c.consultas:0};});
       if(j.videos&&j.videos.length) videos=j.videos.map(function(v,i){return {r:i+1,name:v.nombre,consultas:v.consultas,gasto:v.gasto,cpc:v.consultas?v.gasto/v.consultas:0};});
       if(j.localidades&&j.localidades.length){
         locs=j.localidades.map(function(l){return {name:l.nombre,consultas:l.consultas,gasto:l.gasto,cpc:l.consultas?l.gasto/l.consultas:null};});
@@ -1189,11 +1200,12 @@
     var e1=document.getElementById('rep-v1'); if(e1)e1.textContent=numf(d.consultas.v);
     var e2=document.getElementById('rep-v2'); if(e2)e2.textContent=money(d.cpc.v);
     var e3=document.getElementById('rep-v3'); if(e3)e3.textContent=money(d.gasto.v);
+    var e4=document.getElementById('rep-v4'); if(e4)e4.textContent=numf((d.leads&&d.leads.v)||0);
     var tc=document.getElementById('rep-camps');
     if(tc)tc.innerHTML=camps.length?camps.slice().sort(function(a,b){return b.consultas-a.consultas;}).map(function(c){
       var cpc=c.cpc!=null?c.cpc:(c.consultas?c.gasto/c.consultas:0);
-      return '<tr><td class="cname">'+c.name+'</td><td><span class="pill '+c.estado+'"><span class="dot"></span>'+(c.estado==='act'?'Activa':'Pausada')+'</span></td><td class="r num">'+numf(c.consultas)+'</td><td class="r num">'+money(c.gasto)+'</td><td class="r num">'+money(cpc)+'</td></tr>';
-    }).join(''):'<tr><td colspan="5" style="text-align:center;padding:16px;color:var(--faint)">Sin datos</td></tr>';
+      return '<tr><td class="cname">'+c.name+'</td><td><span class="pill '+c.estado+'"><span class="dot"></span>'+(c.estado==='act'?'Activa':'Pausada')+'</span></td><td class="r num">'+numf(c.consultas)+'</td><td class="r num" style="color:var(--muted)">'+(c.leads?numf(c.leads):'—')+'</td><td class="r num">'+money(c.gasto)+'</td><td class="r num">'+money(cpc)+'</td></tr>';
+    }).join(''):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--faint)">Sin datos</td></tr>';
     var tv=document.getElementById('rep-videos');
     if(tv)tv.innerHTML=videos.length?videos.slice(0,10).map(function(v){
       var cpc=v.cpc!=null?v.cpc:(v.consultas?v.gasto/v.consultas:0);

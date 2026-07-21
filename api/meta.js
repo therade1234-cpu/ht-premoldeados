@@ -7,11 +7,14 @@
 // Opcional:
 //   META_CONSULTA_ACTION -> tipo de acción que cuenta como "consulta"
 //                           (por defecto: conversaciones de mensajería iniciadas)
+//   META_LEAD_ACTION     -> tipo de acción que cuenta como "cliente potencial" (lead)
+//                           (por defecto: leads agrupados de formularios de Meta)
 // Si faltan las variables, responde { configured:false } y el tablero sigue en modo demo.
 
 const TOKEN = process.env.META_TOKEN;
 const ACCOUNT_RAW = process.env.META_AD_ACCOUNT || '';
 const CONSULTA_MATCH = process.env.META_CONSULTA_ACTION || 'messaging_conversation_started';
+const LEAD_MATCH = process.env.META_LEAD_ACTION || 'lead_grouped';
 const V = 'v21.0';
 const API = 'https://graph.facebook.com/' + V;
 
@@ -21,15 +24,18 @@ function accts() {
     .map(a => a.indexOf('act_') === 0 ? a : ('act_' + a));
 }
 
-// Cuenta como "consulta" cualquier acción cuyo tipo contenga CONSULTA_MATCH
-function consultas(actions) {
+function sumaAccion(actions, match) {
   if (!Array.isArray(actions)) return 0;
   let n = 0;
   for (const a of actions) {
-    if (a && a.action_type && a.action_type.indexOf(CONSULTA_MATCH) >= 0) n += Number(a.value) || 0;
+    if (a && a.action_type && a.action_type.indexOf(match) >= 0) n += Number(a.value) || 0;
   }
   return n;
 }
+// Cuenta como "consulta" cualquier acción cuyo tipo contenga CONSULTA_MATCH
+function consultas(actions) { return sumaAccion(actions, CONSULTA_MATCH); }
+// Cuenta como "cliente potencial" (lead de formulario) cualquier acción cuyo tipo contenga LEAD_MATCH
+function leads(actions) { return sumaAccion(actions, LEAD_MATCH); }
 
 function ymd(d) { return d.toISOString().slice(0, 10); }
 function rangos(tipo) {
@@ -83,13 +89,14 @@ module.exports = async function handler(req, res) {
 
   if (!TOKEN || !ACCOUNT_RAW) return res.status(200).json({ configured: false });
 
-  // Suma filas por una clave (fecha, región, nombre de anuncio) juntando consultas y gasto.
+  // Suma filas por una clave (fecha, región, nombre de anuncio) juntando consultas, leads y gasto.
   function agrupar(rows, keyOf, nombreOf) {
     const map = {};
     for (const row of rows) {
       const k = keyOf(row);
-      if (!map[k]) map[k] = { nombre: nombreOf(row, k), consultas: 0, gasto: 0 };
+      if (!map[k]) map[k] = { nombre: nombreOf(row, k), consultas: 0, leads: 0, gasto: 0 };
       map[k].consultas += consultas(row.actions);
+      map[k].leads += leads(row.actions);
       map[k].gasto += Number(row.spend) || 0;
     }
     return Object.values(map);
@@ -105,6 +112,7 @@ module.exports = async function handler(req, res) {
     const totRows = await insights({ level: 'account', fields: 'spend,actions', time_range: tr });
     const gasto = totRows.reduce((s, x) => s + (Number(x.spend) || 0), 0);
     const cons = totRows.reduce((s, x) => s + consultas(x.actions), 0);
+    const leadsTot = totRows.reduce((s, x) => s + leads(x.actions), 0);
 
     // Diagnóstico: TODOS los tipos de acción que devolvió Meta en este período, sumados.
     // Sirve para verificar si CONSULTA_MATCH está agarrando el tipo correcto (o si falta sumar otro,
@@ -119,23 +127,24 @@ module.exports = async function handler(req, res) {
       .sort((a, b) => b.valor - a.valor);
 
     // Período anterior (para el % vs anterior)
-    let gastoPrev = null, consPrev = null;
+    let gastoPrev = null, consPrev = null, leadsPrev = null;
     if (r.pSince) {
       const prev = await insights({ level: 'account', fields: 'spend,actions', time_range: JSON.stringify({ since: r.pSince, until: r.pUntil }) });
       gastoPrev = prev.reduce((s, x) => s + (Number(x.spend) || 0), 0);
       consPrev = prev.reduce((s, x) => s + consultas(x.actions), 0);
+      leadsPrev = prev.reduce((s, x) => s + leads(x.actions), 0);
     }
 
     // Serie diaria (para el gráfico) — se agrupa por fecha sumando las cuentas
     const serie = agrupar(
       await insights({ level: 'account', fields: 'spend,actions', time_range: tr, time_increment: 1 }),
       d => d.date_start, (d, k) => k
-    ).map(d => ({ fecha: d.nombre, consultas: d.consultas, gasto: d.gasto }))
+    ).map(d => ({ fecha: d.nombre, consultas: d.consultas, leads: d.leads, gasto: d.gasto }))
       .sort((a, b) => a.fecha < b.fecha ? -1 : 1);
 
     // Por campaña (cada cuenta tiene campañas distintas, se concatenan)
     const campanias = (await insights({ level: 'campaign', fields: 'campaign_name,spend,actions', time_range: tr, limit: 200 }))
-      .map(c => ({ nombre: c.campaign_name, consultas: consultas(c.actions), gasto: Number(c.spend) || 0 }))
+      .map(c => ({ nombre: c.campaign_name, consultas: consultas(c.actions), leads: leads(c.actions), gasto: Number(c.spend) || 0 }))
       .sort((a, b) => b.consultas - a.consultas);
 
     // Estado de cada campaña (activa/pausada) — se junta el de todas las cuentas
@@ -169,7 +178,7 @@ module.exports = async function handler(req, res) {
         time_range: tr, time_increment: 1, limit: 1000,
       })).map(h => ({
         fecha: h.date_start, campana: h.campaign_name, anuncio: h.ad_name,
-        ciudad: h.region || 'Sin dato', consultas: consultas(h.actions), gasto: Number(h.spend) || 0,
+        ciudad: h.region || 'Sin dato', consultas: consultas(h.actions), leads: leads(h.actions), gasto: Number(h.spend) || 0,
       })).sort((a, b) => b.fecha.localeCompare(a.fecha));
     } catch (e) { historial = []; }
 
@@ -187,7 +196,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
       configured: true, range: tipo, since: r.since, until: r.until,
-      totales: { consultas: cons, gasto, consultasPrev: consPrev, gastoPrev },
+      totales: { consultas: cons, gasto, consultasPrev: consPrev, gastoPrev, leads: leadsTot, leadsPrev },
       serie, campanias, videos, localidades, historial, cuentas, todasLasAcciones
     });
   } catch (e) {
