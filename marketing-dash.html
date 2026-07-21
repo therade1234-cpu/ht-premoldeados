@@ -575,7 +575,8 @@
         <div class="card col-6">
           <div class="ctitle"><span class="kico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a11 11 0 0 1 14 0"/><path d="M8.5 16a6 6 0 0 1 7 0"/><line x1="12" y1="19.5" x2="12" y2="19.51"/></svg></span>Conexión con Meta Ads</div>
           <div id="cfg-meta-status" style="font-size:15px;font-weight:800;margin-bottom:4px">Verificando…</div>
-          <div id="cfg-meta-sub" class="ksub" style="margin-bottom:16px">—</div>
+          <div id="cfg-meta-sub" class="ksub" style="margin-bottom:10px">—</div>
+          <div id="cfg-meta-cuentas" style="margin-bottom:16px"></div>
           <button id="cfg-sync-btn" class="btn-primary">
             <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
             Sincronizar ahora
@@ -1042,12 +1043,24 @@
     try{
       var r=await fetch('/api/meta',{cache:'no-store'});
       var j=await r.json();
+      var cEl=document.getElementById('cfg-meta-cuentas');
       if(j&&j.configured){
         st.textContent='● Conectado'; st.style.color='var(--good)';
         sub.textContent=j.error?('Conectado, pero Meta devolvió un error: '+j.error):'Meta Ads está devolviendo datos en vivo.';
+        if(cEl){
+          if(j.cuentas&&j.cuentas.length){
+            cEl.innerHTML='<div class="ilabel" style="margin-bottom:6px">Cuentas publicitarias que se están sumando (compará esta lista contra el selector de cuentas de Meta Ads Manager — si falta una acá, esa es la causa de que los números no coincidan)</div>'+
+              j.cuentas.map(function(c){
+                return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)">'+
+                  '<span class="pill '+(c.activa?'act':'pau')+'"><span class="dot"></span>'+(c.activa===null?'?':(c.activa?'Activa':'Inactiva'))+'</span>'+
+                  '<span style="font-weight:600">'+c.nombre+'</span><span class="mono" style="color:var(--faint);font-size:11.5px">'+c.id+'</span></div>';
+              }).join('');
+          } else { cEl.innerHTML='<div class="ksub" style="color:var(--bad)">No se pudo listar ninguna cuenta — revisá que META_AD_ACCOUNT tenga los IDs correctos.</div>'; }
+        }
       } else {
         st.textContent='○ No conectado'; st.style.color='var(--bad)';
         sub.textContent='Faltan las variables META_TOKEN y META_AD_ACCOUNT en Vercel. Mientras tanto el tablero muestra datos de ejemplo.';
+        if(cEl)cEl.innerHTML='';
       }
     }catch(e){
       st.textContent='○ No se pudo verificar'; st.style.color='var(--bad)';

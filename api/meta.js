@@ -159,10 +159,22 @@ module.exports = async function handler(req, res) {
       })).sort((a, b) => b.fecha.localeCompare(a.fecha));
     } catch (e) { historial = []; }
 
+    // Diagnóstico: qué cuentas está sumando el sistema ahora mismo (nombre, no el token).
+    // Sirve para comparar contra el selector de cuentas de Meta Ads Manager y detectar
+    // si falta alguna cuenta cargada en la variable de entorno META_AD_ACCOUNT.
+    let cuentas = [];
+    try {
+      cuentas = await Promise.all(accts().map(a =>
+        gj(API + '/' + a + '?fields=name,account_status&access_token=' + encodeURIComponent(TOKEN))
+          .then(j => ({ id: a, nombre: j.name || '(sin nombre)', activa: j.account_status === 1 }))
+          .catch(() => ({ id: a, nombre: '(no se pudo consultar)', activa: null }))
+      ));
+    } catch (e) { cuentas = accts().map(a => ({ id: a, nombre: '(no se pudo consultar)', activa: null })); }
+
     return res.status(200).json({
       configured: true, range: tipo, since: r.since, until: r.until,
       totales: { consultas: cons, gasto, consultasPrev: consPrev, gastoPrev },
-      serie, campanias, videos, localidades, historial
+      serie, campanias, videos, localidades, historial, cuentas
     });
   } catch (e) {
     return res.status(200).json({ configured: true, error: e.message });
