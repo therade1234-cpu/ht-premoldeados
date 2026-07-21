@@ -142,20 +142,23 @@ module.exports = async function handler(req, res) {
     ).map(d => ({ fecha: d.nombre, consultas: d.consultas, leads: d.leads, gasto: d.gasto }))
       .sort((a, b) => a.fecha < b.fecha ? -1 : 1);
 
-    // Por campaña (cada cuenta tiene campañas distintas, se concatenan)
-    const campanias = (await insights({ level: 'campaign', fields: 'campaign_name,spend,actions', time_range: tr, limit: 200 }))
-      .map(c => ({ nombre: c.campaign_name, consultas: consultas(c.actions), leads: leads(c.actions), gasto: Number(c.spend) || 0 }))
+    // Por campaña (cada cuenta tiene campañas distintas, se concatenan).
+    // OJO: puede haber varias campañas con el MISMO nombre (ej. dos "Pri (ABO) 26" distintas,
+    // una activa y otra pausada) — por eso se guarda también el campaign_id, que sí es único,
+    // para no confundir el estado de una con el de la otra.
+    const campanias = (await insights({ level: 'campaign', fields: 'campaign_id,campaign_name,spend,actions', time_range: tr, limit: 200 }))
+      .map(c => ({ id: c.campaign_id, nombre: c.campaign_name, consultas: consultas(c.actions), leads: leads(c.actions), gasto: Number(c.spend) || 0 }))
       .sort((a, b) => b.consultas - a.consultas);
 
-    // Estado de cada campaña (activa/pausada) — se junta el de todas las cuentas
+    // Estado de cada campaña (activa/pausada) — se junta el de todas las cuentas, por ID (no por nombre)
     try {
       const listas = await Promise.all(accts().map(a =>
-        gj(API + '/' + a + '/campaigns?fields=name,effective_status&limit=500&access_token=' + encodeURIComponent(TOKEN))
+        gj(API + '/' + a + '/campaigns?fields=id,name,effective_status&limit=500&access_token=' + encodeURIComponent(TOKEN))
           .then(j => j.data || []).catch(() => [])
       ));
       const map = {};
-      [].concat.apply([], listas).forEach(c => { map[c.name] = c.effective_status === 'ACTIVE' ? 'act' : 'pau'; });
-      campanias.forEach(c => { c.estado = map[c.nombre] || 'pau'; });
+      [].concat.apply([], listas).forEach(c => { map[c.id] = c.effective_status === 'ACTIVE' ? 'act' : 'pau'; });
+      campanias.forEach(c => { c.estado = map[c.id] || 'pau'; });
     } catch (e) { campanias.forEach(c => { c.estado = 'act'; }); }
 
     // Por anuncio = videos/creativos (se agrupan por nombre sumando cuentas)
