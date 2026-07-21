@@ -33,7 +33,10 @@ function consultas(actions) {
 
 function ymd(d) { return d.toISOString().slice(0, 10); }
 function rangos(tipo) {
-  const hoy = new Date();
+  // El servidor corre en UTC; Argentina es UTC-3 (sin horario de verano).
+  // Sin este ajuste, entre las 21:00 y las 23:59 hora Argentina el servidor ya "ve" el
+  // día siguiente y calcula mal el inicio de la semana/mes (se corre un día).
+  const hoy = new Date(Date.now() - 3 * 60 * 60 * 1000);
   const y = hoy.getUTCFullYear(), m = hoy.getUTCMonth();
   if (tipo === 'semana') {
     const dow = (hoy.getUTCDay() + 6) % 7; // 0 = lunes
