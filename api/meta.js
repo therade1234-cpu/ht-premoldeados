@@ -104,6 +104,18 @@ module.exports = async function handler(req, res) {
     const gasto = totRows.reduce((s, x) => s + (Number(x.spend) || 0), 0);
     const cons = totRows.reduce((s, x) => s + consultas(x.actions), 0);
 
+    // Diagnóstico: TODOS los tipos de acción que devolvió Meta en este período, sumados.
+    // Sirve para verificar si CONSULTA_MATCH está agarrando el tipo correcto (o si falta sumar otro,
+    // p.ej. mensajes que empiezan por WhatsApp en vez de Messenger).
+    const accionesMap = {};
+    totRows.forEach(row => (row.actions || []).forEach(a => {
+      if (!a || !a.action_type) return;
+      accionesMap[a.action_type] = (accionesMap[a.action_type] || 0) + (Number(a.value) || 0);
+    }));
+    const todasLasAcciones = Object.keys(accionesMap)
+      .map(k => ({ tipo: k, valor: accionesMap[k], cuenta: k.indexOf(CONSULTA_MATCH) >= 0 }))
+      .sort((a, b) => b.valor - a.valor);
+
     // Período anterior (para el % vs anterior)
     let gastoPrev = null, consPrev = null;
     if (r.pSince) {
@@ -174,7 +186,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       configured: true, range: tipo, since: r.since, until: r.until,
       totales: { consultas: cons, gasto, consultasPrev: consPrev, gastoPrev },
-      serie, campanias, videos, localidades, historial, cuentas
+      serie, campanias, videos, localidades, historial, cuentas, todasLasAcciones
     });
   } catch (e) {
     return res.status(200).json({ configured: true, error: e.message });
