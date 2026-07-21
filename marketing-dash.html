@@ -1001,7 +1001,12 @@
     for(var i=0;i<n;i+=size){var ch=serie.slice(i,i+size);out.push([ch[0].fecha.slice(5).split('-').reverse().join('/'),ch.reduce(function(s,x){return s+x.consultas;},0)]);}
     return out;
   }
-  function setModo(txt,cls){var b=document.getElementById('modo');if(b){b.textContent=txt;b.style.background=cls==='live'?'var(--good-ghost)':'var(--accent-ghost)';b.style.color=cls==='live'?'var(--good)':'var(--accent)';}}
+  function setModo(txt,cls){
+    ['modo','modo2'].forEach(function(id){
+      var b=document.getElementById(id);
+      if(b){b.textContent=txt;b.style.background=cls==='live'?'var(--good-ghost)':'var(--accent-ghost)';b.style.color=cls==='live'?'var(--good)':'var(--accent)';}
+    });
+  }
   async function sync(p){
     try{
       var res=await fetch('/api/meta?range='+p,{cache:'no-store'});
@@ -1019,8 +1024,22 @@
       if(j.campanias&&j.campanias.length) camps=j.campanias.map(function(c){return {name:c.nombre,estado:c.estado||'act',consultas:c.consultas,gasto:c.gasto,cpc:c.consultas?c.gasto/c.consultas:0};});
       if(j.videos&&j.videos.length) videos=j.videos.map(function(v,i){return {r:i+1,name:v.nombre,consultas:v.consultas,gasto:v.gasto,cpc:v.consultas?v.gasto/v.consultas:0};});
       if(j.localidades&&j.localidades.length) locs=j.localidades.map(function(l){return {name:l.nombre,consultas:l.consultas,gasto:l.gasto,cpc:l.consultas?l.gasto/l.consultas:null};});
+      if(j.historial&&j.historial.length){
+        hist=j.historial.map(function(h){return {fecha:h.fecha,camp:h.campana,anuncio:h.anuncio,ciudad:h.ciudad,consultas:h.consultas,gasto:h.gasto};});
+        // completar "anuncios" y "última actividad" de cada campaña con datos reales del historial
+        var porCamp={};
+        hist.forEach(function(h){
+          var e=porCamp[h.camp]||(porCamp[h.camp]={anuncios:{},ultima:''});
+          e.anuncios[h.anuncio]=1;
+          if(h.fecha>e.ultima)e.ultima=h.fecha;
+        });
+        camps.forEach(function(c){
+          var e=porCamp[c.name];
+          if(e){ c.anuncios=Object.keys(e.anuncios).length; c.ultima=e.ultima; }
+        });
+      }
       setModo('En vivo · Meta Ads','live');
-      render(p); paintVideos(); paintCamps(); paintLocs(); paintVideosFull(); paintCampDir();
+      render(p); paintVideos(); paintCamps(); paintLocs(); paintVideosFull(); paintCampDir(); paintHist();
     }catch(e){ setModo('Demo · datos de ejemplo','demo'); }
   }
 

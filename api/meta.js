@@ -110,10 +110,22 @@ module.exports = async function handler(req, res) {
       .map(rg => ({ nombre: rg.region || 'Sin dato', consultas: consultas(rg.actions), gasto: Number(rg.spend) || 0 }))
       .sort((a, b) => b.consultas - a.consultas);
 
+    // Historial diario por anuncio + campaña + ciudad (para la pestaña "Historial")
+    let historial = [];
+    try {
+      historial = (await insights({
+        level: 'ad', fields: 'campaign_name,ad_name,spend,actions', breakdowns: 'region',
+        time_range: tr, time_increment: 1, limit: 1000,
+      })).map(h => ({
+        fecha: h.date_start, campana: h.campaign_name, anuncio: h.ad_name,
+        ciudad: h.region || 'Sin dato', consultas: consultas(h.actions), gasto: Number(h.spend) || 0,
+      })).sort((a, b) => b.fecha.localeCompare(a.fecha));
+    } catch (e) { historial = []; }
+
     return res.status(200).json({
       configured: true, range: tipo, since: r.since, until: r.until,
       totales: { consultas: cons, gasto, consultasPrev: consPrev, gastoPrev },
-      serie, campanias, videos, localidades
+      serie, campanias, videos, localidades, historial
     });
   } catch (e) {
     return res.status(200).json({ configured: true, error: e.message });
