@@ -1446,23 +1446,34 @@ function sigOf(it){return [it.fecha,it.fechaObra,it.fechaRep,it.fechaVenta,it.cl
 function hashStr(s){var h=5381,i=s.length;while(i){h=(h*33)^s.charCodeAt(--i);}return (h>>>0).toString(36);}
 function idFromSig(it){var s=sigOf(it);return 'h'+hashStr(s)+s.length.toString(36);}
 function ensureIds(arr){if(Array.isArray(arr)){for(var i=0;i<arr.length;i++){var it=arr[i];if(it&&typeof it==='object'&&!it.id)it.id=idFromSig(it);}}}
+// ID único y ESTABLE por ítem (NO derivado del contenido): no cambia al editar ni colisiona con otra obra distinta.
+function newId(){return 'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+// Marca un ítem como creado/modificado AHORA: le asegura un id estable y actualiza su marca de tiempo (updatedAt).
+function touch(it){if(it&&typeof it==='object'){if(!it.id)it.id=newId();it.updatedAt=Date.now();}return it;}
 function tombstone(it){if(!it)return;if(!Array.isArray(state._deleted))state._deleted=[];state._deleted.push(it.id||idFromSig(it));state._deleted.push(sigOf(it));}
 // Marca SOLO la firma de contenido (para usar ANTES de mover/editar: borra la versión vieja aunque el id no coincida entre dispositivos)
 function tombstoneSig(it){if(!it)return;if(!Array.isArray(state._deleted))state._deleted=[];state._deleted.push(sigOf(it));}
 function unionDeleted(a,b){var s={};(Array.isArray(a)?a:[]).forEach(function(k){s[k]=1;});(Array.isArray(b)?b:[]).forEach(function(k){s[k]=1;});return Object.keys(s);}
 function mergeArr(remote,local,deletedArr){
+  // Combina por ID con "gana el más reciente" (last-write-wins según updatedAt).
+  // - Deduplica SOLO por id (dos obras distintas con datos iguales NO se pisan entre sí).
+  // - Para un mismo id, se queda la versión con updatedAt más nuevo -> las ediciones/movimientos
+  //   se propagan en ambos sentidos (lo que faltaba y causaba las desincronizaciones).
+  // - Un ítem del SERVIDOR se descarta si su id está borrado (tombstone por ID). Lo LOCAL es inmune
+  //   (una obra que tenés a la vista no se borra por accidente).
   var del={};(Array.isArray(deletedArr)?deletedArr:[]).forEach(function(k){del[k]=1;});
-  var out=[],seenId={},seenSig={};
-  function dup(it){var sig=sigOf(it);return (it.id&&seenId[it.id])||seenSig[sig];}
-  function keep(it){out.push(it);if(it.id)seenId[it.id]=1;seenSig[sigOf(it)]=1;}
-  // 1) Ítems PRESENTES localmente: siempre se conservan (inmunes a tombstones; solo se evita duplicar).
-  //    Así, mover/editar y "volver atrás" nunca borra ni duplica una obra que tenés a la vista.
-  (Array.isArray(local)?local:[]).forEach(function(it){if(it&&typeof it==='object'&&!dup(it))keep(it);});
-  // 2) Ítems del SERVIDOR: se descartan si están borrados (tombstone, solo por ID) o si ya están presentes.
-  //    OJO: el tombstone NUNCA se compara por "sig" (contenido) — si dos obras distintas comparten
-  //    los mismos datos (mismo cliente/fecha/etc.), no queremos que borrar una tape a la otra para siempre.
-  (Array.isArray(remote)?remote:[]).forEach(function(it){if(!it||typeof it!=='object')return;if(it.id&&del[it.id])return;if(dup(it))return;keep(it);});
-  return out;
+  var byId={},order=[];
+  function put(it,fromRemote){
+    if(!it||typeof it!=='object')return;
+    if(!it.id)it.id=idFromSig(it);
+    if(fromRemote&&del[it.id])return;
+    var cur=byId[it.id];
+    if(!cur){byId[it.id]=it;order.push(it.id);}
+    else if((+it.updatedAt||0)>(+cur.updatedAt||0)){byId[it.id]=it;}
+  }
+  (Array.isArray(local)?local:[]).forEach(function(it){put(it,false);});
+  (Array.isArray(remote)?remote:[]).forEach(function(it){put(it,true);});
+  return order.map(function(id){return byId[id];});
 }
 
 let _toastTimer=null;
@@ -2143,6 +2154,7 @@ function guardarEditarMov(){
   m.desc=document.getElementById('emov-desc').value.trim()||m.cat;
   m.monto=Math.abs(parseMonto(document.getElementById('emov-monto').value));
   m.fecha=document.getElementById('emov-fecha').value;
+  touch(m);
   saveState();
   cerrarEditarMov();
   renderAdmin();
@@ -2179,7 +2191,7 @@ function agregarMovimiento(){
   const fecha=document.getElementById('fecha-mov').value;
   if(!monto){alert('Ingresá un monto válido');return;}
   if(!fecha){alert('Seleccioná una fecha');return;}
-  state.movimientos.push({tipo,cat,desc,monto,fecha});
+  state.movimientos.push(touch({tipo,cat,desc,monto,fecha}));
   saveState();
   document.getElementById('desc-mov').value='';
   document.getElementById('monto-mov').value='';
@@ -3876,7 +3888,7 @@ function setVale(nombre,fecha,val){
   });
   // Agregar nuevo si monto > 0
   if(monto>0){
-    state.movimientos.push({tipo:'gasto',cat:'vales',desc:descVale,monto:monto,fecha:fecha});
+    state.movimientos.push(touch({tipo:'gasto',cat:'vales',desc:descVale,monto:monto,fecha:fecha}));
   }
   saveState();
   // Refrescar admin si está visible
@@ -4234,6 +4246,7 @@ async function guardarEdicion(){
   obra.totalObra=gn('edit-total-obra');
   obra.sena=gn('edit-sena');
   obra.resta=gn('edit-resta');
+  touch(obra); // marca la obra como modificada AHORA -> el cambio se propaga a los demás dispositivos
   if(state.ventas.indexOf(obra)===-1)state.ventas.push(obra); // por si el polling reemplazó el array
   const nombreCli=obra.cliente||'cliente';
   cerrarModalEditar();
@@ -4274,9 +4287,9 @@ function confirmarFecha(){
   const obra=_moverObraCtx.obra;
   cerrarModalFecha();
   if(!obra)return;
-  tombstoneSig(obra); // marca la versión con la fecha VIEJA como borrada (evita que reaparezca duplicada)
   // Mutar el objeto por REFERENCIA (robusto: el polling reemplaza el array y los índices quedan viejos)
   obra.fecha=nuevaFecha;
+  touch(obra); // marca el movimiento de fecha como el cambio más reciente -> no vuelve al lugar viejo
   if(state.ventas.indexOf(obra)===-1)state.ventas.push(obra); // por si el array fue reemplazado
   saveState();
   const parts=nuevaFecha.split('-');
@@ -4376,7 +4389,7 @@ async function cargarVenta(){
   const resta=parseMonto(document.getElementById('v-resta').value);
   const placasReja=parseInt(document.getElementById('v-placas-reja').value)||0;
   if(!vend||!cliente||!metros||!fecha){alert('Completá al menos: vendedor, cliente, metros y fecha');return;}
-  state.ventas.push({vendedor:vend,origen,cliente,tel,fecha,fechaVenta,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja});
+  state.ventas.push(touch({vendedor:vend,origen,cliente,tel,fecha,fechaVenta,localidad:loc,direccion:dir,metros,altura,diseno:dis,distribucion:dist,desmonte,encadenado:enc,gorros:gor,columnas:col,agua,luz,detalle,flete,precio,totalObra,sena,resta,material:'Cerco',placasReja}));
   const vendSel=document.getElementById('v-vendedor');
   const vendGuardado=vendSel?vendSel.value:'';
   // limpiar

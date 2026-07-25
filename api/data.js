@@ -62,17 +62,23 @@ function hashStr(s) { let h = 5381, i = s.length; while (i) { h = (h * 33) ^ s.c
 function idFromSig(it) { const s = sigOf(it); return 'h' + hashStr(s) + s.length.toString(36); }
 function ensureIds(arr) { if (Array.isArray(arr)) { for (let i = 0; i < arr.length; i++) { const it = arr[i]; if (it && typeof it === 'object' && !it.id) it.id = idFromSig(it); } } return arr; }
 function mergeArr(existing, incoming, delSet) {
-  const out = [], seenId = {}, seenSig = {};
-  function dup(it) { const sig = sigOf(it); return (it.id && seenId[it.id]) || seenSig[sig]; }
-  function keep(it) { out.push(it); if (it.id) seenId[it.id] = 1; seenSig[sigOf(it)] = 1; }
-  // incoming (lo que manda el cliente = lo que TIENE presente): inmune a tombstones.
-  // Un ítem presente nunca se borra por accidente; solo se evita duplicar.
-  (Array.isArray(incoming) ? incoming : []).forEach(function (it) { if (it && typeof it === 'object' && !dup(it)) keep(it); });
-  // existing (guardado en el servidor): se descarta si está borrado (tombstone, solo por ID) o ya presente.
-  // OJO: el tombstone NUNCA se compara por "sig" (contenido) — si dos ítems distintos comparten los
-  // mismos datos, no queremos que borrar uno tape al otro para siempre.
-  (Array.isArray(existing) ? existing : []).forEach(function (it) { if (!it || typeof it !== 'object') return; if (it.id && delSet[it.id]) return; if (dup(it)) return; keep(it); });
-  return ensureIds(out); // el servidor deja ids deterministas canónicos
+  // Combina por ID con "gana el más reciente" (last-write-wins según updatedAt), igual que el cliente.
+  // - Deduplica SOLO por id (dos ítems distintos con datos iguales no se pisan entre sí).
+  // - Para un mismo id, se queda la versión con updatedAt más nuevo (las ediciones se propagan).
+  // - Un ítem 'existing' (servidor) se descarta si su id está borrado (tombstone por ID).
+  //   'incoming' (lo que manda el cliente = lo que tiene presente) es inmune a tombstones.
+  const byId = {}, order = [];
+  function put(it, fromExisting) {
+    if (!it || typeof it !== 'object') return;
+    if (!it.id) it.id = idFromSig(it);
+    if (fromExisting && delSet[it.id]) return;
+    const cur = byId[it.id];
+    if (!cur) { byId[it.id] = it; order.push(it.id); }
+    else if ((+it.updatedAt || 0) > (+cur.updatedAt || 0)) { byId[it.id] = it; }
+  }
+  (Array.isArray(incoming) ? incoming : []).forEach(function (it) { put(it, false); });
+  (Array.isArray(existing) ? existing : []).forEach(function (it) { put(it, true); });
+  return ensureIds(order.map(function (id) { return byId[id]; }));
 }
 function unionDeleted(a, b) {
   const s = {};
