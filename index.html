@@ -1423,6 +1423,32 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       </table></div>
     </div>
 
+    <div class="card">
+      <div class="card-title">🚚 Calculadora de fletes</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Localidad</label>
+          <select id="flete-localidad" onchange="fleteCalcular()"><option value="">Seleccionar...</option></select></div>
+        <div class="form-group"><label class="form-label">Metros cuadrados (m²)</label>
+          <input type="text" id="flete-metros" placeholder="Ej: 20" inputmode="decimal" oninput="fleteCalcular()" /></div>
+      </div>
+      <div id="flete-resultado" style="margin-top:6px;background:#F7F7F7;border:1px solid #E5E5E5;border-radius:10px;padding:16px 18px;text-align:center;color:#A0A0A0;font-size:13px">Elegí una localidad y los m² para calcular</div>
+      <div style="font-size:10px;color:#9A9A9A;margin-top:8px;text-align:center">El precio base cubre hasta 20 m². Se cobra proporcional: base × (m² ÷ 20).</div>
+      <div style="margin-top:14px;border-top:1px solid #F0F0F0;padding-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="fleteToggleAdmin()">
+          <span style="font-size:11px;font-weight:700;color:#993C1D;text-transform:uppercase;letter-spacing:.05em">Localidades y precios (por 20 m²)</span>
+          <span id="flete-admin-toggle" style="font-size:12px;color:#993C1D;font-weight:600">▼ Editar</span>
+        </div>
+        <div id="flete-admin" style="display:none;margin-top:12px">
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Localidad</label><input type="text" id="flete-nueva-loc" placeholder="Ej: Moreno" /></div>
+            <div class="form-group"><label class="form-label">Precio base (20 m²)</label><input type="text" id="flete-nuevo-precio" placeholder="Ej: 200.000" inputmode="decimal" /></div>
+          </div>
+          <button class="btn-primary" onclick="fleteAgregarZona()">+ Agregar / actualizar</button>
+          <div id="flete-lista-zonas" style="margin-top:14px"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1434,7 +1460,7 @@ const OC=['#D85A30','#E8744A','#993C1D','#F0997B','#BA7517','#5DCAA5','#7F77DD']
 const CAT_LABEL={obras:'Obras',senas:'Señas',publicidad:'Publicidad',sueldos:'Sueldos',fabrica:'Fábrica',materiales:'Materiales',vales:'Vales',fletes:'Fletes',ferreteria:'Ferretería',nafta:'Nafta',gastos_calle:'Gastos de calle',sueldos_oficina:'Sueldos oficina',pago_chicos_obra:'Pago semanal chicos de obra',nominas:'Nóminas',otro:'Otro'};
 
 // ---- PERSISTENCIA EN TIEMPO REAL (Vercel Edge Config) ----
-let state={ movimientos:[], ventas:[], vendedores:[], visitas:[], reparaciones:[], campanias:[], mktMedia:[], stock:[], produccion:[], _deleted:[] };
+let state={ movimientos:[], ventas:[], vendedores:[], visitas:[], reparaciones:[], campanias:[], mktMedia:[], stock:[], produccion:[], fletesZonas:[], _deleted:[] };
 let _panelActivo = null;
 let _saving = false;
 let _lastSave = 0;
@@ -1520,6 +1546,7 @@ function applyData(data){
   state.mktMedia=mergeArr(data.mktMedia, state.mktMedia, del);
   ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);ensureIds(state.campanias);ensureIds(state.mktMedia);ensureIds(state.stock);ensureIds(state.produccion);
   if(Array.isArray(data.vendedores))state.vendedores=data.vendedores;
+  if(Array.isArray(data.fletesZonas))state.fletesZonas=data.fletesZonas;
   // Restaurar nóminas completas (empleados, porDia y semanas).
   // NO reemplazar mientras el usuario edita nóminas (perdería lo que está cargando) ni si este equipo tiene cambios sin sincronizar.
   if(data.nomPlanilla && data.nomPlanilla.length > 0 && !editandoNominas && !_nomDirty){
@@ -1562,7 +1589,7 @@ async function saveState(){
     const r = await fetch('/api/data', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, nomPlanilla: (_nomDirty ? nomPlanilla : undefined), visitas: state.visitas, reparaciones: state.reparaciones, campanias: state.campanias, mktMedia: state.mktMedia, stock: state.stock, produccion: state.produccion, _deleted: state._deleted })
+      body: JSON.stringify({ movimientos: state.movimientos, ventas: state.ventas, vendedores: state.vendedores, fletesZonas: state.fletesZonas, nomPlanilla: (_nomDirty ? nomPlanilla : undefined), visitas: state.visitas, reparaciones: state.reparaciones, campanias: state.campanias, mktMedia: state.mktMedia, stock: state.stock, produccion: state.produccion, _deleted: state._deleted })
     });
     const result = await r.json();
     if(!result.ok) {
@@ -3194,45 +3221,83 @@ function descargarAdminPDF(){
   var metrics=document.getElementById('admin-metrics');
   var btn=document.getElementById('btn-pdf-admin');
   var prevBtn=btn?btn.innerHTML:''; if(btn){btn.innerHTML='...';btn.disabled=true;}
-  // contenedor temporal para render limpio (A4 horizontal ~1123px de ancho util)
-  var wrap=document.createElement('div');
-  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:1123px;background:#fff;padding:28px;font-family:inherit;color:#1A1A1A;box-sizing:border-box';
-  wrap.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px"><span style="font-size:24px;font-weight:800;color:#D85A30">HT Premoldeados</span><span style="font-size:14px;color:#666">— Administración</span></div>'+
-    '<div style="font-size:17px;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #eee">'+label+'</div>';
-  if(metrics){var mc=metrics.cloneNode(true);wrap.appendChild(mc);}
-  var vc=vista.cloneNode(true);vc.style.display='block';vc.style.marginTop='16px';
-  var t=vc.querySelector('table'); if(t){t.style.width='100%';t.style.tableLayout='fixed';t.style.fontSize='12px';}
-  wrap.appendChild(vc);
-  document.body.appendChild(wrap);
-  html2canvas(wrap,{scale:2,backgroundColor:'#fff',useCORS:true,windowWidth:1123}).then(function(canvas){
-    document.body.removeChild(wrap);
-    if(btn){btn.innerHTML=prevBtn;btn.disabled=false;}
-    var jsPDF=window.jspdf.jsPDF;
-    var pdf=new jsPDF('l','mm','a4');
-    var pw=297, ph=210;
+  var jsPDF=window.jspdf.jsPDF;
+  var pdf=new jsPDF('l','mm','a4');
+  var pw=297, ph=210;
+  var hojas=[];  // lista de {added:false}
+
+  // encabezado comun reutilizable
+  function encabezado(){
+    return '<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px"><span style="font-size:24px;font-weight:800;color:#D85A30">HT Premoldeados</span><span style="font-size:14px;color:#666">— Administración</span></div>'+
+      '<div style="font-size:17px;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #eee">'+label+'</div>';
+  }
+  function nuevoWrap(){
+    var w=document.createElement('div');
+    w.style.cssText='position:fixed;left:-9999px;top:0;width:1123px;background:#fff;padding:28px;font-family:inherit;color:#1A1A1A;box-sizing:border-box';
+    w.innerHTML=encabezado();
+    return w;
+  }
+  // agrega un canvas al pdf, partiendo en varias hojas si es muy alto
+  function addCanvas(canvas,esPrimera){
     var imgH=canvas.height*pw/canvas.width;
     if(imgH<=ph){
+      if(!esPrimera)pdf.addPage();
       pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,pw,imgH);
     }else{
-      // partir en varias páginas
-      var pxPerPage=canvas.width*ph/pw;
-      var y=0, page=0;
+      var pxPerPage=canvas.width*ph/pw, y=0, page=0;
       while(y<canvas.height){
         var sliceH=Math.min(pxPerPage,canvas.height-y);
         var c2=document.createElement('canvas');
         c2.width=canvas.width;c2.height=sliceH;
         var ctx=c2.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c2.width,c2.height);
         ctx.drawImage(canvas,0,y,canvas.width,sliceH,0,0,canvas.width,sliceH);
-        if(page>0)pdf.addPage();
+        if(!esPrimera||page>0)pdf.addPage();
         pdf.addImage(c2.toDataURL('image/png'),'PNG',0,0,pw,sliceH*pw/canvas.width);
         y+=sliceH;page++;
       }
     }
+  }
+
+  // ---- HOJA 1: tabla de la vista actual + metricas ----
+  var wrap1=nuevoWrap();
+  if(metrics){wrap1.appendChild(metrics.cloneNode(true));}
+  var vc=vista.cloneNode(true);vc.style.display='block';vc.style.marginTop='16px';
+  var t=vc.querySelector('table'); if(t){t.style.width='100%';t.style.tableLayout='fixed';t.style.fontSize='12px';}
+  wrap1.appendChild(vc);
+
+  // ---- HOJA 2: distribucion de gastos + ingresos ----
+  var wrap2=nuevoWrap();
+  var dg=document.getElementById('dist-gastos'), di=document.getElementById('dist-ingresos');
+  var cardG=dg?dg.closest('.card'):null, cardI=di?di.closest('.card'):null;
+  var hay2=false;
+  if(cardG){var c=cardG.cloneNode(true);c.style.marginTop='0';c.style.marginBottom='18px';wrap2.appendChild(c);hay2=true;}
+  if(cardI){var c2=cardI.cloneNode(true);c2.style.marginTop='0';wrap2.appendChild(c2);hay2=true;}
+
+  var opts={scale:2,backgroundColor:'#fff',windowWidth:1123};
+  // renderiza un wrap (lo agrega, captura y lo quita) — secuencial para evitar IDs duplicados
+  function renderWrap(w){
+    document.body.appendChild(w);
+    return html2canvas(w,opts).then(function(cv){
+      if(w.parentNode)w.parentNode.removeChild(w);
+      return cv;
+    },function(e){
+      if(w.parentNode)w.parentNode.removeChild(w);
+      throw e;
+    });
+  }
+
+  renderWrap(wrap1).then(function(cv1){
+    addCanvas(cv1,true);
+    if(!hay2)return null;
+    return renderWrap(wrap2).then(function(cv2){ addCanvas(cv2,false); });
+  }).then(function(){
+    if(btn){btn.innerHTML=prevBtn;btn.disabled=false;}
     var fname='Administracion_'+(label||curView).replace(/[^a-z0-9]/gi,'_')+'.pdf';
     pdf.save(fname);
-  }).catch(function(){
-    document.body.removeChild(wrap);
+  }).catch(function(e){
+    [wrap1,wrap2].forEach(function(w){if(w&&w.parentNode)w.parentNode.removeChild(w);});
     if(btn){btn.innerHTML=prevBtn;btn.disabled=false;}
+    console.error('PDF admin error:',e);
     alert('No se pudo generar el PDF');
   });
 }
@@ -4534,6 +4599,7 @@ function calcComisionEscala(totalVendido){
   return{pct,comision,basico:BASICO,total:comision+BASICO};
 }
 function renderVendedores(){
+  renderFletes();
   document.getElementById('vend-period-label').textContent=MESES[vendMonth]+' '+vendYear;
   document.getElementById('ranking-titulo').textContent='Ranking — '+MESES[vendMonth];
   const vs=state.ventas.filter(v=>{const d=parseFecha(v.fechaVenta||v.fecha);return d.getFullYear()===vendYear&&d.getMonth()===vendMonth;});
@@ -4595,6 +4661,96 @@ function agregarVendedor(){
   document.getElementById('vend-nombre').value='';document.getElementById('vend-tel').value='';document.getElementById('vend-zona').value='';
   const sel=document.getElementById('v-vendedor');sel.innerHTML='<option value="">Seleccionar...</option>'+state.vendedores.map(v=>`<option value="${v.nombre}">${v.nombre}</option>`).join('');
   renderVendedores();
+}
+
+// ---- FLETES (calculadora por localidad + m²) ----
+// Precio base = hasta 20 m². Total = base × (m² / 20). Precios EDITABLES desde la pantalla.
+// Semilla inicial tomada del mapa (revisar/ajustar valores reales).
+var FLETES_SEED=[
+  {loc:'Moreno',precio:200000},{loc:'General Rodríguez',precio:260000},{loc:'Pilar',precio:280000},
+  {loc:'Fátima',precio:280000},{loc:'Escobar',precio:300000},{loc:'Marcos Paz',precio:330000},
+  {loc:'General Las Heras',precio:380000},{loc:'Luján',precio:420000},{loc:'Campana',precio:420000},
+  {loc:'San Andrés de Giles',precio:480000},{loc:'Mercedes',precio:480000},{loc:'Zárate',precio:500000},
+  {loc:'Cañuelas',precio:480000},{loc:'San Vicente',precio:480000},{loc:'Alejandro Korn',precio:450000},
+  {loc:'Domselaar',precio:390000},{loc:'San Antonio de Areco',precio:450000},{loc:'Ezeiza',precio:380000},
+  {loc:'Tristán Suárez',precio:380000},{loc:'Monte Grande',precio:380000},{loc:'Quilmes',precio:290000},
+  {loc:'Avellaneda',precio:290000},{loc:'Berazategui',precio:450000},{loc:'Guillermo E. Hudson',precio:450000},
+  {loc:'La Plata',precio:480000},{loc:'City Bell',precio:480000},{loc:'Los Hornos',precio:500000}
+];
+var _fleteAdminOpen=false;
+function fleteEnsureSeed(){
+  if(!Array.isArray(state.fletesZonas))state.fletesZonas=[];
+  if(state.fletesZonas.length===0){
+    state.fletesZonas=FLETES_SEED.map(function(z){return {loc:z.loc,precio:z.precio};});
+  }
+}
+function fleteZonasOrdenadas(){
+  return (state.fletesZonas||[]).slice().sort(function(a,b){return a.loc.localeCompare(b.loc,'es');});
+}
+function renderFletes(){
+  fleteEnsureSeed();
+  var sel=document.getElementById('flete-localidad');
+  if(sel){
+    var prev=sel.value;
+    var zs=fleteZonasOrdenadas();
+    sel.innerHTML='<option value="">Seleccionar...</option>'+zs.map(function(z){return '<option value="'+z.loc.replace(/"/g,'&quot;')+'">'+z.loc+'</option>';}).join('');
+    if(prev)sel.value=prev;
+  }
+  var adm=document.getElementById('flete-admin');
+  if(adm)adm.style.display=_fleteAdminOpen?'block':'none';
+  var tog=document.getElementById('flete-admin-toggle');
+  if(tog)tog.textContent=_fleteAdminOpen?'▲ Cerrar':'▼ Editar';
+  var lst=document.getElementById('flete-lista-zonas');
+  if(lst){
+    var zs2=fleteZonasOrdenadas();
+    if(!zs2.length){lst.innerHTML='<div style="color:#A0A0A0;font-size:12px;text-align:center;padding:14px 0">Sin localidades cargadas</div>';}
+    else{
+      lst.innerHTML='<table class="movs" style="width:100%"><thead><tr><th>Localidad</th><th style="text-align:right;width:120px">Base (20 m²)</th><th style="width:36px"></th></tr></thead><tbody>'+
+        zs2.map(function(z){return '<tr><td style="font-weight:600">'+z.loc+'</td><td style="text-align:right">'+fmt(z.precio)+'</td>'+
+          '<td style="text-align:center"><span title="Borrar" onclick="fleteBorrarZona(\''+z.loc.replace(/'/g,"\\'")+'\')" style="cursor:pointer;color:#C62828;font-weight:700">✕</span></td></tr>';}).join('')+
+        '</tbody></table>';
+    }
+  }
+  fleteCalcular();
+}
+function fleteCalcular(){
+  var out=document.getElementById('flete-resultado');if(!out)return;
+  var loc=(document.getElementById('flete-localidad')||{}).value||'';
+  var metros=parseMonto((document.getElementById('flete-metros')||{}).value);
+  if(!loc){out.style.color='#A0A0A0';out.innerHTML='Elegí una localidad y los m² para calcular';return;}
+  var zona=(state.fletesZonas||[]).find(function(z){return z.loc===loc;});
+  if(!zona){out.style.color='#A0A0A0';out.innerHTML='Localidad sin precio';return;}
+  if(!metros||metros<=0){
+    out.style.color='#1A1A1A';
+    out.innerHTML='<div style="font-size:12px;color:#6B6B6B">Base '+loc+' (hasta 20 m²)</div><div style="font-size:22px;font-weight:800;color:#993C1D;margin-top:2px">'+fmt(zona.precio)+'</div><div style="font-size:11px;color:#9A9A9A;margin-top:2px">Ingresá los m² para el total</div>';
+    return;
+  }
+  var total=zona.precio*(metros/20);
+  out.style.color='#1A1A1A';
+  out.innerHTML='<div style="font-size:12px;color:#6B6B6B">'+loc+' · '+(metros%1===0?metros:metros.toFixed(1))+' m²</div>'+
+    '<div style="font-size:26px;font-weight:800;color:#2E7D32;margin-top:2px">'+fmt(Math.round(total))+'</div>'+
+    '<div style="font-size:11px;color:#9A9A9A;margin-top:3px">'+fmt(zona.precio)+' × ('+(metros%1===0?metros:metros.toFixed(1))+' ÷ 20)</div>';
+}
+function fleteToggleAdmin(){_fleteAdminOpen=!_fleteAdminOpen;renderFletes();}
+function fleteAgregarZona(){
+  var locEl=document.getElementById('flete-nueva-loc'),preEl=document.getElementById('flete-nuevo-precio');
+  var loc=(locEl.value||'').trim();var precio=parseMonto(preEl.value);
+  if(!loc){showToast('Poné el nombre de la localidad','error');return;}
+  if(!precio||precio<=0){showToast('Poné un precio base válido','error');return;}
+  fleteEnsureSeed();
+  var ex=state.fletesZonas.find(function(z){return z.loc.toLowerCase()===loc.toLowerCase();});
+  if(ex){ex.loc=loc;ex.precio=precio;}
+  else{state.fletesZonas.push({loc:loc,precio:precio});}
+  locEl.value='';preEl.value='';
+  saveState();
+  renderFletes();
+  showToast('Localidad guardada','success');
+}
+function fleteBorrarZona(loc){
+  if(!confirm('¿Borrar "'+loc+'"?'))return;
+  state.fletesZonas=(state.fletesZonas||[]).filter(function(z){return z.loc!==loc;});
+  saveState();
+  renderFletes();
 }
 
 // ---- LISTA DE PRECIOS ----
