@@ -1585,6 +1585,7 @@ function applyData(data){
   ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);ensureIds(state.campanias);ensureIds(state.mktMedia);ensureIds(state.stock);ensureIds(state.produccion);
   if(Array.isArray(data.vendedores))state.vendedores=data.vendedores;
   if(Array.isArray(data.fletesZonas))state.fletesZonas=data.fletesZonas;
+  if(fleteEnsureSeed()){ setTimeout(function(){ if(!_saving) saveState(); },300); }
   // Restaurar nóminas completas (empleados, porDia y semanas).
   // NO reemplazar mientras el usuario edita nóminas (perdería lo que está cargando) ni si este equipo tiene cambios sin sincronizar.
   if(data.nomPlanilla && data.nomPlanilla.length > 0 && !editandoNominas && !_nomDirty){
@@ -4705,22 +4706,39 @@ function agregarVendedor(){
 // Precio base = hasta 20 m². Total = base × (m² / 20). Precios EDITABLES desde la pantalla.
 // Semilla inicial tomada del mapa (revisar/ajustar valores reales).
 var FLETES_SEED=[
-  {loc:'Moreno',precio:200000},{loc:'General Rodríguez',precio:260000},{loc:'Pilar',precio:280000},
-  {loc:'Fátima',precio:280000},{loc:'Escobar',precio:300000},{loc:'Marcos Paz',precio:330000},
+  {loc:'Moreno',precio:200000},{loc:'Paso del Rey',precio:220000},{loc:'General Rodríguez',precio:260000},
+  {loc:'Pilar',precio:280000},{loc:'Fátima',precio:280000},{loc:'Escobar',precio:300000},{loc:'Marcos Paz',precio:330000},
   {loc:'General Las Heras',precio:380000},{loc:'Luján',precio:420000},{loc:'Campana',precio:420000},
   {loc:'San Andrés de Giles',precio:480000},{loc:'Mercedes',precio:480000},{loc:'Zárate',precio:500000},
   {loc:'Cañuelas',precio:480000},{loc:'San Vicente',precio:480000},{loc:'Alejandro Korn',precio:450000},
   {loc:'Domselaar',precio:390000},{loc:'San Antonio de Areco',precio:450000},{loc:'Ezeiza',precio:380000},
   {loc:'Tristán Suárez',precio:380000},{loc:'Monte Grande',precio:380000},{loc:'Quilmes',precio:290000},
   {loc:'Avellaneda',precio:290000},{loc:'Berazategui',precio:450000},{loc:'Guillermo E. Hudson',precio:450000},
-  {loc:'La Plata',precio:480000},{loc:'City Bell',precio:480000},{loc:'Los Hornos',precio:500000}
+  {loc:'La Plata',precio:480000},{loc:'City Bell',precio:480000},{loc:'Los Hornos',precio:500000},
+  {loc:'Florencio Varela',precio:380000}
 ];
+// Subir este número cada vez que se agreguen localidades nuevas a la semilla:
+// las localidades faltantes se agregan (una sola vez por dispositivo) en todos lados sin pisar precios editados.
+var FLETES_SEED_VER=2;
 var _fleteAdminOpen=false;
+// Devuelve true si modificó la lista (para guardar). Semilla inicial + migración por versión (agrega faltantes).
 function fleteEnsureSeed(){
   if(!Array.isArray(state.fletesZonas))state.fletesZonas=[];
   if(state.fletesZonas.length===0){
     state.fletesZonas=FLETES_SEED.map(function(z){return {loc:z.loc,precio:z.precio};});
+    try{localStorage.setItem('ht-flete-seed-ver',String(FLETES_SEED_VER));}catch(e){}
+    return true;
   }
+  var ver=0; try{ver=parseInt(localStorage.getItem('ht-flete-seed-ver')||'0',10)||0;}catch(e){}
+  if(ver>=FLETES_SEED_VER)return false;
+  var changed=false;
+  FLETES_SEED.forEach(function(s){
+    if(!state.fletesZonas.some(function(z){return (z.loc||'').toLowerCase()===s.loc.toLowerCase();})){
+      state.fletesZonas.push({loc:s.loc,precio:s.precio});changed=true;
+    }
+  });
+  try{localStorage.setItem('ht-flete-seed-ver',String(FLETES_SEED_VER));}catch(e){}
+  return changed;
 }
 function fleteZonasOrdenadas(){
   return (state.fletesZonas||[]).slice().sort(function(a,b){return a.loc.localeCompare(b.loc,'es');});
