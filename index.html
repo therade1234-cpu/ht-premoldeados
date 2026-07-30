@@ -4743,10 +4743,13 @@ function fleteCalcular(){
     return;
   }
   var total=zona.precio*(metros/20);
+  var fletes=Math.ceil(metros/40); // un camión lleva hasta 40 m²
+  var mStr=(metros%1===0?metros:metros.toFixed(1));
   out.style.color='#1A1A1A';
-  out.innerHTML='<div style="font-size:12px;color:#6B6B6B">'+loc+' · '+(metros%1===0?metros:metros.toFixed(1))+' m²</div>'+
+  out.innerHTML='<div style="font-size:12px;color:#6B6B6B">'+loc+' · '+mStr+' m²</div>'+
     '<div style="font-size:26px;font-weight:800;color:#2E7D32;margin-top:2px">'+fmt(Math.round(total))+'</div>'+
-    '<div style="font-size:11px;color:#9A9A9A;margin-top:3px">'+fmt(zona.precio)+' × ('+(metros%1===0?metros:metros.toFixed(1))+' ÷ 20)</div>';
+    '<div style="display:inline-block;margin-top:6px;background:#FDF3EF;border:1px solid #F0997B;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;color:#993C1D">🚚 '+fletes+' flete'+(fletes>1?'s':'')+'</div>'+
+    '<div style="font-size:11px;color:#9A9A9A;margin-top:6px">'+fmt(zona.precio)+' × ('+mStr+' ÷ 20)</div>';
 }
 function fleteToggleAdmin(){_fleteAdminOpen=!_fleteAdminOpen;renderFletes();}
 function fleteAgregarZona(){
