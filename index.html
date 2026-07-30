@@ -3194,20 +3194,22 @@ function descargarAdminPDF(){
   var metrics=document.getElementById('admin-metrics');
   var btn=document.getElementById('btn-pdf-admin');
   var prevBtn=btn?btn.innerHTML:''; if(btn){btn.innerHTML='...';btn.disabled=true;}
-  // contenedor temporal para render limpio
+  // contenedor temporal para render limpio (A4 horizontal ~1123px de ancho util)
   var wrap=document.createElement('div');
-  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff;padding:24px;font-family:inherit;color:#1A1A1A';
-  wrap.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px"><span style="font-size:22px;font-weight:800;color:#D85A30">HT Premoldeados</span><span style="font-size:13px;color:#666">— Administración</span></div>'+
-    '<div style="font-size:16px;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #eee">'+label+'</div>';
+  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:1123px;background:#fff;padding:28px;font-family:inherit;color:#1A1A1A;box-sizing:border-box';
+  wrap.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px"><span style="font-size:24px;font-weight:800;color:#D85A30">HT Premoldeados</span><span style="font-size:14px;color:#666">— Administración</span></div>'+
+    '<div style="font-size:17px;font-weight:700;margin-bottom:16px;padding-bottom:8px;border-bottom:2px solid #eee">'+label+'</div>';
   if(metrics){var mc=metrics.cloneNode(true);wrap.appendChild(mc);}
-  var vc=vista.cloneNode(true);vc.style.display='block';vc.style.marginTop='14px';wrap.appendChild(vc);
+  var vc=vista.cloneNode(true);vc.style.display='block';vc.style.marginTop='16px';
+  var t=vc.querySelector('table'); if(t){t.style.width='100%';t.style.tableLayout='fixed';t.style.fontSize='12px';}
+  wrap.appendChild(vc);
   document.body.appendChild(wrap);
-  html2canvas(wrap,{scale:2,backgroundColor:'#fff',useCORS:true}).then(function(canvas){
+  html2canvas(wrap,{scale:2,backgroundColor:'#fff',useCORS:true,windowWidth:1123}).then(function(canvas){
     document.body.removeChild(wrap);
     if(btn){btn.innerHTML=prevBtn;btn.disabled=false;}
     var jsPDF=window.jspdf.jsPDF;
-    var pdf=new jsPDF('p','mm','a4');
-    var pw=210, ph=297;
+    var pdf=new jsPDF('l','mm','a4');
+    var pw=297, ph=210;
     var imgH=canvas.height*pw/canvas.width;
     if(imgH<=ph){
       pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,pw,imgH);
