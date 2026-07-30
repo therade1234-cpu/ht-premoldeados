@@ -664,6 +664,7 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       <button class="nav-btn" onclick="navPrev()">&#8249;</button>
       <span class="period-label" id="period-label">—</span>
       <button class="nav-btn" onclick="navNext()">&#8250;</button>
+      <button class="nav-btn" id="btn-pdf-admin" onclick="descargarAdminPDF()" title="Descargar PDF" style="margin-left:8px;display:inline-flex;align-items:center;gap:5px;padding:0 12px;font-weight:700;color:#993C1D"><i class="ti ti-file-type-pdf"></i>PDF</button>
     </div>
   </div>
   <div class="content">
@@ -3181,6 +3182,56 @@ function descargarReciboPDF(){
     pdf.addImage(imgData,'PNG',0,0,w,h);
     var cliente=(document.getElementById('rc-cliente').value||'cliente').replace(/[^a-z0-9]/gi,'_');
     pdf.save('Recibo_'+cliente+'.pdf');
+  });
+}
+
+function descargarAdminPDF(){
+  var vistas={semana:'view-semana',mes:'view-mes',anual:'view-anual'};
+  var vid=vistas[curView]||'view-semana';
+  var vista=document.getElementById(vid);
+  if(!vista){alert('No hay datos para exportar');return;}
+  var label=(document.getElementById('period-label')||{}).textContent||'';
+  var metrics=document.getElementById('admin-metrics');
+  var btn=document.getElementById('btn-pdf-admin');
+  var prevBtn=btn?btn.innerHTML:''; if(btn){btn.innerHTML='...';btn.disabled=true;}
+  // contenedor temporal para render limpio
+  var wrap=document.createElement('div');
+  wrap.style.cssText='position:fixed;left:-9999px;top:0;width:794px;background:#fff;padding:24px;font-family:inherit;color:#1A1A1A';
+  wrap.innerHTML='<div style="display:flex;align-items:center;gap:12px;margin-bottom:6px"><span style="font-size:22px;font-weight:800;color:#D85A30">HT Premoldeados</span><span style="font-size:13px;color:#666">— Administración</span></div>'+
+    '<div style="font-size:16px;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid #eee">'+label+'</div>';
+  if(metrics){var mc=metrics.cloneNode(true);wrap.appendChild(mc);}
+  var vc=vista.cloneNode(true);vc.style.display='block';vc.style.marginTop='14px';wrap.appendChild(vc);
+  document.body.appendChild(wrap);
+  html2canvas(wrap,{scale:2,backgroundColor:'#fff',useCORS:true}).then(function(canvas){
+    document.body.removeChild(wrap);
+    if(btn){btn.innerHTML=prevBtn;btn.disabled=false;}
+    var jsPDF=window.jspdf.jsPDF;
+    var pdf=new jsPDF('p','mm','a4');
+    var pw=210, ph=297;
+    var imgH=canvas.height*pw/canvas.width;
+    if(imgH<=ph){
+      pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,pw,imgH);
+    }else{
+      // partir en varias páginas
+      var pxPerPage=canvas.width*ph/pw;
+      var y=0, page=0;
+      while(y<canvas.height){
+        var sliceH=Math.min(pxPerPage,canvas.height-y);
+        var c2=document.createElement('canvas');
+        c2.width=canvas.width;c2.height=sliceH;
+        var ctx=c2.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c2.width,c2.height);
+        ctx.drawImage(canvas,0,y,canvas.width,sliceH,0,0,canvas.width,sliceH);
+        if(page>0)pdf.addPage();
+        pdf.addImage(c2.toDataURL('image/png'),'PNG',0,0,pw,sliceH*pw/canvas.width);
+        y+=sliceH;page++;
+      }
+    }
+    var fname='Administracion_'+(label||curView).replace(/[^a-z0-9]/gi,'_')+'.pdf';
+    pdf.save(fname);
+  }).catch(function(){
+    document.body.removeChild(wrap);
+    if(btn){btn.innerHTML=prevBtn;btn.disabled=false;}
+    alert('No se pudo generar el PDF');
   });
 }
 
