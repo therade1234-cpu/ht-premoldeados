@@ -645,6 +645,13 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       <div class="home-btn-title">REPARACIONES</div>
       <div class="home-btn-desc">Obras con reparaciones pendientes</div>
     </button>
+    <button class="home-btn rol-vendedor rol-admin" onclick="openPanel('fletes')">
+      <div class="home-btn-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#D85A30" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+      </div>
+      <div class="home-btn-title">CALCULAR FLETE</div>
+      <div class="home-btn-desc">Precio de flete por localidad y m²</div>
+    </button>
   </div>
 </div>
 
@@ -1423,7 +1430,17 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       </table></div>
     </div>
 
-    <div class="card">
+  </div>
+</div>
+
+<!-- CALCULADORA DE FLETES -->
+<div class="inner" id="inner-fletes">
+  <div class="topbar">
+    <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
+    <span class="tb-title">Calcular flete</span>
+  </div>
+  <div class="content">
+    <div class="card" style="max-width:560px;margin:0 auto">
       <div class="card-title">🚚 Calculadora de fletes</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Localidad</label>
@@ -1448,7 +1465,6 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -1523,6 +1539,7 @@ function renderPanelActivo(){
   else if(_panelActivo==='analisis')renderAnalisis();
   else if(_panelActivo==='marketing')renderMarketing();
   else if(_panelActivo==='vendedores')renderVendedores();
+  else if(_panelActivo==='fletes')renderFletes();
   else if(_panelActivo==='visitas')renderVisitas();
   else if(_panelActivo==='reparaciones')renderReparaciones();
   else if(_panelActivo==='stock')renderStock();
@@ -1656,6 +1673,7 @@ function openPanel(id){
   else if(id==='analisis')renderAnalisis();
   else if(id==='marketing')renderMarketing();
   else if(id==='vendedores')renderVendedores();
+  else if(id==='fletes')renderFletes();
   else if(id==='precios')renderPrecios();
   else if(id==='precios-portones')renderPortones();
   else if(id==='presupuestos')renderPresupuesto();
@@ -4599,7 +4617,6 @@ function calcComisionEscala(totalVendido){
   return{pct,comision,basico:BASICO,total:comision+BASICO};
 }
 function renderVendedores(){
-  renderFletes();
   document.getElementById('vend-period-label').textContent=MESES[vendMonth]+' '+vendYear;
   document.getElementById('ranking-titulo').textContent='Ranking — '+MESES[vendMonth];
   const vs=state.ventas.filter(v=>{const d=parseFecha(v.fechaVenta||v.fecha);return d.getFullYear()===vendYear&&d.getMonth()===vendMonth;});
