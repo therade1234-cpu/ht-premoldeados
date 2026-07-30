@@ -1471,7 +1471,7 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       <div class="form-group" style="margin-bottom:10px"><label class="form-label">Kilómetros (solo ida)</label>
         <input type="text" id="flete-km" placeholder="Ej: 25" inputmode="decimal" oninput="fleteCostoCalcular()" /></div>
       <div id="flete-costo-resultado" style="background:#F7F7F7;border:1px solid #E5E5E5;border-radius:10px;padding:16px 18px;text-align:center;color:#A0A0A0;font-size:13px">Ingresá los km para calcular</div>
-      <div style="font-size:10px;color:#9A9A9A;margin-top:8px;text-align:center">Cerca (&lt;35 km): $4.000/km · Largo (≥35 km): $5.000/km + media espera</div>
+      <div style="font-size:10px;color:#9A9A9A;margin-top:8px;text-align:center">Cerca (&lt;35 km): $4.000/km · Largo (≥35 km): $5.000/km · + $100.000 espera (siempre)</div>
     </div>
   </div>
 </div>
@@ -4787,14 +4787,14 @@ function fleteCostoCalcular(){
   if(!km||km<=0){out.style.color='#A0A0A0';out.innerHTML='Ingresá los km para calcular';return;}
   var kmStr=(km%1===0?km:km.toFixed(1));
   var largo=km>=35;
-  var viaje, espera=0, tarifa;
-  if(largo){ tarifa=5000; viaje=km*5000; espera=viaje/2; }
-  else{ tarifa=4000; viaje=km*4000; }
+  var tarifa=largo?5000:4000;
+  var viaje=km*tarifa;
+  var espera=100000; // media espera fija, en todos los viajes
   var total=viaje+espera;
   out.style.color='#1A1A1A';
   out.innerHTML='<div style="font-size:12px;color:#6B6B6B">'+kmStr+' km · '+(largo?'viaje largo':'viaje cerca')+'</div>'+
     '<div style="font-size:26px;font-weight:800;color:#C62828;margin-top:2px">'+fmt(Math.round(total))+'</div>'+
-    '<div style="font-size:11px;color:#9A9A9A;margin-top:6px">'+kmStr+' km × '+fmt(tarifa)+(largo?' + media espera '+fmt(Math.round(espera)):'')+'</div>';
+    '<div style="font-size:11px;color:#9A9A9A;margin-top:6px">'+kmStr+' km × '+fmt(tarifa)+' + espera '+fmt(espera)+'</div>';
 }
 
 // ---- LISTA DE PRECIOS ----
