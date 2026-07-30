@@ -4706,22 +4706,31 @@ function agregarVendedor(){
 // Precio base = hasta 20 m². Total = base × (m² / 20). Precios EDITABLES desde la pantalla.
 // Semilla inicial tomada del mapa (revisar/ajustar valores reales).
 var FLETES_SEED=[
-  {loc:'Moreno',precio:200000},{loc:'Paso del Rey',precio:220000},{loc:'General Rodríguez',precio:260000},
-  {loc:'Pilar',precio:280000},{loc:'Fátima',precio:280000},{loc:'Escobar',precio:300000},{loc:'Marcos Paz',precio:330000},
-  {loc:'General Las Heras',precio:380000},{loc:'Luján',precio:420000},{loc:'Campana',precio:420000},
-  {loc:'San Andrés de Giles',precio:480000},{loc:'Mercedes',precio:480000},{loc:'Zárate',precio:500000},
-  {loc:'Cañuelas',precio:480000},{loc:'San Vicente',precio:480000},{loc:'Alejandro Korn',precio:450000},
-  {loc:'Domselaar',precio:390000},{loc:'San Antonio de Areco',precio:450000},{loc:'Ezeiza',precio:380000},
-  {loc:'Tristán Suárez',precio:380000},{loc:'Monte Grande',precio:380000},{loc:'Quilmes',precio:290000},
-  {loc:'Avellaneda',precio:290000},{loc:'Berazategui',precio:450000},{loc:'Guillermo E. Hudson',precio:450000},
-  {loc:'La Plata',precio:480000},{loc:'City Bell',precio:480000},{loc:'Los Hornos',precio:500000},
-  {loc:'Florencio Varela',precio:380000}
+  // Círculo central (todas $220.000)
+  {loc:'Moreno',precio:220000},{loc:'Paso del Rey',precio:220000},{loc:'San Miguel',precio:220000},
+  {loc:'Merlo',precio:220000},{loc:'Hurlingham',precio:220000},{loc:'Ituzaingó',precio:220000},
+  {loc:'Morón',precio:220000},{loc:'San Justo',precio:220000},
+  // Segundo anillo
+  {loc:'San Martín',precio:240000},{loc:'Vicente López',precio:240000},
+  {loc:'José C. Paz',precio:260000},{loc:'General Rodríguez',precio:260000},
+  {loc:'Pilar',precio:280000},{loc:'Fátima',precio:280000},{loc:'Escobar',precio:300000},
+  {loc:'Marcos Paz',precio:330000},{loc:'General Las Heras',precio:380000},
+  // Zona norte/oeste
+  {loc:'Luján',precio:420000},{loc:'Capilla del Señor',precio:420000},{loc:'Campana',precio:450000},
+  {loc:'San Andrés de Giles',precio:480000},{loc:'Mercedes',precio:450000},{loc:'Tomás Jofré',precio:460000},
+  {loc:'Zárate',precio:580000},{loc:'San Antonio de Areco',precio:450000},
+  // Zona sur
+  {loc:'Cañuelas',precio:480000},{loc:'San Vicente',precio:450000},{loc:'Alejandro Korn',precio:450000},
+  {loc:'Domselaar',precio:390000},{loc:'Ezeiza',precio:380000},{loc:'Tristán Suárez',precio:380000},
+  {loc:'Monte Grande',precio:380000},{loc:'Quilmes',precio:290000},{loc:'Avellaneda',precio:290000},
+  {loc:'Berazategui',precio:450000},{loc:'Guillermo E. Hudson',precio:450000},{loc:'Florencio Varela',precio:380000},
+  {loc:'La Plata',precio:450000},{loc:'City Bell',precio:450000},{loc:'Los Hornos',precio:500000}
 ];
-// Subir este número cada vez que se agreguen localidades nuevas a la semilla:
-// las localidades faltantes se agregan (una sola vez por dispositivo) en todos lados sin pisar precios editados.
-var FLETES_SEED_VER=2;
+// Subir este número cada vez que cambien/agreguen precios en la semilla:
+// al subir, se AGREGAN las faltantes y se SOBRESCRIBEN los precios de las que ya están (una vez por dispositivo y versión).
+var FLETES_SEED_VER=3;
 var _fleteAdminOpen=false;
-// Devuelve true si modificó la lista (para guardar). Semilla inicial + migración por versión (agrega faltantes).
+// Devuelve true si modificó la lista (para guardar). Semilla inicial + migración por versión (agrega + corrige precios).
 function fleteEnsureSeed(){
   if(!Array.isArray(state.fletesZonas))state.fletesZonas=[];
   if(state.fletesZonas.length===0){
@@ -4733,9 +4742,9 @@ function fleteEnsureSeed(){
   if(ver>=FLETES_SEED_VER)return false;
   var changed=false;
   FLETES_SEED.forEach(function(s){
-    if(!state.fletesZonas.some(function(z){return (z.loc||'').toLowerCase()===s.loc.toLowerCase();})){
-      state.fletesZonas.push({loc:s.loc,precio:s.precio});changed=true;
-    }
+    var ex=state.fletesZonas.find(function(z){return (z.loc||'').toLowerCase()===s.loc.toLowerCase();});
+    if(!ex){ state.fletesZonas.push({loc:s.loc,precio:s.precio}); changed=true; }
+    else if(ex.precio!==s.precio){ ex.precio=s.precio; changed=true; }
   });
   try{localStorage.setItem('ht-flete-seed-ver',String(FLETES_SEED_VER));}catch(e){}
   return changed;
