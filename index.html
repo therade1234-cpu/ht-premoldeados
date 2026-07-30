@@ -872,6 +872,7 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
   <div class="topbar">
     <button class="back-btn" onclick="goHome()">&#8592; Inicio</button>
     <span class="tb-title">Generar presupuesto</span>
+    <button onclick="abrirModalFlete()" style="margin-left:auto;display:inline-flex;align-items:center;gap:7px;background:#D85A30;color:#fff;border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🚚 Calcular flete</button>
   </div>
   <div class="content">
     <div class="two-col" style="align-items:start">
@@ -1473,6 +1474,30 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       <div id="flete-costo-resultado" style="background:#F7F7F7;border:1px solid #E5E5E5;border-radius:12px;padding:24px 22px;text-align:center;color:#A0A0A0;font-size:15px">Ingresá los km para calcular</div>
       <div style="font-size:11px;color:#9A9A9A;margin-top:10px;text-align:center">Cerca (&lt;35 km): $4.000/km · Largo (≥35 km): $5.000/km · + $100.000 espera (siempre)</div>
     </div>
+  </div>
+</div>
+
+<!-- MINI MODAL: CALCULAR FLETE (desde presupuestos) -->
+<div id="modal-flete" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2100;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px;box-sizing:border-box" onclick="if(event.target===this)cerrarModalFlete()">
+  <div style="background:#fff;border-radius:16px;max-width:460px;width:100%;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-size:16px;font-weight:800;color:#993C1D">🚚 Calcular flete</span>
+      <span onclick="cerrarModalFlete()" style="cursor:pointer;font-size:22px;color:#999;line-height:1">×</span>
+    </div>
+    <!-- Precio al cliente -->
+    <div style="font-size:11px;font-weight:700;color:#D85A30;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Precio al cliente</div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">Localidad</label>
+        <select id="mf-localidad" onchange="fleteModalCalcular()"><option value="">Seleccionar...</option></select></div>
+      <div class="form-group"><label class="form-label">Metros² (m²)</label>
+        <input type="text" id="mf-metros" placeholder="Ej: 20" inputmode="decimal" oninput="fleteModalCalcular()" /></div>
+    </div>
+    <div id="mf-resultado" style="background:#F7F7F7;border:1px solid #E5E5E5;border-radius:10px;padding:14px 16px;text-align:center;color:#A0A0A0;font-size:13px">Elegí localidad y m²</div>
+    <!-- Costo del fletero -->
+    <div style="font-size:11px;font-weight:700;color:#D85A30;text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px;border-top:1px solid #F0F0F0;padding-top:16px">Costo del fletero (por km)</div>
+    <div class="form-group" style="margin-bottom:10px"><label class="form-label">Kilómetros (solo ida)</label>
+      <input type="text" id="mf-km" placeholder="Ej: 25" inputmode="decimal" oninput="fleteModalCosto()" /></div>
+    <div id="mf-costo-resultado" style="background:#F7F7F7;border:1px solid #E5E5E5;border-radius:10px;padding:14px 16px;text-align:center;color:#A0A0A0;font-size:13px">Ingresá los km</div>
   </div>
 </div>
 
@@ -4779,6 +4804,48 @@ function fleteBorrarZona(loc){
   state.fletesZonas=(state.fletesZonas||[]).filter(function(z){return z.loc!==loc;});
   saveState();
   renderFletes();
+}
+// ---- MINI MODAL de fletes (desde presupuestos) ----
+function abrirModalFlete(){
+  fleteEnsureSeed();
+  var sel=document.getElementById('mf-localidad');
+  if(sel){
+    var prev=sel.value, zs=fleteZonasOrdenadas();
+    sel.innerHTML='<option value="">Seleccionar...</option>'+zs.map(function(z){return '<option value="'+z.loc.replace(/"/g,'&quot;')+'">'+z.loc+'</option>';}).join('');
+    // pre-cargar localidad del presupuesto si coincide
+    var prLoc=(document.getElementById('pr-localidad')||{}).value||'';
+    var match=zs.find(function(z){return z.loc.toLowerCase()===prLoc.trim().toLowerCase();});
+    sel.value=match?match.loc:prev;
+  }
+  // pre-cargar metros del presupuesto
+  var mEl=document.getElementById('mf-metros'), prM=(document.getElementById('pr-metros-num')||document.getElementById('pr-metros')||{}).value;
+  if(mEl&&prM)mEl.value=prM;
+  document.getElementById('modal-flete').style.display='flex';
+  fleteModalCalcular();fleteModalCosto();
+}
+function cerrarModalFlete(){document.getElementById('modal-flete').style.display='none';}
+function fleteModalCalcular(){
+  var out=document.getElementById('mf-resultado');if(!out)return;
+  var loc=(document.getElementById('mf-localidad')||{}).value||'';
+  var metros=parseMonto((document.getElementById('mf-metros')||{}).value);
+  var zona=(state.fletesZonas||[]).find(function(z){return z.loc===loc;});
+  if(!loc||!zona){out.style.color='#A0A0A0';out.innerHTML='Elegí localidad y m²';return;}
+  if(!metros||metros<=0){out.style.color='#1A1A1A';out.innerHTML='<div style="font-size:12px;color:#6B6B6B">Base '+loc+' (hasta 20 m²)</div><div style="font-size:22px;font-weight:800;color:#993C1D">'+fmt(zona.precio)+'</div>';return;}
+  var total=zona.precio*(metros/20), fletes=Math.ceil(metros/40), mStr=(metros%1===0?metros:metros.toFixed(1));
+  out.style.color='#1A1A1A';
+  out.innerHTML='<div style="font-size:12px;color:#6B6B6B">'+loc+' · '+mStr+' m²</div>'+
+    '<div style="font-size:28px;font-weight:800;color:#2E7D32;margin-top:2px">'+fmt(Math.round(total))+'</div>'+
+    '<div style="display:inline-block;margin-top:6px;background:#FDF3EF;border:1px solid #F0997B;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;color:#993C1D">🚚 '+fletes+' flete'+(fletes>1?'s':'')+'</div>';
+}
+function fleteModalCosto(){
+  var out=document.getElementById('mf-costo-resultado');if(!out)return;
+  var km=parseMonto((document.getElementById('mf-km')||{}).value);
+  if(!km||km<=0){out.style.color='#A0A0A0';out.innerHTML='Ingresá los km';return;}
+  var largo=km>=35, tarifa=largo?5000:4000, espera=100000, total=km*tarifa+espera, kmStr=(km%1===0?km:km.toFixed(1));
+  out.style.color='#1A1A1A';
+  out.innerHTML='<div style="font-size:12px;color:#6B6B6B">'+kmStr+' km · '+(largo?'viaje largo':'viaje cerca')+'</div>'+
+    '<div style="font-size:28px;font-weight:800;color:#C62828;margin-top:2px">'+fmt(Math.round(total))+'</div>'+
+    '<div style="font-size:11px;color:#9A9A9A;margin-top:5px">'+kmStr+' km × '+fmt(tarifa)+' + espera '+fmt(espera)+'</div>';
 }
 // Costo que cobra el fletero, por km (solo ida). Cerca <35km: $4.000/km. Largo >=35km: $5.000/km + media espera (mitad del viaje).
 function fleteCostoCalcular(){
