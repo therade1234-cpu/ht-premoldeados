@@ -1444,9 +1444,9 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
     <div class="card" style="max-width:820px;margin:0 auto;padding:26px 28px">
       <div class="card-title" style="font-size:16px">🚚 Calculadora de fletes</div>
       <div class="form-row">
-        <div class="form-group"><label class="form-label">Localidad</label>
-          <input type="text" id="flete-localidad" list="flete-loc-list" autocomplete="off" placeholder="Escribí o elegí..." oninput="fleteCalcular()" onchange="fleteCalcular()" style="font-size:17px;padding:13px 12px" />
-          <datalist id="flete-loc-list"></datalist></div>
+        <div class="form-group" style="position:relative"><label class="form-label">Localidad</label>
+          <input type="text" id="flete-localidad" name="ht-fleteloc" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" placeholder="Escribí o elegí..." oninput="fleteCalcular();fleteAutoc('flete-localidad','flete-loc-drop')" onfocus="fleteAutoc('flete-localidad','flete-loc-drop')" onblur="fleteAutocHide('flete-loc-drop')" style="font-size:17px;padding:13px 12px" />
+          <div id="flete-loc-drop" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:2px;background:#fff;border:1px solid #DDD;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);max-height:260px;overflow-y:auto;z-index:50"></div></div>
         <div class="form-group"><label class="form-label">Metros lineales</label>
           <input type="text" id="flete-metros" placeholder="Ej: 20" inputmode="decimal" oninput="fleteCalcular()" style="font-size:17px;padding:13px 12px" /></div>
       </div>
@@ -1481,9 +1481,9 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
     <!-- Precio al cliente -->
     <div style="font-size:11px;font-weight:700;color:#D85A30;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Precio al cliente</div>
     <div class="form-row">
-      <div class="form-group"><label class="form-label">Localidad</label>
-        <input type="text" id="mf-localidad" list="mf-loc-list" autocomplete="off" placeholder="Escribí o elegí..." oninput="fleteModalCalcular()" onchange="fleteModalCalcular()" />
-        <datalist id="mf-loc-list"></datalist></div>
+      <div class="form-group" style="position:relative"><label class="form-label">Localidad</label>
+        <input type="text" id="mf-localidad" name="ht-mfloc" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" placeholder="Escribí o elegí..." oninput="fleteModalCalcular();fleteAutoc('mf-localidad','mf-loc-drop')" onfocus="fleteAutoc('mf-localidad','mf-loc-drop')" onblur="fleteAutocHide('mf-loc-drop')" />
+        <div id="mf-loc-drop" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:2px;background:#fff;border:1px solid #DDD;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);max-height:220px;overflow-y:auto;z-index:60"></div></div>
       <div class="form-group"><label class="form-label">Metros lineales</label>
         <input type="text" id="mf-metros" placeholder="Ej: 20" inputmode="decimal" oninput="fleteModalCalcular()" /></div>
     </div>
@@ -4756,11 +4756,6 @@ function fleteZonasOrdenadas(){
 }
 function renderFletes(){
   fleteEnsureSeed();
-  var dl=document.getElementById('flete-loc-list');
-  if(dl){
-    var zs=fleteZonasOrdenadas();
-    dl.innerHTML=zs.map(function(z){return '<option value="'+z.loc.replace(/"/g,'&quot;')+'"></option>';}).join('');
-  }
   var adm=document.getElementById('flete-admin');
   if(adm)adm.style.display=_fleteAdminOpen?'block':'none';
   var tog=document.getElementById('flete-admin-toggle');
@@ -4782,6 +4777,25 @@ function renderFletes(){
 function fleteCantidad(metros){ return Math.max(1, metros/20); }
 // Formatea la cantidad de fletes (1, 1,25, 2,5) para mostrar.
 function fleteFmtCant(n){ return (Math.round(n*100)/100).toLocaleString('es-AR',{maximumFractionDigits:2}); }
+// Autocompletado propio de localidad (evita el autofill de direcciones del navegador).
+function fleteAutoc(inpId,dropId){
+  var inp=document.getElementById(inpId),drop=document.getElementById(dropId);
+  if(!inp||!drop)return;
+  var q=(inp.value||'').toLowerCase().trim();
+  var zs=fleteZonasOrdenadas().filter(function(z){return q===''||z.loc.toLowerCase().indexOf(q)>-1;});
+  if(!zs.length){drop.style.display='none';return;}
+  drop.innerHTML=zs.map(function(z){
+    var safe=z.loc.replace(/'/g,"\\'");
+    return '<div onmousedown="event.preventDefault();fleteAutocPick(\''+inpId+'\',\''+dropId+'\',\''+safe+'\')" style="padding:11px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid #F0F0F0;display:flex;justify-content:space-between;gap:10px" onmouseover="this.style.background=\'#FDF3EF\'" onmouseout="this.style.background=\'#fff\'"><span style="font-weight:600">'+z.loc+'</span><span style="color:#993C1D;font-size:12px">'+fmt(z.precio)+'</span></div>';
+  }).join('');
+  drop.style.display='block';
+}
+function fleteAutocPick(inpId,dropId,loc){
+  var inp=document.getElementById(inpId);if(inp)inp.value=loc;
+  var drop=document.getElementById(dropId);if(drop)drop.style.display='none';
+  if(inpId==='mf-localidad')fleteModalCalcular();else fleteCalcular();
+}
+function fleteAutocHide(dropId){ setTimeout(function(){var d=document.getElementById(dropId);if(d)d.style.display='none';},150); }
 function fleteCalcular(){
   var out=document.getElementById('flete-resultado');if(!out)return;
   var loc=(document.getElementById('flete-localidad')||{}).value||'';
@@ -4828,9 +4842,8 @@ function fleteBorrarZona(loc){
 // ---- MINI MODAL de fletes (desde presupuestos) ----
 function abrirModalFlete(){
   fleteEnsureSeed();
-  var sel=document.getElementById('mf-localidad'), dl=document.getElementById('mf-loc-list');
+  var sel=document.getElementById('mf-localidad');
   var zs=fleteZonasOrdenadas();
-  if(dl){ dl.innerHTML=zs.map(function(z){return '<option value="'+z.loc.replace(/"/g,'&quot;')+'"></option>';}).join(''); }
   if(sel){
     // pre-cargar localidad del presupuesto si coincide
     var prLoc=(document.getElementById('pr-localidad')||{}).value||'';
