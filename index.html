@@ -1445,7 +1445,7 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       <div class="card-title" style="font-size:16px">🚚 Calculadora de fletes</div>
       <div class="form-row">
         <div class="form-group" style="position:relative"><label class="form-label">Localidad</label>
-          <input type="text" id="flete-localidad" name="ht-fleteloc" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" placeholder="Escribí o elegí..." oninput="fleteCalcular();fleteAutoc('flete-localidad','flete-loc-drop')" onfocus="fleteAutoc('flete-localidad','flete-loc-drop')" onblur="fleteAutocHide('flete-loc-drop')" style="font-size:17px;padding:13px 12px" />
+          <input type="text" id="flete-localidad" name="ht-fleteloc-search-nofill" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" placeholder="Escribí o elegí..." oninput="fleteCalcular();fleteAutoc('flete-localidad','flete-loc-drop')" onfocus="fleteAutoc('flete-localidad','flete-loc-drop')" onblur="fleteAutocHide('flete-loc-drop')" style="font-size:17px;padding:13px 12px" />
           <div id="flete-loc-drop" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:2px;background:#fff;border:1px solid #DDD;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);max-height:260px;overflow-y:auto;z-index:50"></div></div>
         <div class="form-group"><label class="form-label">Metros lineales</label>
           <input type="text" id="flete-metros" placeholder="Ej: 20" inputmode="decimal" oninput="fleteCalcular()" style="font-size:17px;padding:13px 12px" /></div>
@@ -1482,7 +1482,7 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
     <div style="font-size:11px;font-weight:700;color:#D85A30;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Precio al cliente</div>
     <div class="form-row">
       <div class="form-group" style="position:relative"><label class="form-label">Localidad</label>
-        <input type="text" id="mf-localidad" name="ht-mfloc" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" placeholder="Escribí o elegí..." oninput="fleteModalCalcular();fleteAutoc('mf-localidad','mf-loc-drop')" onfocus="fleteAutoc('mf-localidad','mf-loc-drop')" onblur="fleteAutocHide('mf-loc-drop')" />
+        <input type="text" id="mf-localidad" name="ht-mfloc-search-nofill" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" data-lpignore="true" data-form-type="other" placeholder="Escribí o elegí..." oninput="fleteModalCalcular();fleteAutoc('mf-localidad','mf-loc-drop')" onfocus="fleteAutoc('mf-localidad','mf-loc-drop')" onblur="fleteAutocHide('mf-loc-drop')" />
         <div id="mf-loc-drop" style="display:none;position:absolute;left:0;right:0;top:100%;margin-top:2px;background:#fff;border:1px solid #DDD;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);max-height:220px;overflow-y:auto;z-index:60"></div></div>
       <div class="form-group"><label class="form-label">Metros lineales</label>
         <input type="text" id="mf-metros" placeholder="Ej: 20" inputmode="decimal" oninput="fleteModalCalcular()" /></div>
