@@ -1451,10 +1451,10 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
           <input type="text" id="flete-metros" placeholder="Ej: 20" inputmode="decimal" oninput="fleteCalcular()" style="font-size:17px;padding:13px 12px" /></div>
       </div>
       <div id="flete-resultado" style="margin-top:8px;background:#F7F7F7;border:1px solid #E5E5E5;border-radius:12px;padding:24px 22px;text-align:center;color:#A0A0A0;font-size:15px">Elegí una localidad y los metros para calcular</div>
-      <div style="font-size:11px;color:#9A9A9A;margin-top:10px;text-align:center">Cada flete cubre hasta 20 m lineales. Fletes = máximo(1, metros ÷ 20). Nunca menos de 1 flete.</div>
+      <div style="font-size:11px;color:#9A9A9A;margin-top:10px;text-align:center">Cada flete cubre hasta 35 m lineales. Fletes = máximo(1, metros ÷ 35). Nunca menos de 1 flete.</div>
       <div style="margin-top:14px;border-top:1px solid #F0F0F0;padding-top:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="fleteToggleAdmin()">
-          <span style="font-size:11px;font-weight:700;color:#993C1D;text-transform:uppercase;letter-spacing:.05em">Localidades y precios (1 flete = 20 m)</span>
+          <span style="font-size:11px;font-weight:700;color:#993C1D;text-transform:uppercase;letter-spacing:.05em">Localidades y precios (1 flete = 35 m)</span>
           <span id="flete-admin-toggle" style="font-size:12px;color:#993C1D;font-weight:600">▼ Editar</span>
         </div>
         <div id="flete-admin" style="display:none;margin-top:12px">
@@ -4773,8 +4773,10 @@ function renderFletes(){
   }
   fleteCalcular();
 }
-// Cantidad de fletes = máximo(1, metros/20). Nunca menos de 1 flete. Sin tope máximo.
-function fleteCantidad(metros){ return Math.max(1, metros/20); }
+// Capacidad de un camión (metros lineales que cubre 1 flete). Cambiar acá si varía.
+var FLETE_CAP=35;
+// Cantidad de fletes = máximo(1, metros/FLETE_CAP). Nunca menos de 1 flete. Sin tope máximo.
+function fleteCantidad(metros){ return Math.max(1, metros/FLETE_CAP); }
 // Formatea la cantidad de fletes (1, 1,25, 2,5) para mostrar.
 function fleteFmtCant(n){ return (Math.round(n*100)/100).toLocaleString('es-AR',{maximumFractionDigits:2}); }
 // Autocompletado propio de localidad (evita el autofill de direcciones del navegador).
@@ -4806,7 +4808,7 @@ function fleteCalcular(){
   loc=zona.loc;
   if(!metros||metros<=0){
     out.style.color='#1A1A1A';
-    out.innerHTML='<div style="font-size:14px;color:#6B6B6B">'+loc+' · 1 flete (hasta 20 m)</div><div style="font-size:38px;font-weight:800;color:#2E7D32;margin-top:4px;line-height:1.1">'+fmt(zona.precio)+'</div><div style="font-size:12px;color:#9A9A9A;margin-top:8px">Ingresá los metros lineales para el total</div>';
+    out.innerHTML='<div style="font-size:14px;color:#6B6B6B">'+loc+' · 1 flete (hasta 35 m)</div><div style="font-size:38px;font-weight:800;color:#2E7D32;margin-top:4px;line-height:1.1">'+fmt(zona.precio)+'</div><div style="font-size:12px;color:#9A9A9A;margin-top:8px">Ingresá los metros lineales para el total</div>';
     return;
   }
   var fletes=fleteCantidad(metros);
@@ -4864,7 +4866,7 @@ function fleteModalCalcular(){
   var zona=(state.fletesZonas||[]).find(function(z){return (z.loc||'').toLowerCase()===loc.toLowerCase();});
   if(!loc||!zona){out.style.color='#A0A0A0';out.innerHTML='Escribí una localidad de la lista';return;}
   loc=zona.loc;
-  if(!metros||metros<=0){out.style.color='#1A1A1A';out.innerHTML='<div style="font-size:12px;color:#6B6B6B">'+loc+' · 1 flete (hasta 20 m)</div><div style="font-size:26px;font-weight:800;color:#2E7D32">'+fmt(zona.precio)+'</div>';return;}
+  if(!metros||metros<=0){out.style.color='#1A1A1A';out.innerHTML='<div style="font-size:12px;color:#6B6B6B">'+loc+' · 1 flete (hasta 35 m)</div><div style="font-size:26px;font-weight:800;color:#2E7D32">'+fmt(zona.precio)+'</div>';return;}
   var fletes=fleteCantidad(metros), total=zona.precio*fletes, mStr=(metros%1===0?metros:metros.toFixed(1));
   out.style.color='#1A1A1A';
   out.innerHTML='<div style="font-size:12px;color:#6B6B6B">'+loc+' · '+mStr+' m lineales</div>'+
