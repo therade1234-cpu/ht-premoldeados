@@ -1451,7 +1451,7 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
           <input type="text" id="flete-metros" placeholder="Ej: 20" inputmode="decimal" oninput="fleteCalcular()" style="font-size:17px;padding:13px 12px" /></div>
       </div>
       <div id="flete-resultado" style="margin-top:8px;background:#F7F7F7;border:1px solid #E5E5E5;border-radius:12px;padding:24px 22px;text-align:center;color:#A0A0A0;font-size:15px">Elegí una localidad y los metros para calcular</div>
-      <div style="font-size:11px;color:#9A9A9A;margin-top:10px;text-align:center">Fletes = máximo(1, metros ÷ 28). Nunca menos de 1 flete.</div>
+      <div style="font-size:11px;color:#9A9A9A;margin-top:10px;text-align:center">Fletes = máximo(1, metros ÷ 26). Nunca menos de 1 flete.</div>
       <div style="margin-top:14px;border-top:1px solid #F0F0F0;padding-top:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="fleteToggleAdmin()">
           <span style="font-size:11px;font-weight:700;color:#993C1D;text-transform:uppercase;letter-spacing:.05em">Localidades y precios (precio por flete)</span>
@@ -4773,9 +4773,9 @@ function renderFletes(){
   }
   fleteCalcular();
 }
-// Capacidad de cálculo por flete (metros lineales). Se usa 28 para que cierren los precios;
+// Capacidad de cálculo por flete (metros lineales). Se usa 26 para que cierren los precios;
 // los camiones en la realidad llevan hasta 35 m. Cambiar acá si varía.
-var FLETE_CAP=28;
+var FLETE_CAP=26;
 // Cantidad de fletes = máximo(1, metros/FLETE_CAP). Nunca menos de 1 flete. Sin tope máximo.
 function fleteCantidad(metros){ return Math.max(1, metros/FLETE_CAP); }
 // Formatea la cantidad de fletes (1, 1,25, 2,5) para mostrar.
