@@ -1445,7 +1445,8 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       <div class="card-title" style="font-size:16px">🚚 Calculadora de fletes</div>
       <div class="form-row">
         <div class="form-group"><label class="form-label">Localidad</label>
-          <select id="flete-localidad" onchange="fleteCalcular()" style="font-size:17px;padding:13px 12px;height:auto"><option value="">Seleccionar...</option></select></div>
+          <input type="text" id="flete-localidad" list="flete-loc-list" autocomplete="off" placeholder="Escribí o elegí..." oninput="fleteCalcular()" onchange="fleteCalcular()" style="font-size:17px;padding:13px 12px" />
+          <datalist id="flete-loc-list"></datalist></div>
         <div class="form-group"><label class="form-label">Metros lineales</label>
           <input type="text" id="flete-metros" placeholder="Ej: 20" inputmode="decimal" oninput="fleteCalcular()" style="font-size:17px;padding:13px 12px" /></div>
       </div>
@@ -1481,7 +1482,8 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
     <div style="font-size:11px;font-weight:700;color:#D85A30;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Precio al cliente</div>
     <div class="form-row">
       <div class="form-group"><label class="form-label">Localidad</label>
-        <select id="mf-localidad" onchange="fleteModalCalcular()"><option value="">Seleccionar...</option></select></div>
+        <input type="text" id="mf-localidad" list="mf-loc-list" autocomplete="off" placeholder="Escribí o elegí..." oninput="fleteModalCalcular()" onchange="fleteModalCalcular()" />
+        <datalist id="mf-loc-list"></datalist></div>
       <div class="form-group"><label class="form-label">Metros lineales</label>
         <input type="text" id="mf-metros" placeholder="Ej: 20" inputmode="decimal" oninput="fleteModalCalcular()" /></div>
     </div>
@@ -4754,12 +4756,10 @@ function fleteZonasOrdenadas(){
 }
 function renderFletes(){
   fleteEnsureSeed();
-  var sel=document.getElementById('flete-localidad');
-  if(sel){
-    var prev=sel.value;
+  var dl=document.getElementById('flete-loc-list');
+  if(dl){
     var zs=fleteZonasOrdenadas();
-    sel.innerHTML='<option value="">Seleccionar...</option>'+zs.map(function(z){return '<option value="'+z.loc.replace(/"/g,'&quot;')+'">'+z.loc+'</option>';}).join('');
-    if(prev)sel.value=prev;
+    dl.innerHTML=zs.map(function(z){return '<option value="'+z.loc.replace(/"/g,'&quot;')+'"></option>';}).join('');
   }
   var adm=document.getElementById('flete-admin');
   if(adm)adm.style.display=_fleteAdminOpen?'block':'none';
@@ -4787,8 +4787,9 @@ function fleteCalcular(){
   var loc=(document.getElementById('flete-localidad')||{}).value||'';
   var metros=parseMonto((document.getElementById('flete-metros')||{}).value);
   if(!loc){out.style.color='#A0A0A0';out.innerHTML='Elegí una localidad y los metros para calcular';return;}
-  var zona=(state.fletesZonas||[]).find(function(z){return z.loc===loc;});
-  if(!zona){out.style.color='#A0A0A0';out.innerHTML='Localidad sin precio';return;}
+  var zona=(state.fletesZonas||[]).find(function(z){return (z.loc||'').toLowerCase()===loc.toLowerCase();});
+  if(!zona){out.style.color='#A0A0A0';out.innerHTML='Escribí una localidad de la lista';return;}
+  loc=zona.loc;
   if(!metros||metros<=0){
     out.style.color='#1A1A1A';
     out.innerHTML='<div style="font-size:14px;color:#6B6B6B">'+loc+' · 1 flete (hasta 20 m)</div><div style="font-size:38px;font-weight:800;color:#2E7D32;margin-top:4px;line-height:1.1">'+fmt(zona.precio)+'</div><div style="font-size:12px;color:#9A9A9A;margin-top:8px">Ingresá los metros lineales para el total</div>';
@@ -4827,14 +4828,14 @@ function fleteBorrarZona(loc){
 // ---- MINI MODAL de fletes (desde presupuestos) ----
 function abrirModalFlete(){
   fleteEnsureSeed();
-  var sel=document.getElementById('mf-localidad');
+  var sel=document.getElementById('mf-localidad'), dl=document.getElementById('mf-loc-list');
+  var zs=fleteZonasOrdenadas();
+  if(dl){ dl.innerHTML=zs.map(function(z){return '<option value="'+z.loc.replace(/"/g,'&quot;')+'"></option>';}).join(''); }
   if(sel){
-    var prev=sel.value, zs=fleteZonasOrdenadas();
-    sel.innerHTML='<option value="">Seleccionar...</option>'+zs.map(function(z){return '<option value="'+z.loc.replace(/"/g,'&quot;')+'">'+z.loc+'</option>';}).join('');
     // pre-cargar localidad del presupuesto si coincide
     var prLoc=(document.getElementById('pr-localidad')||{}).value||'';
     var match=zs.find(function(z){return z.loc.toLowerCase()===prLoc.trim().toLowerCase();});
-    sel.value=match?match.loc:prev;
+    if(match)sel.value=match.loc;
   }
   // pre-cargar metros del presupuesto
   var mEl=document.getElementById('mf-metros'), prM=(document.getElementById('pr-metros-num')||document.getElementById('pr-metros')||{}).value;
@@ -4847,8 +4848,9 @@ function fleteModalCalcular(){
   var out=document.getElementById('mf-resultado');if(!out)return;
   var loc=(document.getElementById('mf-localidad')||{}).value||'';
   var metros=parseMonto((document.getElementById('mf-metros')||{}).value);
-  var zona=(state.fletesZonas||[]).find(function(z){return z.loc===loc;});
-  if(!loc||!zona){out.style.color='#A0A0A0';out.innerHTML='Elegí localidad y metros';return;}
+  var zona=(state.fletesZonas||[]).find(function(z){return (z.loc||'').toLowerCase()===loc.toLowerCase();});
+  if(!loc||!zona){out.style.color='#A0A0A0';out.innerHTML='Escribí una localidad de la lista';return;}
+  loc=zona.loc;
   if(!metros||metros<=0){out.style.color='#1A1A1A';out.innerHTML='<div style="font-size:12px;color:#6B6B6B">'+loc+' · 1 flete (hasta 20 m)</div><div style="font-size:26px;font-weight:800;color:#2E7D32">'+fmt(zona.precio)+'</div>';return;}
   var fletes=fleteCantidad(metros), total=zona.precio*fletes, mStr=(metros%1===0?metros:metros.toFixed(1));
   out.style.color='#1A1A1A';
