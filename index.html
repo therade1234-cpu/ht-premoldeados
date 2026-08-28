@@ -3566,22 +3566,22 @@ function descargarPresupuestoPDF(){
 // ---- PORTONES ----
 let portonesData=[
   {modelo:'Portón ciego o con acero', nota:'Liso o con agregados metálicos', filas:[
-    {medida:'2,50 × 2,00', porton:1499990, escape:1582000},
-    {medida:'3,00 × 2,00', porton:1650000, escape:1730000},
-    {medida:'4,00 × 2,00', porton:2340000, escape:2420000}
+    {medida:'2,50 × 2,00', sinPorton:1100000, sinEscape:1150000, porton:1499990, escape:1582000},
+    {medida:'3,00 × 2,00', sinPorton:1160000, sinEscape:1210000, porton:1650000, escape:1730000},
+    {medida:'4,00 × 2,00', sinPorton:1600000, sinEscape:1650000, porton:2340000, escape:2420000}
   ]},
   {modelo:'Portón con visor', nota:'Visor de malla o visor americano', filas:[
-    {medida:'2,50 × 2,00', porton:1515000, escape:1595000},
-    {medida:'3,00 × 2,00', porton:1605000, escape:1685000},
-    {medida:'4,00 × 2,00', porton:2395000, escape:2475000}
+    {medida:'2,50 × 2,00', sinPorton:1140000, sinEscape:1190000, porton:1515000, escape:1595000},
+    {medida:'3,00 × 2,00', sinPorton:1190000, sinEscape:1240000, porton:1605000, escape:1685000},
+    {medida:'4,00 × 2,00', sinPorton:1660000, sinEscape:1710000, porton:2395000, escape:2475000}
   ]},
   {modelo:'Portón doble visor', nota:'Doble visor de malla o visor americano', filas:[
-    {medida:'2,50 × 2,00', porton:1730000, escape:1810000},
-    {medida:'3,00 × 2,00', porton:1875000, escape:1955000},
-    {medida:'4,00 × 2,00', porton:2610000, escape:2690000}
+    {medida:'2,50 × 2,00', sinPorton:1260000, sinEscape:1310000, porton:1730000, escape:1810000},
+    {medida:'3,00 × 2,00', sinPorton:1340000, sinEscape:1390000, porton:1875000, escape:1955000},
+    {medida:'4,00 × 2,00', sinPorton:1750000, sinEscape:1800000, porton:2610000, escape:2690000}
   ]}
 ];
-let puertasData=[{medida:'1,00 × 2,00', precio:895000}];
+let puertasData=[{medida:'1,00 × 2,00', sin:650000, precio:895000}];
 
 function renderPortones(){
   var cont=document.getElementById('portones-tablas');
@@ -3591,18 +3591,30 @@ function renderPortones(){
     var filas=m.filas.map(function(f,fi){
       return '<tr style="border-bottom:1px solid #F0F0F0;background:'+(fi%2===0?'#fff':'#FAFAFA')+'">'+
         '<td style="padding:10px 16px;font-weight:700;color:#993C1D;font-size:13px">'+f.medida+'</td>'+
-        '<td style="padding:10px 16px;text-align:right;font-weight:600;color:#1A1A1A">'+fmt(f.porton)+'</td>'+
-        '<td style="padding:10px 16px;text-align:right;font-weight:700;color:#D85A30">'+fmt(f.escape)+'</td>'+
+        '<td style="padding:10px 12px;text-align:right;font-weight:600;color:#6B6B6B;border-left:1px solid #F0F0F0">'+(f.sinPorton?fmt(f.sinPorton):'—')+'</td>'+
+        '<td style="padding:10px 12px;text-align:right;font-weight:600;color:#6B6B6B">'+(f.sinEscape?fmt(f.sinEscape):'—')+'</td>'+
+        '<td style="padding:10px 12px;text-align:right;font-weight:600;color:#1A1A1A;border-left:1px solid #F0F0F0">'+fmt(f.porton)+'</td>'+
+        '<td style="padding:10px 12px;text-align:right;font-weight:700;color:#D85A30">'+fmt(f.escape)+'</td>'+
         '</tr>';
     }).join('');
+    var thG='padding:8px 12px;font-weight:800;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.03em;text-align:center';
+    var thSub='padding:8px 12px;font-weight:700;color:#993C1D;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;border-bottom:2px solid #F0997B;text-align:right';
     return '<div style="border-radius:12px;overflow:hidden;border:1px solid #E8E8E8;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.06)">'+
       '<div style="background:#D85A30;padding:13px 20px"><span style="font-size:14px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.02em">'+m.modelo+'</span></div>'+
       '<table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff">'+
-        '<thead><tr style="background:#FDF3EF">'+
-          '<th style="text-align:left;'+thBase+'">Medidas (ancho × alto)</th>'+
-          '<th style="text-align:right;'+thBase+'">Portón</th>'+
-          '<th style="text-align:right;'+thBase+'">Con puerta de escape</th>'+
-        '</tr></thead><tbody>'+filas+'</tbody></table>'+
+        '<thead>'+
+          '<tr>'+
+            '<th rowspan="2" style="text-align:left;padding:8px 16px;font-weight:700;color:#993C1D;font-size:11px;text-transform:uppercase;letter-spacing:.03em;border-bottom:2px solid #F0997B;background:#FDF3EF;vertical-align:bottom">Medidas (ancho × alto)</th>'+
+            '<th colspan="2" style="'+thG+';background:#6B6B6B;border-left:1px solid #fff">Sin instalación</th>'+
+            '<th colspan="2" style="'+thG+';background:#D85A30;border-left:1px solid #fff">Con instalación</th>'+
+          '</tr>'+
+          '<tr style="background:#FDF3EF">'+
+            '<th style="'+thSub+';border-left:1px solid #F0F0F0">Portón</th>'+
+            '<th style="'+thSub+'">Con escape</th>'+
+            '<th style="'+thSub+';border-left:1px solid #F0F0F0">Portón</th>'+
+            '<th style="'+thSub+'">Con escape</th>'+
+          '</tr>'+
+        '</thead><tbody>'+filas+'</tbody></table>'+
       (m.nota?'<div style="padding:10px 16px;background:#FDF3EF;font-size:12px;color:#993C1D;font-weight:600;border-top:1px solid #F0D0C0">'+m.nota+'</div>':'')+
     '</div>';
   }).join('')+
@@ -3611,9 +3623,10 @@ function renderPortones(){
     '<table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff">'+
       '<thead><tr style="background:#FDF3EF">'+
         '<th style="text-align:left;'+thBase+'">Medidas (ancho × alto)</th>'+
-        '<th style="text-align:right;'+thBase+'">Precio</th>'+
+        '<th style="text-align:right;'+thBase+'">Sin instalación</th>'+
+        '<th style="text-align:right;'+thBase+'">Con instalación</th>'+
       '</tr></thead><tbody>'+
-        puertasData.map(function(p){return '<tr><td style="padding:10px 16px;font-weight:700;color:#993C1D;font-size:13px">'+p.medida+'</td><td style="padding:10px 16px;text-align:right;font-weight:700;color:#D85A30">'+fmt(p.precio)+'</td></tr>';}).join('')+
+        puertasData.map(function(p){return '<tr><td style="padding:10px 16px;font-weight:700;color:#993C1D;font-size:13px">'+p.medida+'</td><td style="padding:10px 16px;text-align:right;font-weight:600;color:#6B6B6B">'+(p.sin?fmt(p.sin):'—')+'</td><td style="padding:10px 16px;text-align:right;font-weight:700;color:#D85A30">'+fmt(p.precio)+'</td></tr>';}).join('')+
       '</tbody></table>'+
     '<div style="padding:10px 16px;background:#FDF3EF;font-size:12px;color:#993C1D;font-weight:600;border-top:1px solid #F0D0C0">Puerta peatonal individual</div>'+
   '</div>'+
