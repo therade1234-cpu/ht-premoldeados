@@ -3565,7 +3565,7 @@ function descargarPresupuestoPDF(){
 
 // ---- PORTONES ----
 let portonesData=[
-  {modelo:'Portón ciego o con acero', nota:'Liso o con agregados metálicos', filas:[
+  {modelo:'Portón ciego o con acero', nota:'Liso o con agregados metálicos', imgs:[{src:'uploads/porton-ciego-sinescape.jpg',cap:'Sin puerta de escape'},{src:'uploads/porton-ciego-conescape.jpg',cap:'Con puerta de escape'}], filas:[
     {medida:'2,50 × 2,00', sinPorton:1100000, sinEscape:1150000, porton:1499990, escape:1582000},
     {medida:'3,00 × 2,00', sinPorton:1160000, sinEscape:1210000, porton:1650000, escape:1730000},
     {medida:'4,00 × 2,00', sinPorton:1600000, sinEscape:1650000, porton:2340000, escape:2420000}
@@ -3599,9 +3599,10 @@ function renderPortones(){
     }).join('');
     var thG='padding:8px 12px;font-weight:800;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.03em;text-align:center';
     var thSub='padding:8px 12px;font-weight:700;color:#993C1D;font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;border-bottom:2px solid #F0997B;text-align:right';
-    return '<div style="border-radius:12px;overflow:hidden;border:1px solid #E8E8E8;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.06)">'+
-      '<div style="background:#D85A30;padding:13px 20px"><span style="font-size:14px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.02em">'+m.modelo+'</span></div>'+
-      '<table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff">'+
+    var imgsHtml=(m.imgs&&m.imgs.length)?('<div style="flex:0 0 190px;display:flex;flex-direction:column;gap:10px;padding:14px;background:#FAFAFA;border-right:1px solid #F0F0F0">'+
+      m.imgs.map(function(im){return '<div style="text-align:center"><img src="'+im.src+'" alt="'+im.cap+'" style="width:100%;border-radius:7px;border:1px solid #E0E0E0;display:block"><div style="font-size:10.5px;color:#6B6B6B;margin-top:4px;font-weight:700;text-transform:uppercase;letter-spacing:.02em">'+im.cap+'</div></div>';}).join('')+
+    '</div>'):'';
+    var tabla='<table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff">'+
         '<thead>'+
           '<tr>'+
             '<th rowspan="2" style="text-align:left;padding:8px 16px;font-weight:700;color:#993C1D;font-size:11px;text-transform:uppercase;letter-spacing:.03em;border-bottom:2px solid #F0997B;background:#FDF3EF;vertical-align:bottom">Medidas (ancho × alto)</th>'+
@@ -3614,7 +3615,10 @@ function renderPortones(){
             '<th style="'+thSub+';border-left:1px solid #F0F0F0">Portón</th>'+
             '<th style="'+thSub+'">Con escape</th>'+
           '</tr>'+
-        '</thead><tbody>'+filas+'</tbody></table>'+
+        '</thead><tbody>'+filas+'</tbody></table>';
+    return '<div style="border-radius:12px;overflow:hidden;border:1px solid #E8E8E8;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.06)">'+
+      '<div style="background:#D85A30;padding:13px 20px"><span style="font-size:14px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.02em">'+m.modelo+'</span></div>'+
+      '<div style="display:flex;flex-wrap:wrap;align-items:stretch">'+imgsHtml+'<div style="flex:1;min-width:340px">'+tabla+'</div></div>'+
       (m.nota?'<div style="padding:10px 16px;background:#FDF3EF;font-size:12px;color:#993C1D;font-weight:600;border-top:1px solid #F0D0C0">'+m.nota+'</div>':'')+
     '</div>';
   }).join('')+
