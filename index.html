@@ -976,6 +976,9 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       </div>
     </div>
     <div id="portones-tablas"></div>
+    <div id="portones-pdf-wrap" style="text-align:center;margin-top:6px">
+      <button id="btn-portones-pdf" onclick="descargarPortonesPDF()" style="display:inline-flex;align-items:center;gap:8px;background:#D85A30;color:#fff;border:none;border-radius:10px;padding:13px 26px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(216,90,48,.3)">📄 Descargar lista en PDF</button>
+    </div>
   </div>
 </div>
 
@@ -3635,6 +3638,43 @@ function renderPortones(){
     '<div style="padding:10px 16px;background:#FDF3EF;font-size:12px;color:#993C1D;font-weight:600;border-top:1px solid #F0D0C0">Puerta peatonal individual</div>'+
   '</div>'+
   '<div style="font-size:12px;color:#6B6B6B;margin-top:4px;padding:12px 16px;background:#fff;border-radius:10px;border:1px solid #E8E8E8">Medidas en metros (ancho × alto). Precios en pesos. <b style="color:#993C1D">Con puerta de escape</b> = incluye puerta peatonal integrada (+$80.000 en todos los modelos).</div>';
+}
+function descargarPortonesPDF(){
+  var cont=document.querySelector('#inner-precios-portones .content');
+  if(!cont){alert('No se pudo generar el PDF');return;}
+  var wrap=document.getElementById('portones-pdf-wrap');
+  var btn=document.getElementById('btn-portones-pdf');
+  var prev=btn?btn.innerHTML:'';
+  if(btn){btn.innerHTML='Generando...';btn.disabled=true;}
+  if(wrap)wrap.style.display='none';
+  html2canvas(cont,{scale:2,backgroundColor:'#fff',useCORS:true}).then(function(canvas){
+    if(wrap)wrap.style.display='';
+    if(btn){btn.innerHTML=prev;btn.disabled=false;}
+    var jsPDF=window.jspdf.jsPDF;
+    var pdf=new jsPDF('p','mm','a4');
+    var pw=210, ph=297;
+    var imgH=canvas.height*pw/canvas.width;
+    if(imgH<=ph){
+      pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,pw,imgH);
+    }else{
+      var pxPerPage=canvas.width*ph/pw, y=0, page=0;
+      while(y<canvas.height){
+        var sliceH=Math.min(pxPerPage,canvas.height-y);
+        var c2=document.createElement('canvas');c2.width=canvas.width;c2.height=sliceH;
+        var ctx=c2.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c2.width,c2.height);
+        ctx.drawImage(canvas,0,y,canvas.width,sliceH,0,0,canvas.width,sliceH);
+        if(page>0)pdf.addPage();
+        pdf.addImage(c2.toDataURL('image/png'),'PNG',0,0,pw,sliceH*pw/canvas.width);
+        y+=sliceH;page++;
+      }
+    }
+    pdf.save('Lista-precios-portones-HT.pdf');
+  }).catch(function(e){
+    if(wrap)wrap.style.display='';
+    if(btn){btn.innerHTML=prev;btn.disabled=false;}
+    console.error('PDF portones error:',e);
+    alert('No se pudo generar el PDF');
+  });
 }
 
 function renderPrecios(){
