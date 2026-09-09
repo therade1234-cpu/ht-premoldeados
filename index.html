@@ -1532,9 +1532,13 @@ function ensureIds(arr){if(Array.isArray(arr)){for(var i=0;i<arr.length;i++){var
 function newId(){return 'o'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 // Marca un ítem como creado/modificado AHORA: le asegura un id estable y actualiza su marca de tiempo (updatedAt).
 function touch(it){if(it&&typeof it==='object'){if(!it.id)it.id=newId();it.updatedAt=Date.now();}return it;}
-function tombstone(it){if(!it)return;if(!Array.isArray(state._deleted))state._deleted=[];state._deleted.push(it.id||idFromSig(it));state._deleted.push(sigOf(it));}
-// Marca SOLO la firma de contenido (para usar ANTES de mover/editar: borra la versión vieja aunque el id no coincida entre dispositivos)
-function tombstoneSig(it){if(!it)return;if(!Array.isArray(state._deleted))state._deleted=[];state._deleted.push(sigOf(it));}
+// Borrado SEGURO: marca SOLO el id único y estable del ítem.
+// (Antes también guardaba una huella por CONTENIDO (idFromSig/sigOf), lo que borraba por accidente
+//  otras obras con los mismos datos. Eso causaba que desaparecieran obras de la cartelera.)
+function tombstone(it){if(!it)return;if(!Array.isArray(state._deleted))state._deleted=[];if(!it.id)it.id=newId();state._deleted.push(it.id);}
+// Obsoleto: las "firmas por contenido" eran inertes en el merge (nunca coinciden con un id) y solo
+// inflaban _deleted (arriesgando que reaparecieran obras al llegar al tope). Ahora no hace nada.
+function tombstoneSig(it){}
 function unionDeleted(a,b){var s={};(Array.isArray(a)?a:[]).forEach(function(k){s[k]=1;});(Array.isArray(b)?b:[]).forEach(function(k){s[k]=1;});return Object.keys(s);}
 function mergeArr(remote,local,deletedArr){
   // Combina por ID con "gana el más reciente" (last-write-wins según updatedAt).
