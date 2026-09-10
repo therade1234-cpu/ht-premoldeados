@@ -3573,22 +3573,22 @@ function descargarPresupuestoPDF(){
 // ---- PORTONES ----
 let portonesData=[
   {modelo:'Portón ciego o con acero', nota:'Liso o con agregados metálicos', imgs:[{src:'uploads/porton-ciego-sinescape.jpg',cap:'Sin puerta de escape'},{src:'uploads/porton-ciego-conescape.jpg',cap:'Con puerta de escape'}], filas:[
-    {medida:'2,50 × 2,00', sinPorton:1100000, sinEscape:1150000, porton:1499990, escape:1582000},
-    {medida:'3,00 × 2,00', sinPorton:1160000, sinEscape:1210000, porton:1550000, escape:1630000},
-    {medida:'4,00 × 2,00', sinPorton:1600000, sinEscape:1650000, porton:2340000, escape:2420000}
+    {medida:'2,50 × 2,00', sinPorton:1320000, sinEscape:1380000, porton:1799988, escape:1898400},
+    {medida:'3,00 × 2,00', sinPorton:1392000, sinEscape:1452000, porton:1860000, escape:1956000},
+    {medida:'4,00 × 2,00', sinPorton:1920000, sinEscape:1980000, porton:2808000, escape:2904000}
   ]},
   {modelo:'Portón con visor', nota:'Visor de malla o visor americano', imgs:[{src:'uploads/porton-visor-sinescape.jpg',cap:'Sin puerta de escape'},{src:'uploads/porton-visor-conescape.jpg',cap:'Con puerta de escape'}], filas:[
-    {medida:'2,50 × 2,00', sinPorton:1140000, sinEscape:1190000, porton:1515000, escape:1595000},
-    {medida:'3,00 × 2,00', sinPorton:1190000, sinEscape:1240000, porton:1605000, escape:1685000},
-    {medida:'4,00 × 2,00', sinPorton:1660000, sinEscape:1710000, porton:2395000, escape:2475000}
+    {medida:'2,50 × 2,00', sinPorton:1368000, sinEscape:1428000, porton:1818000, escape:1914000},
+    {medida:'3,00 × 2,00', sinPorton:1428000, sinEscape:1488000, porton:1926000, escape:2022000},
+    {medida:'4,00 × 2,00', sinPorton:1992000, sinEscape:2052000, porton:2874000, escape:2970000}
   ]},
   {modelo:'Portón doble visor', nota:'Doble visor de malla o visor americano', imgs:[{src:'uploads/porton-doble-sinescape.jpg',cap:'Sin puerta de escape'},{src:'uploads/porton-doble-conescape.jpg',cap:'Con puerta de escape'}], filas:[
-    {medida:'2,50 × 2,00', sinPorton:1260000, sinEscape:1310000, porton:1730000, escape:1810000},
-    {medida:'3,00 × 2,00', sinPorton:1340000, sinEscape:1390000, porton:1875000, escape:1955000},
-    {medida:'4,00 × 2,00', sinPorton:1750000, sinEscape:1800000, porton:2610000, escape:2690000}
+    {medida:'2,50 × 2,00', sinPorton:1512000, sinEscape:1572000, porton:2076000, escape:2172000},
+    {medida:'3,00 × 2,00', sinPorton:1608000, sinEscape:1668000, porton:2250000, escape:2346000},
+    {medida:'4,00 × 2,00', sinPorton:2100000, sinEscape:2160000, porton:3132000, escape:3228000}
   ]}
 ];
-let puertasData=[{medida:'1,00 × 2,00', sin:650000, precio:895000}];
+let puertasData=[{medida:'1,00 × 2,00', sin:780000, precio:1074000}];
 
 function renderPortones(){
   var cont=document.getElementById('portones-tablas');
@@ -3641,7 +3641,7 @@ function renderPortones(){
       '</tbody></table>'+
     '<div style="padding:10px 16px;background:#FDF3EF;font-size:12px;color:#993C1D;font-weight:600;border-top:1px solid #F0D0C0">Puerta peatonal individual</div>'+
   '</div>'+
-  '<div style="font-size:12px;color:#6B6B6B;margin-top:4px;padding:12px 16px;background:#fff;border-radius:10px;border:1px solid #E8E8E8">Medidas en metros (ancho × alto). Precios en pesos. <b style="color:#993C1D">Con puerta de escape</b> = incluye puerta peatonal integrada (+$80.000 en todos los modelos).</div>';
+  '<div style="font-size:12px;color:#6B6B6B;margin-top:4px;padding:12px 16px;background:#fff;border-radius:10px;border:1px solid #E8E8E8">Medidas en metros (ancho × alto). Precios en pesos. <b style="color:#993C1D">Con puerta de escape</b> = incluye puerta peatonal integrada (+$96.000 en todos los modelos).</div>';
 }
 function descargarPortonesPDF(){
   var cont=document.querySelector('#inner-precios-portones .content');
