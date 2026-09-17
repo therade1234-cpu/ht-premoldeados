@@ -370,7 +370,7 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Diseño</label>
           <select id="edit-diseno" onchange="toggleDisenoCustom('edit-diseno','edit-diseno-custom')" style="width:100%;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:#fff">
-            <option>Similar ladrillo</option><option>Similar bloque</option><option>Similar piedra</option><option>Similar laja</option><option>Similar piedra alpina</option><option>Similar ladrillo rústico</option><option>Similar madera</option><option>Doble vista</option><option>A confirmar</option></select>
+            <option>Similar ladrillo</option><option>Similar bloque</option><option>Similar piedra</option><option>Similar laja</option><option>Similar piedra alpina</option><option>Similar ladrillo rústico</option><option>Similar madera</option><option>Ladrillo, piedra y bloque</option><option>Doble vista</option><option>A confirmar</option></select>
           <input type="text" id="edit-diseno-custom" placeholder="Describí la combinación..." style="display:none;margin-top:6px;width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #2563EB;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
         <div><label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px">Distribución</label>
           <input id="edit-distribucion" type="text" placeholder="Ej: 2 tramos" style="width:100%;box-sizing:border-box;padding:9px 10px;border:1.5px solid #CCCCCC;border-radius:8px;font-size:13px;font-family:inherit;outline:none"></div>
@@ -901,6 +901,7 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
           <option value="Similar piedra alpina">Similar piedra alpina</option>
           <option value="Similar ladrillo rústico">Similar ladrillo rústico</option>
           <option value="Similar madera">Similar madera</option>
+          <option value="Ladrillo, piedra y bloque">Ladrillo, piedra y bloque</option>
           <option value="Doble vista">Doble vista</option>
           <option value="A confirmar">A confirmar</option>
         </select>
@@ -1307,6 +1308,7 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
               <option>Similar piedra alpina</option>
               <option>Similar ladrillo rústico</option>
               <option>Similar madera</option>
+              <option>Ladrillo, piedra y bloque</option>
               <option>Doble vista</option>
               <option>A confirmar</option>
             </select>
@@ -5582,7 +5584,7 @@ restaurarSesion();
           <select id="rc-diseno" onchange="renderRecibo()">
             <option>Similar ladrillo</option><option>Similar bloque</option><option>Similar piedra</option>
             <option>Similar laja</option><option>Similar piedra alpina</option>
-            <option>Similar ladrillo rústico</option><option>Similar madera</option><option>Doble vista</option>
+            <option>Similar ladrillo rústico</option><option>Similar madera</option><option>Ladrillo, piedra y bloque</option><option>Doble vista</option>
           </select></div>
         <div class="form-group" style="margin-bottom:10px"><label class="form-label">Columnas</label>
           <select id="rc-columnas" onchange="renderRecibo()">
