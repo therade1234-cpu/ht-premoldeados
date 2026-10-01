@@ -1624,11 +1624,25 @@ function applyData(data){
   if(snap!==_lastSnapshot && !editando){_lastSnapshot=snap;renderPanelActivo();}
 }
 
+let _saveRetry=0;
+// ¿El servidor quedó sin alguna obra/movimiento que nosotros SÍ tenemos (y no está borrada)?
+// Eso pasa si un guardado simultáneo de otra PC pisó al nuestro -> hay que re-guardar.
+function _fuePisado(remote){
+  if(!remote)return false;
+  var delS={}; (state._deleted||[]).forEach(function(k){delS[k]=1;});
+  function falta(local,rem){
+    var ids={}; (Array.isArray(rem)?rem:[]).forEach(function(x){if(x&&x.id)ids[x.id]=1;});
+    return (Array.isArray(local)?local:[]).some(function(x){return x&&x.id&&!ids[x.id]&&!delS[x.id];});
+  }
+  return falta(state.ventas,remote.ventas)||falta(state.movimientos,remote.movimientos)||
+         falta(state.visitas,remote.visitas)||falta(state.reparaciones,remote.reparaciones)||
+         falta(state.stock,remote.stock)||falta(state.produccion,remote.produccion);
+}
 async function saveState(){
   if(_saving){_pendingSave=true;return true;}
   _saving = true;
   _pendingSave = false;
-  let _ok=false;
+  let _ok=false, _reSave=false;
   try {
     ensureIds(state.ventas);ensureIds(state.movimientos);ensureIds(state.visitas);ensureIds(state.reparaciones);ensureIds(state.campanias);ensureIds(state.mktMedia);ensureIds(state.stock);ensureIds(state.produccion);
     // 1) Traer lo último del servidor y COMBINARLO (no pisar cambios de otros dispositivos)
@@ -1661,6 +1675,11 @@ async function saveState(){
     } else {
       _lastSave = Date.now();
       _ok = true;
+      // 3) VERIFICAR que nuestro guardado no haya sido pisado por otro guardado simultáneo.
+      try {
+        const rv = await fetch('/api/data', { cache:'no-store' });
+        if(rv.ok){ if(_fuePisado(await rv.json())) _reSave=true; }
+      } catch(e){}
     }
   } catch(e) {
     console.error('Error de red al guardar:', e);
@@ -1668,7 +1687,14 @@ async function saveState(){
     _saving = false;
     _lastSnapshot=JSON.stringify([state.ventas,state.movimientos,state.visitas,state.reparaciones,state.campanias,state.mktMedia,state.stock,state.produccion,state.vendedores,nomPlanilla]);
     renderPanelActivo();
-    if(_pendingSave) saveState();
+    if(_pendingSave){ _saveRetry=0; saveState(); }
+    else if((!_ok || _reSave) && _saveRetry<5){
+      // Reintentar: ante fallo de red o si otro guardado simultáneo pisó al nuestro.
+      _saveRetry++;
+      setTimeout(function(){ saveState(); }, _ok ? 700 : 2000*_saveRetry);
+    } else {
+      _saveRetry=0;
+    }
   }
   return _ok;
 }
