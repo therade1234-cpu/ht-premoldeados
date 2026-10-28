@@ -1012,24 +1012,8 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
     <div style="font-size:10px;color:#B0B0B0;margin-top:2px" id="precios-fecha"></div>
   </div>
 </div>
-    <!-- TABLA PRINCIPAL -->
-    <div style="border-radius:12px;overflow:hidden;border:1px solid #E8E8E8;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
-      <div style="background:#D85A30;padding:14px 20px;display:flex;align-items:center;gap:10px">
-        <span style="font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em">Precios por modelo y altura</span>
-      </div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff">
-        <thead>
-          <tr style="background:#FDF3EF">
-            <th style="padding:11px 16px;text-align:left;font-weight:700;color:#993C1D;font-size:12px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #F0997B">Modelo</th>
-            <th style="padding:11px 16px;text-align:center;font-weight:700;color:#993C1D;font-size:12px;border-bottom:2px solid #F0997B">1,60 m</th>
-            <th style="padding:11px 16px;text-align:center;font-weight:700;color:#993C1D;font-size:12px;border-bottom:2px solid #F0997B">2,00 m</th>
-            <th style="padding:11px 16px;text-align:center;font-weight:700;color:#993C1D;font-size:12px;border-bottom:2px solid #F0997B">2,40 m</th>
-            <th style="padding:11px 16px;text-align:center;font-weight:700;color:#993C1D;font-size:12px;border-bottom:2px solid #F0997B">2,80 m</th>
-          </tr>
-        </thead>
-        <tbody id="tabla-precios-full"></tbody>
-      </table>
-    </div>
+    <!-- 3 TABLAS POR CANTIDAD DE METROS LINEALES -->
+    <div id="precios-tablas"></div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
 
@@ -3415,7 +3399,7 @@ function calcPresupuestoTotal(){
   var adicional=parseMonto((document.getElementById('pr-adicional-monto')||{}).value)||0;
   var adicExtra=prAdicionales().total;
   if(typeof PRECIOS!=='undefined'&&PRECIOS[diseno]&&PRECIOS[diseno][altura]&&metros>0){
-    var total=metros*PRECIOS[diseno][altura]+adicional+adicExtra;
+    var total=metros*precioUnit(diseno,altura,metros)+adicional+adicExtra;
     var tEl=document.getElementById('pr-total');
     if(tEl)tEl.value=fmtMonto(total);
   }
@@ -3704,16 +3688,29 @@ function descargarPortonesPDF(){
 function renderPrecios(){
   const fd=document.getElementById('precios-fecha');
   if(fd){const h=new Date();fd.textContent=h.toLocaleDateString('es-AR',{month:'long',year:'numeric'});}
-  const tb=document.getElementById('tabla-precios-full');
-  if(!tb)return;
-  tb.innerHTML=Object.entries(PRECIOS).map(([mod,alts],i)=>`
-    <tr style="border-bottom:1px solid #F0F0F0;background:${i%2===0?'#fff':'#FAFAFA'}">
-      <td style="padding:12px 16px;font-weight:600;color:#1A1A1A;font-size:13px">${mod}</td>
-      <td style="padding:12px 16px;text-align:center;font-weight:700;color:#D85A30;font-size:13px">$${fmtMonto(alts['1,60 m'])}</td>
-      <td style="padding:12px 16px;text-align:center;font-weight:700;color:#D85A30;font-size:13px">$${fmtMonto(alts['2,00 m'])}</td>
-      <td style="padding:12px 16px;text-align:center;font-weight:700;color:#D85A30;font-size:13px">$${fmtMonto(alts['2,40 m'])}</td>
-      <td style="padding:12px 16px;text-align:center;font-weight:700;color:#D85A30;font-size:13px">$${fmtMonto(alts['2,80 m'])}</td>
-    </tr>`).join('');
+  const cont=document.getElementById('precios-tablas');
+  if(!cont)return;
+  const alturas=['1,60 m','2,00 m','2,40 m','2,80 m'];
+  cont.innerHTML=PRECIO_TRAMOS.map(function(t){
+    var filas=Object.entries(PRECIOS).map(function(e,i){
+      var alts=e[1];
+      return '<tr style="border-bottom:1px solid #F0F0F0;background:'+(i%2===0?'#fff':'#FAFAFA')+'">'+
+        '<td style="padding:11px 16px;font-weight:600;color:#1A1A1A;font-size:13px">'+e[0]+'</td>'+
+        alturas.map(function(a){return '<td style="padding:11px 16px;text-align:center;font-weight:700;color:#D85A30;font-size:13px">$'+fmtMonto(Math.round(alts[a]*t.mult))+'</td>';}).join('')+
+      '</tr>';
+    }).join('');
+    return '<div style="border-radius:12px;overflow:hidden;border:1px solid #E8E8E8;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.06)">'+
+      '<div style="background:#D85A30;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">'+
+        '<span style="font-size:15px;font-weight:700;color:#fff;letter-spacing:.02em">Precios por modelo y altura</span>'+
+        '<span style="font-size:12px;font-weight:800;color:#fff;background:rgba(255,255,255,.22);padding:4px 13px;border-radius:20px;text-transform:uppercase;letter-spacing:.03em">'+t.label+'</span>'+
+      '</div>'+
+      '<table style="width:100%;border-collapse:collapse;font-size:13px;background:#fff">'+
+        '<thead><tr style="background:#FDF3EF">'+
+          '<th style="padding:11px 16px;text-align:left;font-weight:700;color:#993C1D;font-size:12px;text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid #F0997B">Modelo</th>'+
+          alturas.map(function(a){return '<th style="padding:11px 16px;text-align:center;font-weight:700;color:#993C1D;font-size:12px;border-bottom:2px solid #F0997B">'+a+'</th>';}).join('')+
+        '</tr></thead><tbody>'+filas+'</tbody></table>'+
+    '</div>';
+  }).join('');
 }
 
 // ---- NÓMINAS ----
@@ -4596,6 +4593,21 @@ const PRECIOS = {
   'Doble vista':         {'1,60 m':140125,'2,00 m':147725,'2,40 m':168625,'2,80 m':207100},
 };
 
+// ---- 3 LISTAS POR CANTIDAD DE METROS LINEALES (descuento por volumen) ----
+// Se escala TODA la tabla PRECIOS por un factor, anclado a que el diseño base
+// (Similar ladrillo) a 2,00 m dé el objetivo de cada tramo. Los diseños premium y
+// las otras alturas mantienen su mismo % relativo.
+var _PRECIO_BASE_REF = PRECIOS['Similar ladrillo']['2,00 m']; // 120460
+var PRECIO_TRAMOS = [
+  {max:10,       objetivo:130000, label:'Hasta 10 m lineales'},
+  {max:50,       objetivo:126000, label:'De 10 a 50 m lineales'},
+  {max:Infinity, objetivo:120000, label:'Más de 50 m lineales'}
+];
+PRECIO_TRAMOS.forEach(function(t){ t.mult = t.objetivo / _PRECIO_BASE_REF; });
+function precioTramo(metros){ var m=parseFloat(metros)||0; for(var i=0;i<PRECIO_TRAMOS.length;i++){ if(m<=PRECIO_TRAMOS[i].max) return PRECIO_TRAMOS[i]; } return PRECIO_TRAMOS[PRECIO_TRAMOS.length-1]; }
+// Precio del metro lineal según diseño, altura y cantidad de metros (elige el tramo solo).
+function precioUnit(diseno,altura,metros){ var b=(PRECIOS[diseno]&&PRECIOS[diseno][altura])||0; return Math.round(b*precioTramo(metros).mult); }
+
 function abrirModalPrecios(){
   const tb=document.getElementById('tabla-precios-body');
   tb.innerHTML=Object.entries(PRECIOS).map(([mod,alts],i)=>`
@@ -4623,11 +4635,12 @@ function toggleDisenoCustom(selId,inputId){
 function actualizarPrecio(){
   const diseno=document.getElementById('v-diseno').value;
   const altura=document.getElementById('v-altura').value;
+  const metros=parseFloat((document.getElementById('v-metros')||{}).value)||0;
   if(PRECIOS[diseno]&&PRECIOS[diseno][altura]){
-    document.getElementById('v-precio').value=fmtMonto(PRECIOS[diseno][altura]);
+    document.getElementById('v-precio').value=fmtMonto(precioUnit(diseno,altura,metros));
   }
 }
-function redondearParMetros(){}
+function redondearParMetros(){ actualizarPrecio(); }
 async function cargarVenta(){
   const vend=document.getElementById('v-vendedor').value;
   const origen=document.getElementById('v-origen').value;
