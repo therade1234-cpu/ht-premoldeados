@@ -4599,9 +4599,9 @@ const PRECIOS = {
 // las otras alturas mantienen su mismo % relativo.
 var _PRECIO_BASE_REF = PRECIOS['Similar ladrillo']['2,00 m']; // 120460
 var PRECIO_TRAMOS = [
-  {max:10,       objetivo:130000, label:'Hasta 10 m lineales'},
-  {max:50,       objetivo:126000, label:'De 10 a 50 m lineales'},
-  {max:Infinity, objetivo:120000, label:'Más de 50 m lineales'}
+  {max:10,       objetivo:133900, label:'Hasta 10 m lineales'},
+  {max:50,       objetivo:129780, label:'De 10 a 50 m lineales'},
+  {max:Infinity, objetivo:123600, label:'Más de 50 m lineales'}
 ];
 PRECIO_TRAMOS.forEach(function(t){ t.mult = t.objetivo / _PRECIO_BASE_REF; });
 function precioTramo(metros){ var m=parseFloat(metros)||0; for(var i=0;i<PRECIO_TRAMOS.length;i++){ if(m<=PRECIO_TRAMOS[i].max) return PRECIO_TRAMOS[i]; } return PRECIO_TRAMOS[PRECIO_TRAMOS.length-1]; }
