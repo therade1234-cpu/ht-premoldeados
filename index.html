@@ -3585,22 +3585,22 @@ function descargarPresupuestoPDF(){
 // ---- PORTONES ----
 let portonesData=[
   {modelo:'Portón ciego o con acero', nota:'Liso o con agregados metálicos', imgs:[{src:'uploads/porton-ciego-sinescape.jpg',cap:'Sin puerta de escape'},{src:'uploads/porton-ciego-conescape.jpg',cap:'Con puerta de escape'}], filas:[
-    {medida:'2,50 × 2,00', sinPorton:1386000, sinEscape:1449000, porton:1889987, escape:1993320},
-    {medida:'3,00 × 2,00', sinPorton:1461600, sinEscape:1524600, porton:1953000, escape:2053800},
-    {medida:'4,00 × 2,00', sinPorton:2016000, sinEscape:2079000, porton:2948400, escape:3049200}
+    {medida:'2,50 × 2,00', sinPorton:1427580, sinEscape:1492470, porton:1946687, escape:2053120},
+    {medida:'3,00 × 2,00', sinPorton:1505448, sinEscape:1570338, porton:2011590, escape:2115414},
+    {medida:'4,00 × 2,00', sinPorton:2076480, sinEscape:2141370, porton:3036852, escape:3140676}
   ]},
   {modelo:'Portón con visor', nota:'Visor de malla o visor americano', imgs:[{src:'uploads/porton-visor-sinescape.jpg',cap:'Sin puerta de escape'},{src:'uploads/porton-visor-conescape.jpg',cap:'Con puerta de escape'}], filas:[
-    {medida:'2,50 × 2,00', sinPorton:1436400, sinEscape:1499400, porton:1908900, escape:2009700},
-    {medida:'3,00 × 2,00', sinPorton:1499400, sinEscape:1562400, porton:2022300, escape:2123100},
-    {medida:'4,00 × 2,00', sinPorton:2091600, sinEscape:2154600, porton:3017700, escape:3118500}
+    {medida:'2,50 × 2,00', sinPorton:1479492, sinEscape:1544382, porton:1966167, escape:2069991},
+    {medida:'3,00 × 2,00', sinPorton:1544382, sinEscape:1609272, porton:2082969, escape:2186793},
+    {medida:'4,00 × 2,00', sinPorton:2154348, sinEscape:2219238, porton:3108231, escape:3212055}
   ]},
   {modelo:'Portón doble visor', nota:'Doble visor de malla o visor americano', imgs:[{src:'uploads/porton-doble-sinescape.jpg',cap:'Sin puerta de escape'},{src:'uploads/porton-doble-conescape.jpg',cap:'Con puerta de escape'}], filas:[
-    {medida:'2,50 × 2,00', sinPorton:1587600, sinEscape:1650600, porton:2179800, escape:2280600},
-    {medida:'3,00 × 2,00', sinPorton:1688400, sinEscape:1751400, porton:2362500, escape:2463300},
-    {medida:'4,00 × 2,00', sinPorton:2205000, sinEscape:2268000, porton:3288600, escape:3389400}
+    {medida:'2,50 × 2,00', sinPorton:1635228, sinEscape:1700118, porton:2245194, escape:2349018},
+    {medida:'3,00 × 2,00', sinPorton:1739052, sinEscape:1803942, porton:2433375, escape:2537199},
+    {medida:'4,00 × 2,00', sinPorton:2271150, sinEscape:2336040, porton:3387258, escape:3491082}
   ]}
 ];
-let puertasData=[{medida:'1,00 × 2,00', sin:819000, precio:1127700}];
+let puertasData=[{medida:'1,00 × 2,00', sin:843570, precio:1161531}];
 
 function renderPortones(){
   var cont=document.getElementById('portones-tablas');
@@ -3653,7 +3653,7 @@ function renderPortones(){
       '</tbody></table>'+
     '<div style="padding:10px 16px;background:#FDF3EF;font-size:12px;color:#993C1D;font-weight:600;border-top:1px solid #F0D0C0">Puerta peatonal individual</div>'+
   '</div>'+
-  '<div style="font-size:12px;color:#6B6B6B;margin-top:4px;padding:12px 16px;background:#fff;border-radius:10px;border:1px solid #E8E8E8">Medidas en metros (ancho × alto). Precios en pesos. <b style="color:#993C1D">Con puerta de escape</b> = incluye puerta peatonal integrada (+$100.800 en todos los modelos).</div>';
+  '<div style="font-size:12px;color:#6B6B6B;margin-top:4px;padding:12px 16px;background:#fff;border-radius:10px;border:1px solid #E8E8E8">Medidas en metros (ancho × alto). Precios en pesos. <b style="color:#993C1D">Con puerta de escape</b> = incluye puerta peatonal integrada (+$103.824 en todos los modelos).</div>';
 }
 function descargarPortonesPDF(){
   var cont=document.querySelector('#inner-precios-portones .content');
@@ -4599,9 +4599,9 @@ const PRECIOS = {
 // las otras alturas mantienen su mismo % relativo.
 var _PRECIO_BASE_REF = PRECIOS['Similar ladrillo']['2,00 m']; // 120460
 var PRECIO_TRAMOS = [
-  {max:10,       objetivo:133900, label:'Hasta 10 m lineales'},
-  {max:50,       objetivo:129780, label:'De 10 a 50 m lineales'},
-  {max:Infinity, objetivo:123600, label:'Más de 50 m lineales'}
+  {max:10,       objetivo:137917, label:'Hasta 10 m lineales'},
+  {max:50,       objetivo:133673, label:'De 10 a 50 m lineales'},
+  {max:Infinity, objetivo:127308, label:'Más de 50 m lineales'}
 ];
 PRECIO_TRAMOS.forEach(function(t){ t.mult = t.objetivo / _PRECIO_BASE_REF; });
 function precioTramo(metros){ var m=parseFloat(metros)||0; for(var i=0;i<PRECIO_TRAMOS.length;i++){ if(m<=PRECIO_TRAMOS[i].max) return PRECIO_TRAMOS[i]; } return PRECIO_TRAMOS[PRECIO_TRAMOS.length-1]; }
