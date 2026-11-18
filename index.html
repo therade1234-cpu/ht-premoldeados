@@ -1077,6 +1077,9 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
       </div>
 
     </div>
+    <div id="precios-pdf-wrap" style="text-align:center;margin-top:6px">
+      <button id="btn-precios-pdf" onclick="descargarPreciosPDF()" style="display:inline-flex;align-items:center;gap:8px;background:#D85A30;color:#fff;border:none;border-radius:10px;padding:13px 26px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(216,90,48,.3)">📄 Descargar lista en PDF</button>
+    </div>
   </div>
 </div>
 
@@ -3711,6 +3714,34 @@ function renderPrecios(){
         '</tr></thead><tbody>'+filas+'</tbody></table>'+
     '</div>';
   }).join('');
+}
+
+function descargarPreciosPDF(){
+  var cont=document.querySelector('#inner-precios .content');
+  if(!cont){alert('No se pudo generar el PDF');return;}
+  var wrap=document.getElementById('precios-pdf-wrap');
+  var btn=document.getElementById('btn-precios-pdf');
+  var prev=btn?btn.innerHTML:'';
+  if(btn){btn.innerHTML='Generando...';btn.disabled=true;}
+  if(wrap)wrap.style.display='none';
+  html2canvas(cont,{scale:2,backgroundColor:'#fff',useCORS:true}).then(function(canvas){
+    if(wrap)wrap.style.display='';
+    if(btn){btn.innerHTML=prev;btn.disabled=false;}
+    var jsPDF=window.jspdf.jsPDF;
+    var pdf=new jsPDF('p','mm','a4');
+    var pw=210, ph=297, margin=6;
+    var maxW=pw-margin*2, maxH=ph-margin*2;
+    var ratio=canvas.width/canvas.height;
+    var w=maxW, h=w/ratio;
+    if(h>maxH){ h=maxH; w=h*ratio; }
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',(pw-w)/2,margin,w,h);
+    pdf.save('Lista-precios-premoldeados-HT.pdf');
+  }).catch(function(e){
+    if(wrap)wrap.style.display='';
+    if(btn){btn.innerHTML=prev;btn.disabled=false;}
+    console.error('PDF precios error:',e);
+    alert('No se pudo generar el PDF');
+  });
 }
 
 // ---- NÓMINAS ----
