@@ -3440,83 +3440,102 @@ function renderPresupuesto(){
   var listaFmt=totalNum>0?'$'+Math.round(totalNum*1.15).toLocaleString('es-AR'):'';
   var asesor=g('pr-asesor')||'';
 
+  // ---- datos calculados para el formato nuevo ----
+  var _MN=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  var _hoyP=new Date();
+  var _fdoc=fechaRaw?new Date(fechaRaw+'T00:00:00'):_hoyP;
+  var fechaLargaDoc=_fdoc.getDate()+' de '+_MN[_fdoc.getMonth()]+' '+_fdoc.getFullYear();
+  var mesProx=_MN[(_hoyP.getMonth()+1)%12];
+  var _lim=new Date(_hoyP.getTime()+10*86400000);
+  var fechaLimite=_lim.getDate()+' de '+_MN[_lim.getMonth()]+' '+_lim.getFullYear();
+  var alturaNum=(altura||'').replace(/m/ig,'').replace(/\s+/g,'').trim();
+  var metrosDoc=metrosNum||'—';
+  var perimetro=distribucion||'Libre';
+  // adicionales (bonificados o con monto)
+  var adicBox='';
+  adicData.list.forEach(function(a){
+    adicBox+='<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px"><span style="width:7px;height:7px;border-radius:50%;background:#D85A30;flex-shrink:0"></span>'+
+      '<span style="font-size:14px;font-weight:700;color:#1A1A1A;text-transform:uppercase;letter-spacing:.01em">'+a.nombre+'</span>'+
+      (a.monto>0?'<span style="font-size:12px;font-weight:800;color:#D85A30;margin-left:auto">+$'+a.monto.toLocaleString("es-AR")+'</span>':'<span style="font-size:10px;font-weight:800;color:#fff;background:#D85A30;padding:3px 10px;border-radius:12px;letter-spacing:.03em;margin-left:6px">BONIFICADO</span>')+
+    '</div>';
+  });
+  if(adicionalDesc){adicBox+='<div style="display:flex;align-items:center;gap:9px;margin-bottom:10px"><span style="width:7px;height:7px;border-radius:50%;background:#D85A30;flex-shrink:0"></span><span style="font-size:14px;font-weight:700;color:#1A1A1A">'+adicionalDesc+'</span>'+(adicionalMonto?'<span style="font-size:12px;font-weight:800;color:#D85A30;margin-left:auto">+$'+parseMonto(adicionalMonto).toLocaleString("es-AR")+'</span>':'')+'</div>';}
+  if(!adicBox)adicBox='<div style="font-size:12px;color:#999;font-style:italic">Sin adicionales</div>';
+  function featRow(t,d){return '<div style="display:flex;gap:11px;margin-bottom:17px"><span style="width:9px;height:9px;border-radius:50%;background:#D85A30;margin-top:6px;flex-shrink:0"></span><div><div style="font-size:16px;font-weight:800;color:#1A1A1A;line-height:1.2">'+t+'</div><div style="font-size:13px;color:#555;line-height:1.45;margin-top:2px">'+d+'</div></div></div>';}
+
   el.innerHTML=''+
-  '<div id="presup-doc" style="width:794px;min-height:1123px;background:#fff;position:relative;font-family:Inter,Arial,sans-serif;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);padding-bottom:0">'+
-    // HEADER
-    '<div style="position:relative;height:200px;background:linear-gradient(120deg,#3A3B3D 0%,#58595B 100%);overflow:hidden">'+
-      '<div style="position:absolute;top:-40px;right:-60px;width:380px;height:280px;background:linear-gradient(135deg,#E8742A,#D85A30);border-radius:50%;opacity:.95"></div>'+
-      '<div style="position:absolute;bottom:-1px;left:0;right:0;height:60px;background:#fff;border-top-left-radius:60px;border-top-right-radius:0"></div>'+
-      // Logo
-      '<div style="position:absolute;top:34px;right:48px;text-align:right;z-index:5">'+
-        '<div style="display:inline-grid;grid-template-columns:repeat(4,13px);grid-template-rows:repeat(4,13px);gap:2px;margin-bottom:8px">'+
-          gridLogo()+
+  '<div id="presup-doc" style="width:794px;min-height:1123px;background:#fff;position:relative;font-family:Inter,Arial,sans-serif;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08)">'+
+    // HEADER (banda gris + esquina naranja)
+    '<div style="position:relative;height:230px;overflow:hidden">'+
+      '<div style="position:absolute;top:0;left:0;right:0;height:170px;background:linear-gradient(120deg,#3A3B3D 0%,#4A4B4D 100%)"></div>'+
+      '<div style="position:absolute;top:-70px;right:-70px;width:260px;height:260px;background:#D85A30;transform:rotate(45deg)"></div>'+
+      '<div style="position:absolute;bottom:0;left:0;right:0;height:70px;background:#fff;border-top-left-radius:50px"></div>'+
+      // datos izquierda
+      '<div style="position:absolute;top:30px;left:48px;z-index:5;color:#fff">'+
+        '<div style="font-size:17px;font-weight:800"><span style="color:#F0997B">LOCALIDAD:</span> '+localidad+'</div>'+
+        (cliente&&cliente!=='—'?'<div style="font-size:13px;color:#D8D8D8;margin-top:2px">Cliente: '+cliente+'</div>':'')+
+        '<div style="font-size:14px;margin-top:10px"><b>FECHA:</b> '+fechaLargaDoc+'</div>'+
+      '</div>'+
+      // logo derecha
+      '<div style="position:absolute;top:24px;right:44px;z-index:6;display:flex;align-items:center;gap:12px">'+
+        '<div style="text-align:right;color:#fff;line-height:.98"><div style="font-size:30px;font-weight:900;letter-spacing:.5px">HT</div><div style="font-size:21px;font-weight:900;letter-spacing:.5px">PREMOLDEADOS</div><div style="font-size:8.5px;color:#FFE0D0;letter-spacing:3px;margin-top:3px">CERCOS PREMOLDEADOS</div></div>'+
+        '<div style="display:inline-grid;grid-template-columns:repeat(4,13px);grid-template-rows:repeat(4,13px);gap:2px">'+gridLogo()+'</div>'+
+      '</div>'+
+    '</div>'+
+    // TITULO
+    '<div style="margin:4px 48px 0;font-size:34px;font-weight:900;color:#1A1A1A;line-height:1.05;text-transform:uppercase">'+metrosDoc+' metros lineales a '+alturaNum+' de altura</div>'+
+    // BADGE reserva
+    '<div style="margin:16px 48px 0"><span style="display:inline-block;background:#D85A30;color:#fff;font-size:15px;font-weight:700;padding:9px 20px;border-radius:9px">Estás reservando tu obra para '+mesProx+'</span></div>'+
+    // BARRA concepto
+    '<div style="margin:14px 48px 0;display:flex;border-radius:9px;overflow:hidden;font-size:14px;font-weight:700;color:#fff;text-align:center">'+
+      '<div style="flex:1.8;background:#E8742A;padding:12px 16px;text-align:left">Concepto</div>'+
+      '<div style="flex:1;background:#E8742A;padding:12px 8px;border-left:1px solid rgba(255,255,255,.3)">Cantidad</div>'+
+      '<div style="flex:1;background:#E8742A;padding:12px 8px;border-left:1px solid rgba(255,255,255,.3)">Precio</div>'+
+      '<div style="flex:1;background:#1A1A1A;padding:12px 8px">Total</div>'+
+    '</div>'+
+    // DISEÑO + PERIMETRO
+    '<div style="margin:18px 48px 0;font-size:17px;color:#1A1A1A"><b>DISEÑO:</b> <span style="color:#D85A30;font-weight:800">'+diseno+'</span></div>'+
+    '<div style="margin:10px 48px 0;padding-bottom:14px;border-bottom:1px solid #EEE;font-size:16px;color:#1A1A1A"><b>CONDICIÓN DEL PERÍMETRO:</b> '+perimetro+'</div>'+
+    // FEATURES (2 col)
+    '<div style="margin:18px 48px 0;display:grid;grid-template-columns:1fr 1fr;gap:0 30px">'+
+      featRow('Envío','Buenos Aires')+
+      featRow('Material de amure','Piedra, cemento y arena para la colocación.')+
+      featRow('Mano de obra completa','Obra finalizada en '+dias+' día(s).')+
+      featRow('Placas reforzadas','Con varillaje de hierro en su interior cubiertas de acero.')+
+      featRow('Columnas industriales','Con 4 varillas de hierro del 6, aletadas, con estribos.')+
+      featRow(garantia+' años de garantía','Por desperfecto de fábrica o colocación.')+
+    '</div>'+
+    // ADICIONALES + RESERVA (2 col)
+    '<div style="margin:6px 48px 0;display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch">'+
+      '<div style="background:#FFF1E8;border-radius:14px;padding:18px 20px">'+
+        '<div style="font-size:15px;font-weight:900;color:#993C1D;letter-spacing:.03em">ADICIONALES</div>'+
+        '<div style="font-size:12px;color:#B07A62;margin-bottom:12px">según corresponda</div>'+
+        adicBox+
+      '</div>'+
+      '<div style="background:#1A1A1A;border-radius:14px;padding:18px 22px;color:#fff">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px">'+
+          '<span style="font-size:13px;color:#BDBDBD;font-weight:600;letter-spacing:.04em">PRECIO DE LISTA</span>'+
+          (listaFmt?'<span style="font-size:17px;color:#9A9A9A;text-decoration:line-through;font-weight:700">'+listaFmt+'</span>':'')+
         '</div>'+
-        '<div style="font-size:26px;font-weight:900;color:#fff;line-height:.92;letter-spacing:1px">HT PREMOLDEADOS</div>'+
-        '<div style="font-size:9px;color:#FFE0D0;letter-spacing:3px;margin-top:3px">CERCOS PREMOLDEADOS</div>'+
+        '<div style="margin-top:12px"><span style="display:inline-block;background:#D85A30;color:#fff;font-size:12px;font-weight:800;padding:6px 14px;border-radius:8px;letter-spacing:.02em">RESERVÁ TU OBRA · '+mesProx.toUpperCase()+'</span></div>'+
+        '<div style="font-size:42px;font-weight:900;color:#E8742A;line-height:1.05;margin-top:8px">'+totalFmt+'</div>'+
+        '<div style="font-size:12px;color:#BDBDBD;line-height:1.5;margin-top:6px">Reservá antes del '+fechaLimite+' para asegurar tu lugar en '+mesProx+'.</div>'+
       '</div>'+
     '</div>'+
-    // DATOS CLIENTE (tarjeta)
-    '<div style="margin:10px 48px 0;background:#FFF8F5;border-radius:14px;padding:22px 26px;border:1px solid #F0D8CC">'+
-      '<div style="display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:18px">'+
-        '<span style="font-weight:800;color:#993C1D">CLIENTE</span><span style="color:#1A1A1A;font-weight:600">'+cliente+'</span>'+
-        '<span style="font-weight:800;color:#993C1D">LOCALIDAD</span><span style="color:#1A1A1A;font-weight:600">'+localidad+'</span>'+
-        '<span style="font-weight:800;color:#993C1D">FECHA</span><span style="color:#1A1A1A;font-weight:600">'+fecha+'</span>'+
+    // IVA + PAGOS
+    '<div style="margin:16px 48px 0;font-size:14px;color:#1A1A1A">+ 21% de IVA <b>(en caso de necesitar facturación)</b></div>'+
+    '<div style="margin:10px 48px 0;display:flex;align-items:center;gap:26px;font-size:13.5px;color:#444;font-weight:600">'+
+      '<span>💵 Pesos/Dólares</span><span>🔁 Transferencia (+5%)</span><span>💳 Tarjeta de crédito · Mercado Pago</span>'+
+    '</div>'+
+    // FIRMA
+    '<div style="margin:18px 48px 0;display:flex;justify-content:flex-end">'+
+      '<div style="text-align:center;min-width:240px">'+
+        (asesor?('<div style="font-size:26px;font-style:italic;font-family:Georgia,serif;color:#1A1A1A;margin-bottom:4px">'+asesor+'</div>'):'<div style="height:34px"></div>')+
+        '<div style="border-top:1.5px solid #1A1A1A;padding-top:5px;font-size:13px;color:#555;font-weight:700">Asesor comercial</div>'+
       '</div>'+
     '</div>'+
-    // DETALLE OBRA
-    '<div style="margin:22px 48px 0">'+
-      '<div style="background:#D85A30;color:#fff;font-size:14px;font-weight:800;letter-spacing:1px;padding:10px 20px;border-radius:10px 10px 0 0;text-transform:uppercase">Detalle de la obra</div>'+
-      '<div style="border:1px solid #F0D8CC;border-top:none;border-radius:0 0 10px 10px;padding:18px 20px">'+
-        '<div style="display:flex;margin-bottom:11px;padding-bottom:11px;border-bottom:1px dashed #E8C8B8"><span style="font-size:14px;font-weight:800;color:#993C1D;min-width:130px">Metros:</span><span style="font-size:14px;color:#1A1A1A">'+metrosTxt+'</span></div>'+
-        '<div style="display:flex;margin-bottom:11px;padding-bottom:11px;border-bottom:1px dashed #E8C8B8"><span style="font-size:14px;font-weight:800;color:#993C1D;min-width:130px">Diseño:</span><span style="font-size:14px;color:#1A1A1A;font-weight:600">'+diseno+'</span></div>'+
-        (distribucion?('<div style="display:flex;margin-bottom:11px;padding-bottom:11px;border-bottom:1px dashed #E8C8B8"><span style="font-size:14px;font-weight:800;color:#993C1D;min-width:130px">Distribución:</span><span style="font-size:14px;color:#1A1A1A">'+distribucion+'</span></div>'):'')+
-        '<div style="display:flex;gap:30px;margin-bottom:11px;padding-bottom:11px;border-bottom:1px dashed #E8C8B8">'+
-          '<div style="display:flex"><span style="font-size:14px;font-weight:800;color:#993C1D;min-width:75px">Gorros:</span><span style="font-size:14px;color:#1A1A1A">'+gorros+'</span></div>'+
-          '<div style="display:flex"><span style="font-size:14px;font-weight:800;color:#993C1D;min-width:120px">Columnas remo:</span><span style="font-size:14px;color:#1A1A1A">'+columnas+'</span></div>'+
-        '</div>'+
-        adicItems+
-      '</div>'+
-    '</div>'+
-    // ITEMS (2 columnas)
-    '<div style="margin:26px 48px 0;display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
-      itemCard('Material de amure','Piedra, cemento y arena para la colocación.')+
-      itemCard('Mano de obra completa','Trabajo finalizado en '+dias+' día(s).')+
-      itemCard('Placas reforzadas','Con varillaje de hierro en su interior cubiertas de acero.')+
-      itemCard('Columnas industriales','Con 4 varillas de hierro del 6 aletadas con estribos.')+
-    '</div>'+
-    // GARANTIA destacada
-    '<div style="margin:16px 48px 0;background:linear-gradient(120deg,#FFF8F5,#FDEEE6);border:1.5px solid #F0997B;border-radius:12px;padding:14px 20px;display:flex;align-items:center;gap:14px">'+
-      '<div style="width:40px;height:40px;border-radius:50%;background:#D85A30;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
-        '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" width="20" height="20"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>'+
-      '</div>'+
-      '<div><div style="font-size:16px;font-weight:800;color:#993C1D">Garantía de '+garantia+' años</div><div style="font-size:12.5px;color:#555">Escrita. Cubre cualquier desperfecto de fábrica o colocación.</div></div>'+
-    '</div>'+
-    // TOTAL destacado (centrado) con precio de lista tachado y promo
-    '<div style="margin:22px 48px 0;display:flex;justify-content:center">'+
-      '<div style="background:linear-gradient(135deg,#E8742A,#D85A30);border-radius:16px;padding:18px 50px;box-shadow:0 6px 18px rgba(216,90,48,.3);text-align:center">'+
-        (listaFmt?('<div style="font-size:13px;color:#FFE0D0;font-weight:600;margin-bottom:1px">Precio de lista: <span style="text-decoration:line-through">'+listaFmt+'</span></div>'):'')+
-        '<div style="font-size:12px;color:#FFE0D0;font-weight:700;letter-spacing:2px;margin-bottom:2px">TOTAL DEL PRESUPUESTO</div>'+
-        '<div style="font-size:34px;font-weight:900;color:#fff">'+totalFmt+'</div>'+
-        (listaFmt?('<div style="display:inline-block;margin-top:8px;background:#fff;color:#C0392B;font-size:11px;font-weight:800;letter-spacing:.5px;padding:4px 14px;border-radius:20px">🔥 PRECIO PROMOCIONAL VÁLIDO POR 3 DÍAS</div>'):'')+
-      '</div>'+
-    '</div>'+
-    // CONDICIONES + FIRMA (2 columnas)
-    '<div style="margin:24px 48px 0;display:flex;justify-content:space-between;align-items:flex-end;gap:30px">'+
-      // Condiciones
-      '<div style="font-size:11.5px;color:#666;line-height:1.7;flex:1">'+
-        '<div style="font-weight:700;color:#993C1D;margin-bottom:4px;font-size:12px">CONDICIONES</div>'+
-        'SIN IVA · (+21% en caso de necesitar facturación)<br>'+
-        '<b style="color:#1A1A1A">Forma de pago:</b> Efectivo<br>'+
-        '<b style="color:#1A1A1A">Transferencia:</b> recargo del 5%'+
-      '</div>'+
-      // Firma
-      '<div style="text-align:center;min-width:220px">'+
-        (asesor?('<div style="font-size:24px;font-style:italic;font-family:Georgia,serif;color:#1A1A1A;margin-bottom:4px">'+asesor+'</div>'):'<div style="height:32px"></div>')+
-        '<div style="border-top:1.5px solid #1A1A1A;padding-top:5px;font-size:13px;color:#555;font-weight:600">Asesor comercial</div>'+
-      '</div>'+
-    '</div>'+
-    // CLÁUSULA: el presupuesto NO incluye
-    '<div style="margin:18px 48px 0;background:#FFF8F5;border:1px solid #F0D8CC;border-left:4px solid #D85A30;border-radius:10px;padding:12px 18px">'+
+    // CLÁUSULA no incluye
+    '<div style="margin:16px 48px 0;background:#FFF8F5;border:1px solid #F0D8CC;border-left:4px solid #D85A30;border-radius:10px;padding:12px 18px">'+
       '<div style="font-size:11.5px;font-weight:800;color:#993C1D;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">El presupuesto no incluye <b style="color:#1A1A1A;text-transform:none">(excepto si se habló con el vendedor y lo cotizó e incluyó en el presupuesto)</b></div>'+
       '<ul style="margin:0;padding-left:18px;font-size:11px;color:#555;line-height:1.75">'+
         '<li>Desmonte de cerco vivo (ligustrinas, arbustos pequeños, cañas, enredaderas, plantas, etc).</li>'+
@@ -3526,13 +3545,12 @@ function renderPresupuesto(){
         '<li>Pintura.</li>'+
       '</ul>'+
     '</div>'+
-    // espaciador para que el footer no pise
-    '<div style="height:110px"></div>'+
+    '<div style="height:26px"></div>'+
     // FOOTER
-    '<div style="position:absolute;bottom:0;left:0;right:0;height:72px;background:linear-gradient(120deg,#3A3B3D,#58595B);overflow:hidden">'+
-      '<div style="position:absolute;bottom:-30px;left:-40px;width:200px;height:120px;background:linear-gradient(135deg,#E8742A,#D85A30);border-radius:50%;opacity:.85"></div>'+
-      '<div style="position:absolute;top:0;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:30px;font-size:14px;color:#fff;z-index:3;font-weight:500">'+
-        '<span>📍 Av. Nestor Kirchner 3111</span><span>✉ htpremoldeado@gmail.com</span>'+
+    '<div style="position:relative;height:66px;background:linear-gradient(120deg,#3A3B3D,#4A4B4D);overflow:hidden;margin-top:10px">'+
+      '<div style="position:absolute;top:-30px;left:-30px;width:120px;height:120px;background:#D85A30;transform:rotate(45deg);opacity:.9"></div>'+
+      '<div style="position:absolute;top:0;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:0 48px;font-size:14px;color:#fff;z-index:3;font-weight:500">'+
+        '<span>📍 Dirección: Av. Néstor Kirchner 3111</span><span>✉ Mail: htpremoldeado@gmail.com</span>'+
       '</div>'+
     '</div>'+
   '</div>';
