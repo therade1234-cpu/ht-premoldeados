@@ -906,7 +906,10 @@ html[data-theme="dark"] .stk-pill.out{background:#3a1a18}
           <option value="A confirmar">A confirmar</option>
         </select>
         <input type="text" id="pr-diseno-custom" placeholder="Describí la combinación de diseños..." oninput="renderPresupuesto()" style="display:none;margin-top:6px;width:100%;box-sizing:border-box;padding:8px 10px;border:1.5px solid #D85A30;border-radius:7px;font-size:13px;font-family:inherit;outline:none"></div>
-        <div class="form-group" style="margin-bottom:10px"><label class="form-label">Distribución</label><input type="text" id="pr-distribucion" placeholder="Ej: 3 paños + portón" oninput="renderPresupuesto()" /></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Condición del perímetro</label><input type="text" id="pr-perimetro" placeholder="Ej: Libre / Desmonte / Alambrado / Reja" oninput="renderPresupuesto()" /></div>
+          <div class="form-group"><label class="form-label">Distribución (reparto de metros)</label><input type="text" id="pr-distribucion" placeholder="Ej: 3 paños + portón" oninput="renderPresupuesto()" /></div>
+        </div>
         <div class="form-row">
           <div class="form-group"><label class="form-label">Gorros</label><select id="pr-gorros" onchange="renderPresupuesto()">
             <option value="No">No lleva</option>
@@ -3450,7 +3453,7 @@ function renderPresupuesto(){
   var fechaLimite=_lim.getDate()+' de '+_MN[_lim.getMonth()]+' '+_lim.getFullYear();
   var alturaNum=(altura||'').replace(/m/ig,'').replace(/\s+/g,'').trim();
   var metrosDoc=metrosNum||'—';
-  var perimetro=distribucion||'Libre';
+  var perimetro=g('pr-perimetro')||'Libre';
   // adicionales (bonificados o con monto)
   var adicBox='';
   adicData.list.forEach(function(a){
@@ -3495,7 +3498,9 @@ function renderPresupuesto(){
     '</div>'+
     // DISEÑO + PERIMETRO
     '<div style="margin:18px 48px 0;font-size:17px;color:#1A1A1A"><b>DISEÑO:</b> <span style="color:#D85A30;font-weight:800">'+diseno+'</span></div>'+
-    '<div style="margin:10px 48px 0;padding-bottom:14px;border-bottom:1px solid #EEE;font-size:16px;color:#1A1A1A"><b>CONDICIÓN DEL PERÍMETRO:</b> '+perimetro+'</div>'+
+    '<div style="margin:10px 48px 0;font-size:16px;color:#1A1A1A"><b>CONDICIÓN DEL PERÍMETRO:</b> '+perimetro+'</div>'+
+    (distribucion?('<div style="margin:8px 48px 0;font-size:16px;color:#1A1A1A"><b>DISTRIBUCIÓN:</b> '+distribucion+'</div>'):'')+
+    '<div style="margin:12px 48px 0;border-bottom:1px solid #EEE"></div>'+
     // FEATURES (2 col)
     '<div style="margin:18px 48px 0;display:grid;grid-template-columns:1fr 1fr;gap:0 30px">'+
       featRow('Envío','Buenos Aires')+
